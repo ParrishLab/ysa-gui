@@ -7,18 +7,15 @@ import sys
 from pathlib import Path
 import time
 from urllib.request import pathname2url
-from markdown import markdown
 
 import h5py
 import numpy as np
 import pyqtgraph as pg
 import qdarktheme
-from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import (
     QLineF,
     QPointF,
     QRectF,
-    QUrl,
     Qt,
     QTimer,
     pyqtSignal,
@@ -79,7 +76,7 @@ from helpers.Constants import (
     VERSION,
     WIN,
 )
-from helpers.update.NewUpdater import GITHUB_API_URL, GITHUB_REPO, AppUpdater
+from helpers.update.NewUpdater import GITHUB_API_URL, AppUpdater
 from threads.AnalysisThread import AnalysisThread
 from threads.MatlabEngineThread import MatlabEngineThread
 from threads.DischargeFinderThread import DischargeFinderThread
