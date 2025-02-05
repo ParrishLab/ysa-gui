@@ -1,7 +1,7 @@
 from PyQt5 import QtWidgets, QtCore
 from PyQt5.QtGui import QColor
 
-from src.helpers.Constants import green, yellow, red
+from helpers.Constants import green, yellow, red
 
 FONT_FAMILY = "Arial"
 TIMEOUT = 5000

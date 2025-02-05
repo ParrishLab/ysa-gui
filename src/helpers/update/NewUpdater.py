@@ -98,7 +98,7 @@ class AppUpdater:
 
     def check_for_update(self):
         try:
-            response = requests.get(GITHUB_API_URL)
+            response = requests.get(GITHUB_API_URL, timeout=5)
             if response.status_code == 200:
                 latest_release = response.json()
                 latest_version = latest_release["tag_name"].lstrip("v")

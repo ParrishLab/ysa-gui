@@ -1,3 +1,4 @@
+from pathlib import Path
 from PyQt5.QtWidgets import QAction, QMenu
 from PyQt5.QtCore import pyqtSignal
 from pyqtgraph.Qt.QtWidgets import QMessageBox
@@ -86,13 +87,10 @@ class TraceViewBoxMenu(QMenu):
 
     def save_tracked_discharges(self):
         file_path = self.parent.main_window.file_path
-        if file_path is None:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("No file loaded")
-            msg.setInformativeText("Please load a file before saving.")
-            msg.setWindowTitle("No file loaded")
-            msg.exec_()
+        if file_path == Path():
+            self.parent.main_window.notify(
+                "No file loaded. Please load a file before saving tracked discharges."
+            )
             return
 
         custom_region = self.parent.main_window.custom_region
