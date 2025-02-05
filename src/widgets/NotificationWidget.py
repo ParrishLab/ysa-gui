@@ -29,7 +29,7 @@ class NotificationManager(QtCore.QObject):
             screen = QtWidgets.QApplication.primaryScreen()
             screen_geometry = screen.availableGeometry()
             x = screen_geometry.x() + 10
-            y = screen_geometry.height() - NOTIFICATION_HEIGHT + 30
+            y = screen_geometry.height() - NOTIFICATION_HEIGHT + 50
             self.position = QtCore.QPoint(x, y)
 
         if not self.current_notification:
