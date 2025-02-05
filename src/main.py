@@ -702,11 +702,7 @@ class MainWindow(QMainWindow):
             file_path = cwd / ".." / "docs" / "_build" / "html" / "index.html"
 
         if not file_path.exists():
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(f"Documentation not found at {file_path}.")
-            msg.setWindowTitle("Documentation")
-            msg.exec_()
+            self.notify(f"Documentation not found at {file_path}.", 1)
             return
 
         url = f"file://{pathname2url(str(file_path.absolute()))}"
@@ -822,11 +818,7 @@ class MainWindow(QMainWindow):
                     raise ValueError("Bin size must be greater than 0.")
                 self.bin_size = bin_size
             except ValueError as e:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setText(str(e))
-                msg.setWindowTitle("Invalid Bin Size")
-                msg.exec_()
+                self.notify(str(e), 1)
 
     # TODO: Do we actually want this function? Can be a bit annoying if you accidentally click it while zooming or something. Maybe make it cmd+click?
     def handle_region_clicked(self, start, stop):
@@ -911,11 +903,7 @@ class MainWindow(QMainWindow):
         if ok:
             if order_amount < 1:
                 order_amount = 1
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setText("Order amount must be greater than 0.")
-                msg.setWindowTitle("Invalid Order Amount")
-                msg.exec_()
+                self.notify("Order amount must be greater than 0.")
 
             self.order_amount = order_amount
             self.toggle_order(self.show_order_checkbox.checkState())
