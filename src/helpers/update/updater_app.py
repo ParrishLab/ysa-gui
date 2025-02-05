@@ -14,11 +14,12 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import QThread, pyqtSignal
 import qdarktheme
 from NewUpdater import AppUpdater
+import subprocess
 
 
 class UpdateWorker(QThread):
-    progress = pyqtSignal(str, int)  # Message, percentage
-    finished = pyqtSignal(bool)  # Success status
+    progress = pyqtSignal(str, int)
+    finished = pyqtSignal(bool)
 
     def __init__(self, release, install_dir, current_version):
         super().__init__()
@@ -73,16 +74,41 @@ class UpdaterWindow(QMainWindow):
 
         # Set up logging
         self.setup_logging()
-
+        self.install_dir = self.get_install_dir()
         self.release = release
-        self.install_dir = install_dir or Path("/Applications/")
         self.init_ui()
         self.start_update(current_version)
+
+    # NOTE: Still need to debug this for windows to makesure the correct path is returned
+    def get_install_dir(self):
+        if sys.platform == "darwin":
+            install_dir = Path("/Applications/")
+        elif sys.platform == "win32":
+            if sys.maxsize > 2**32:
+                install_dir = Path("C:/Program Files/")
+            else:
+                install_dir = Path("C:/Program Files (x86)/")
+        else:
+            install_dir = Path("/usr/local/bin/")
+        return install_dir
+
+    def get_log_file(self):
+        if sys.platform == "darwin":
+            log_file = Path(os.path.expanduser("~")) / ".mea_updater" / "updater.log"
+        elif sys.platform == "win32":
+            log_file = (
+                Path(os.path.expanduser("~"))
+                / "AppData"
+                / "Local"
+                / "mea_updater"
+                / "updater.log"
+            )
+        return log_file
 
     def setup_logging(self):
         import logging
 
-        log_file = Path(os.path.expanduser("~")) / ".mea_updater" / "updater.log"
+        log_file = self.get_log_file()
         log_file.parent.mkdir(parents=True, exist_ok=True)
 
         logging.basicConfig(
@@ -136,10 +162,18 @@ class UpdaterWindow(QMainWindow):
                 "The update has been installed successfully. The application will now restart.",
             )
             # Launch the main application
-            app_path = self.install_dir / "MEA GUI.app"
+            app_path = (
+                self.install_dir / "MEA GUI.app"
+                if sys.platform == "darwin"
+                else self.install_dir / "MEA GUI.exe"
+            )
             if app_path.exists():
                 self.logger.info(f"Launching application at: {app_path}")
-                os.system(f"open '{app_path}'")
+                if sys.platform == "darwin":
+                    subprocess.Popen(["open", app_path])
+                elif sys.platform == "win32":
+                    subprocess.Popen([app_path], shell=True)
+
             else:
                 self.logger.error(f"Application not found at: {app_path}")
         else:

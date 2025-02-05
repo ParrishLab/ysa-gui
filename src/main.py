@@ -2895,7 +2895,11 @@ if __name__ == "__main__":
 
                     # TODO: This is only MAC specific
                     cwd = Path(__file__).resolve().parent
-                    updater_path = cwd / "MEAUpdater.app"
+                    updater_path = (
+                        cwd / "MEAUpdater.app"
+                        if sys.platform == MAC
+                        else cwd / "MEAUpdater.exe"
+                    )
                     # updater_path = Path(
                     #     "/Applications/MEA GUI.app/Contents/Resources/MEAUpdater.app/"
                     # )
@@ -2908,7 +2912,15 @@ if __name__ == "__main__":
 
                     if updater_path.exists():
                         # Launch the updater and exit
-                        subprocess.Popen(["open", str(updater_path), "--args", VERSION])
+                        if sys.platform == MAC:
+                            subprocess.Popen(
+                                ["open", str(updater_path), "--args", VERSION]
+                            )
+                        elif sys.platform == WIN:
+                            subprocess.Popen(
+                                ["start", str(updater_path), "--args", VERSION],
+                                shell=True,
+                            )
                         # wait for the updater to start
                         time.sleep(2)
                         sys.exit(0)

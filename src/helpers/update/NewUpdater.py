@@ -11,6 +11,7 @@ from packaging import version
 
 GITHUB_REPO = "booka66/mea-gui"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+# NOTE: Need to add the windows protected path
 PROTECTED_PATHS = ["Contents/Resources/MEAUpdater.app"]
 
 
@@ -30,6 +31,7 @@ class AppUpdater:
         self.machine = platform.machine()
         self.temp_dir = Path(os.path.expanduser("~")) / ".app_updates"
 
+    # NOTE: Make sure this works on windows
     def _is_protected_path(self, path):
         """Check if a path should be protected during updates"""
         try:
@@ -70,14 +72,14 @@ class AppUpdater:
                         if not self._is_protected_path(dir_path):
                             try:
                                 os.chmod(str(dir_path), stat.S_IRWXU)
-                            except:
+                            except Exception:
                                 pass
                     for f in files:
                         file_path = root_path / f
                         if not self._is_protected_path(file_path):
                             try:
                                 os.chmod(str(file_path), stat.S_IRWXU)
-                            except:
+                            except Exception:
                                 pass
 
                 # Then remove non-protected contents
@@ -176,6 +178,7 @@ class AppUpdater:
             print(f"Download failed: {e}")
             return None
 
+    # NOTE: Need to make this work on windows
     def _remove_app_with_privileges(self, target_app):
         """
         Attempts to remove the application using elevated privileges if needed.
@@ -247,6 +250,7 @@ class AppUpdater:
             logger.exception(f"Error removing application: {str(e)}")
             raise
 
+    # NOTE: Does windows have a similar command to osascript?
     def _request_admin_privileges(self, command):
         """
         Executes a command with admin privileges using osascript.
@@ -266,8 +270,6 @@ class AppUpdater:
         end try
         '''
 
-        # TODO: Modify message to include MEAUpdater and the fact that it wants to delete the old application
-        # display dialog "MEAUpdater requires admin privileges to update the application." buttons ["OK"] default button 1 with icon note
         try:
             result = subprocess.run(
                 ["osascript", "-e", script],
@@ -391,7 +393,7 @@ class AppUpdater:
             except Exception as e:
                 print(f"Cleanup failed: {e}")
 
-    # TODO: I'm not sure if this works on Windows
+    # NOTE: Need to make this work on windows
     def _update_windows(self, exe_file):
         try:
             app_location = self.app_path
