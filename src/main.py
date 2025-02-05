@@ -7,15 +7,18 @@ import sys
 from pathlib import Path
 import time
 from urllib.request import pathname2url
+from markdown import markdown
 
 import h5py
 import numpy as np
 import pyqtgraph as pg
 import qdarktheme
+from PyQt5.QtWebEngineWidgets import QWebEngineView
 from PyQt5.QtCore import (
     QLineF,
     QPointF,
     QRectF,
+    QUrl,
     Qt,
     QTimer,
     pyqtSignal,
@@ -53,9 +56,11 @@ from PyQt5.QtWidgets import (
     QSlider,
     QSplitter,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
+import requests
 from scipy.signal import spectrogram
 from sklearn.cluster import DBSCAN
 
@@ -74,7 +79,7 @@ from helpers.Constants import (
     VERSION,
     WIN,
 )
-from helpers.update.NewUpdater import AppUpdater
+from helpers.update.NewUpdater import GITHUB_API_URL, GITHUB_REPO, AppUpdater
 from threads.AnalysisThread import AnalysisThread
 from threads.MatlabEngineThread import MatlabEngineThread
 from threads.DischargeFinderThread import DischargeFinderThread
@@ -130,6 +135,8 @@ class MainWindow(QMainWindow):
         self.set_widgets_enabled()
 
     def setup_variables(self):
+        self.update_message_widget = None
+
         # File and recording settings
         self.file_path: Path = Path()
         self.recording_length = None
@@ -643,6 +650,38 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.redraw_arrows()
+
+    def pull_update_message(self, update_message_path):
+        try:
+            response = requests.get(GITHUB_API_URL)
+            if response.status_code == 200:
+                latest_release = response.json()
+
+                message = latest_release["body"]
+                if message:
+                    with open(update_message_path, "w") as f:
+                        f.write(message)
+        except Exception as e:
+            print(f"Failed to pull update message: {e}")
+
+    def read_update_message(self):
+        cwd = Path(__file__).resolve().parent
+        update_message_path = cwd / "update_message.md"
+        seen_flag_path = update_message_path.with_suffix(".seen")
+
+        self.pull_update_message(update_message_path)
+        if not seen_flag_path.exists() and update_message_path.exists():
+            update_message = update_message_path.read_text()
+            self.update_message_widget = QTextEdit()
+            self.update_message_widget.setReadOnly(True)
+            self.update_message_widget.setMarkdown(update_message)
+            self.update_message_widget.setWindowTitle("Update Message")
+            self.update_message_widget.resize(800, 600)
+            self.update_message_widget.show()
+            self.update_message_widget.raise_()
+            self.update_message_widget.setWindowModality(Qt.ApplicationModal)
+
+            seen_flag_path.touch()
 
     # TODO: Notify of creation/success status
     def export_discharge_stats(self):
@@ -2885,6 +2924,7 @@ if __name__ == "__main__":
                     #     / "MEAUpdater.app"
                     # )
 
+                    # TODO: This is only MAC specific
                     cwd = Path(__file__).resolve().parent
                     print(f"Current working directory: {cwd}")
                     updater_path = cwd / "MEAUpdater.app"
@@ -2938,6 +2978,7 @@ if __name__ == "__main__":
     window.showMaximized()
     # TODO: Implement the windows version of the updater
     confirm_latest_version(window)
+    window.read_update_message()
 
     try:
         if sys.argv[1]:

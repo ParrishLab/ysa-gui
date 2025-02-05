@@ -267,6 +267,7 @@ class AppUpdater:
         '''
 
         # TODO: Modify message to include MEAUpdater and the fact that it wants to delete the old application
+        # display dialog "MEAUpdater requires admin privileges to update the application." buttons ["OK"] default button 1 with icon note
         try:
             result = subprocess.run(
                 ["osascript", "-e", script],
