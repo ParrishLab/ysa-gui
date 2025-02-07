@@ -1,5 +1,5 @@
 from PyQt5 import QtWidgets, QtCore
-from PyQt5.QtGui import QColor
+from PyQt5.QtGui import QColor, QFont
 
 from helpers.Constants import green, yellow, red
 
@@ -28,8 +28,12 @@ class NotificationManager(QtCore.QObject):
         if not self.position:
             screen = QtWidgets.QApplication.primaryScreen()
             screen_geometry = screen.availableGeometry()
-            x = screen_geometry.x() + 10
-            y = screen_geometry.height() - NOTIFICATION_HEIGHT + 50
+            # Bottom left if you want
+            # x = screen_geometry.x() + 10
+            # y = screen_geometry.height() - NOTIFICATION_HEIGHT + 50
+            # Top right:
+            x = screen_geometry.right() - WIDTH - 3
+            y = screen_geometry.top() + (NOTIFICATION_HEIGHT // 2)
             self.position = QtCore.QPoint(x, y)
 
         if not self.current_notification:
@@ -53,7 +57,7 @@ class NotificationManager(QtCore.QObject):
 class NotificationWidget(QtWidgets.QWidget):
     closed = QtCore.pyqtSignal()
 
-    def __init__(self, parent=None, message="", bg=None, timeout=TIMEOUT):
+    def __init__(self, parent=None, title="", message="", bg=None, timeout=TIMEOUT):
         super().__init__(parent)
         self.setFixedHeight(NOTIFICATION_HEIGHT)
         self.setFixedWidth(WIDTH)
@@ -77,74 +81,141 @@ class NotificationWidget(QtWidgets.QWidget):
         self.is_hovered = False
         self.is_animating = False
 
-        self.initUI(message)
+        self.initUI(title, message)
         self.animation = QtCore.QPropertyAnimation(self, b"windowOpacity")
         self.animation.finished.connect(self.on_animation_finished)
 
-    def initUI(self, message):
-        layout = QtWidgets.QHBoxLayout()
+    def initUI(self, title, message):
+        layout = QtWidgets.QVBoxLayout()
         layout.setContentsMargins(0, 0, 0, 0)
+        layout.setSpacing(0)
 
         content_widget = QtWidgets.QWidget()
-        content_layout = QtWidgets.QHBoxLayout()
-        content_layout.setContentsMargins(12, 12, 12, 12)
+        content_layout = QtWidgets.QVBoxLayout()
+        content_layout.setContentsMargins(16, 16, 16, 16)
+        content_layout.setSpacing(8)
 
-        self.label = QtWidgets.QLabel(message)
-        self.label.setWordWrap(True)
-        self.label.setMaximumWidth(WIDTH - 60)
-        self.label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        header_layout = QtWidgets.QHBoxLayout()
+        header_layout.setSpacing(8)
 
+        # Status icon
+        status_icon = self.get_status_icon()
+        header_layout.addWidget(status_icon)
+
+        # Title
+        title_label = QtWidgets.QLabel(title or self.get_default_title())
+        title_label.setFont(QFont(FONT_FAMILY, 14, QFont.Bold))
+        header_layout.addWidget(title_label)
+
+        header_layout.addStretch()
+
+        # Close button
         close_button = QtWidgets.QPushButton("×")
-        close_button.setFixedSize(20, 20)
+        close_button.setFixedSize(24, 24)
         close_button.clicked.connect(self.close)
         close_button.setCursor(QtCore.Qt.PointingHandCursor)
         close_button.setStyleSheet("""
             QPushButton {
                 background-color: transparent;
-                color: white;
+                color: rgba(255, 255, 255, 0.8);
                 border: none;
-                font-size: 16px;
+                font-size: 20px;
+                font-weight: bold;
             }
             QPushButton:hover {
-                background-color: rgba(255, 255, 255, 0.1);
-                border-radius: 10px;
+                background-color: rgba(255, 255, 255, 0.15);
+                border-radius: 12px;
             }
         """)
+        header_layout.addWidget(close_button)
 
+        content_layout.addLayout(header_layout)
+
+        # Message
+        self.label = QtWidgets.QLabel(message)
+        self.label.setWordWrap(True)
+        self.label.setMaximumWidth(WIDTH - 48)
+        self.label.setTextInteractionFlags(QtCore.Qt.TextSelectableByMouse)
+        self.label.setStyleSheet("""
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.4;
+        """)
         content_layout.addWidget(self.label)
-        content_layout.addWidget(close_button)
+
         content_widget.setLayout(content_layout)
 
+        # Enhanced shadow effect
         shadow = QtWidgets.QGraphicsDropShadowEffect()
-        shadow.setBlurRadius(10)
-        shadow.setOffset(0, 2)
-        shadow.setColor(QColor(0, 0, 0, 50))
+        shadow.setBlurRadius(20)
+        shadow.setOffset(0, 4)
+        shadow.setColor(QColor(0, 0, 0, 40))
         content_widget.setGraphicsEffect(shadow)
 
         content_widget.setStyleSheet(f"""
             QWidget {{
                 background-color: {self.get_bg_color()};
-                border-radius: 6px;
+                border-radius: 12px;
             }}
             QLabel {{
-                color: white;
-                font-family: {FONT_FAMILY};
-                font-size: 16px;
                 background: transparent;
+                font-family: {FONT_FAMILY};
             }}
         """)
 
         layout.addWidget(content_widget)
         self.setLayout(layout)
 
+    def get_status_icon(self):
+        icon = QtWidgets.QLabel()
+        size = 20
+        icon.setFixedSize(size, size)
+
+        if self.bg == 0:  # Success
+            icon_char = "✓"
+        elif self.bg == 1:  # Warning
+            icon_char = "!"
+        elif self.bg == 2:  # Error
+            icon_char = "×"
+        else:
+            icon_char = "i"
+
+        icon.setText(icon_char)
+        icon.setAlignment(QtCore.Qt.AlignCenter)
+        icon.setStyleSheet(f"""
+            background-color: rgba(255, 255, 255, 0.2);
+            border-radius: {size // 2}px;
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+        """)
+        return icon
+
+    def get_default_title(self):
+        if self.bg == 0:
+            return "Success"
+        elif self.bg == 1:
+            return "Warning"
+        elif self.bg == 2:
+            return "Error"
+        return "Information"
+
     def get_bg_color(self):
         if self.bg == 0:
-            return green
+            return f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {green}, stop:1 {self.adjust_color(green, 0.6)})"
         elif self.bg == 1:
-            return yellow
+            return f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {yellow}, stop:1 {self.adjust_color(yellow, 0.6)})"
         elif self.bg == 2:
-            return red
-        return "#333"
+            return f"qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 {red}, stop:1 {self.adjust_color(red, 0.6)})"
+        return "qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #2D3748, stop:1 #1A202C)"
+
+    def adjust_color(self, color, factor):
+        # Helper function to slightly adjust color brightness for gradient
+        color = color.lstrip("#")
+        r = min(255, int(int(color[:2], 16) * factor))
+        g = min(255, int(int(color[2:4], 16) * factor))
+        b = min(255, int(int(color[4:], 16) * factor))
+        return f"#{r:02x}{g:02x}{b:02x}"
 
     def enterEvent(self, event):
         self.is_hovered = True
@@ -197,7 +268,7 @@ class NotificationWidget(QtWidgets.QWidget):
         self.start_animation()
 
     @classmethod
-    def show_message(cls, parent, message, bg=None, timeout=TIMEOUT):
-        notification = cls(parent, message, bg, timeout)
+    def show_message(cls, parent, message, title="", bg=None, timeout=TIMEOUT):
+        notification = cls(parent, title, message, bg, timeout)
         NotificationManager.instance().add_notification(notification)
         return notification

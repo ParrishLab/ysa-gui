@@ -583,10 +583,10 @@ class MainWindow(QMainWindow):
             self.engine_started = True
             self.eng = eng
             self.set_widgets_enabled()
-            self.notify("MATLAB engine started successfully.", 0)
+            self.notify("MATLAB engine started successfully.", bg=0)
 
         def on_engine_error(error):
-            self.notify(f"Error starting MATLAB engine: {error}", 2)
+            self.notify(f"Error starting MATLAB engine: {error}", bg=2)
             self.use_cpp = True
             self.eng = None
             self.set_widgets_enabled()
@@ -661,14 +661,22 @@ class MainWindow(QMainWindow):
                     with open(update_message_path, "w") as f:
                         f.write(message)
         except Exception as e:
-            self.notify(f"Failed to pull update message: {e}", 1)
+            self.notify(f"Failed to pull update message: {e}", bg=1)
 
     def read_update_message(self):
         cwd = Path(__file__).resolve().parent
         update_message_path = cwd / "update_message.md"
         seen_flag_path = update_message_path.with_suffix(".seen")
 
-        self.notify(f"Attempting to read update message from {update_message_path}")
+        self.notify(
+            f"Attempting to read update message from {update_message_path}", bg=0
+        )
+        # self.notify(
+        #     f"Attempting to read update message from {update_message_path}", bg=1
+        # )
+        # self.notify(
+        #     f"Attempting to read update message from {update_message_path}", bg=2
+        # )
 
         self.pull_update_message(update_message_path)
         if not seen_flag_path.exists() and update_message_path.exists():
@@ -684,8 +692,8 @@ class MainWindow(QMainWindow):
 
             seen_flag_path.touch()
 
-    def notify(self, message, bg=None):
-        NotificationWidget.show_message(self, message, bg)
+    def notify(self, message, title="", bg=None):
+        NotificationWidget.show_message(self, message, title, bg)
 
     # TODO: Notify of creation/success status
     def export_discharge_stats(self):
@@ -702,7 +710,7 @@ class MainWindow(QMainWindow):
             file_path = cwd / ".." / "docs" / "_build" / "html" / "index.html"
 
         if not file_path.exists():
-            self.notify(f"Documentation not found at {file_path}.", 1)
+            self.notify(f"Documentation not found at {file_path}.", bg=1)
             return
 
         url = f"file://{pathname2url(str(file_path.absolute()))}"
@@ -818,7 +826,7 @@ class MainWindow(QMainWindow):
                     raise ValueError("Bin size must be greater than 0.")
                 self.bin_size = bin_size
             except ValueError as e:
-                self.notify(str(e), 1)
+                self.notify(str(e), bg=1)
 
     # TODO: Do we actually want this function? Can be a bit annoying if you accidentally click it while zooming or something. Maybe make it cmd+click?
     def handle_region_clicked(self, start, stop):
@@ -1634,11 +1642,11 @@ class MainWindow(QMainWindow):
 
                         self.cluster_tracker.seizures.append(seizure)
         except Exception as e:
-            self.notify(f"Error loading discharges: {e}", 2)
+            self.notify(f"Error loading discharges: {e}", bg=2)
             try:
                 self.load_discharges_deprecated(time_range)
             except Exception as e:
-                self.notify(f"Error loading deprecated discharges: {e}", 2)
+                self.notify(f"Error loading deprecated discharges: {e}", bg=2)
 
     def load_discharges_deprecated(self, time_range):
         with h5py.File(self.file_path, "r") as f:
@@ -1701,7 +1709,7 @@ class MainWindow(QMainWindow):
         self.discharges_to_analyze = [x for x in discharges_x if start <= x <= stop]
 
         if not self.discharges_to_analyze:
-            self.notify("No discharges to analyze in the selected region", 1)
+            self.notify("No discharges to analyze in the selected region", bg=1)
             return
 
         self.is_auto_analyzing = True
@@ -1712,7 +1720,7 @@ class MainWindow(QMainWindow):
             self.discharges_to_analyze
         ):
             if self.is_auto_analyzing:
-                self.notify("Auto-analysis complete")
+                self.notify("Auto-analysis complete", bg=0)
 
                 self.cluster_tracker.save_discharges_to_hdf5(
                     self.file_path, *self.custom_region
