@@ -1,3 +1,4 @@
+from pathlib import Path
 from PyQt5.QtWidgets import QAction, QMenu
 from PyQt5.QtCore import pyqtSignal
 from pyqtgraph.Qt.QtWidgets import QMessageBox
@@ -86,33 +87,24 @@ class TraceViewBoxMenu(QMenu):
 
     def save_tracked_discharges(self):
         file_path = self.parent.main_window.file_path
-        if file_path is None:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("No file loaded")
-            msg.setInformativeText("Please load a file before saving.")
-            msg.setWindowTitle("No file loaded")
-            msg.exec_()
+        if file_path == Path():
+            self.parent.main_window.notify(
+                "No file loaded. Please load a file before saving tracked discharges."
+            )
             return
 
         custom_region = self.parent.main_window.custom_region
         if custom_region is None or len(self.parent.main_window.discharges) == 0:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("No discharges detected")
-            msg.setInformativeText("Please detect discharges before saving.")
-            msg.setWindowTitle("No discharges detected")
-            msg.exec_()
+            self.parent.main_window.notify(
+                "No discharges detected. Please detect discharges before saving."
+            )
             return
 
         cluster_tracker = self.parent.main_window.cluster_tracker
         if cluster_tracker.seizures is None or len(cluster_tracker.seizures) == 0:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText("No tracked discharges")
-            msg.setInformativeText("Please track discharges before saving.")
-            msg.setWindowTitle("No tracked discharges")
-            msg.exec_()
+            self.parent.main_window.notify(
+                "No tracked discharges. Please track discharges before saving."
+            )
             return
 
         cluster_tracker.save_discharges_to_hdf5(file_path, *custom_region)

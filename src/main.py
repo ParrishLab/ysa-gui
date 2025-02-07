@@ -2,8 +2,10 @@ import gc
 import glob
 import math
 import os
+import subprocess
 import sys
 from pathlib import Path
+import time
 from urllib.request import pathname2url
 
 import h5py
@@ -51,9 +53,11 @@ from PyQt5.QtWidgets import (
     QSlider,
     QSplitter,
     QTabWidget,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
+import requests
 from scipy.signal import spectrogram
 from sklearn.cluster import DBSCAN
 
@@ -72,10 +76,9 @@ from helpers.Constants import (
     VERSION,
     WIN,
 )
-from helpers.update.Updater import check_for_update
+from helpers.update.NewUpdater import GITHUB_API_URL, AppUpdater
 from threads.AnalysisThread import AnalysisThread
 from threads.MatlabEngineThread import MatlabEngineThread
-from threads.UpdateThread import UpdateThread
 from threads.DischargeFinderThread import DischargeFinderThread
 from widgets.ChannelExtract import ChannelExtract
 from widgets.ClusterTracker import ClusterTracker
@@ -92,6 +95,7 @@ from widgets.Media import (
     open_save_grid_dialog,
     save_mea_with_plots,
 )
+from widgets.NotificationWidget import NotificationWidget
 from widgets.ProgressBar import EEGScrubberWidget
 from widgets.RasterPlot import RasterPlot
 from widgets.Settings import (
@@ -129,6 +133,8 @@ class MainWindow(QMainWindow):
         self.set_widgets_enabled()
 
     def setup_variables(self):
+        self.update_message_widget = None
+
         # File and recording settings
         self.file_path: Path = Path()
         self.recording_length = None
@@ -577,9 +583,10 @@ class MainWindow(QMainWindow):
             self.engine_started = True
             self.eng = eng
             self.set_widgets_enabled()
+            self.notify("MATLAB engine started successfully.", bg=0)
 
         def on_engine_error(error):
-            print(f"Error starting MATLAB engine: {error}")
+            self.notify(f"Error starting MATLAB engine: {error}", bg=2)
             self.use_cpp = True
             self.eng = None
             self.set_widgets_enabled()
@@ -643,6 +650,51 @@ class MainWindow(QMainWindow):
         super().resizeEvent(event)
         self.redraw_arrows()
 
+    def pull_update_message(self, update_message_path):
+        try:
+            response = requests.get(GITHUB_API_URL)
+            if response.status_code == 200:
+                latest_release = response.json()
+
+                message = latest_release["body"]
+                if message:
+                    with open(update_message_path, "w") as f:
+                        f.write(message)
+        except Exception as e:
+            self.notify(f"Failed to pull update message: {e}", bg=1)
+
+    def read_update_message(self):
+        cwd = Path(__file__).resolve().parent
+        update_message_path = cwd / "update_message.md"
+        seen_flag_path = update_message_path.with_suffix(".seen")
+
+        self.notify(
+            f"Attempting to read update message from {update_message_path}", bg=0
+        )
+        # self.notify(
+        #     f"Attempting to read update message from {update_message_path}", bg=1
+        # )
+        # self.notify(
+        #     f"Attempting to read update message from {update_message_path}", bg=2
+        # )
+
+        self.pull_update_message(update_message_path)
+        if not seen_flag_path.exists() and update_message_path.exists():
+            update_message = update_message_path.read_text()
+            self.update_message_widget = QTextEdit()
+            self.update_message_widget.setReadOnly(True)
+            self.update_message_widget.setMarkdown(update_message)
+            self.update_message_widget.setWindowTitle("Update Message")
+            self.update_message_widget.resize(800, 600)
+            self.update_message_widget.show()
+            self.update_message_widget.raise_()
+            self.update_message_widget.setWindowModality(Qt.ApplicationModal)
+
+            seen_flag_path.touch()
+
+    def notify(self, message, title="", bg=None):
+        NotificationWidget.show_message(self, message, title, bg)
+
     # TODO: Notify of creation/success status
     def export_discharge_stats(self):
         if self.cluster_tracker is None or self.file_path is Path():
@@ -652,19 +704,13 @@ class MainWindow(QMainWindow):
 
     def open_docs(self):
         cwd = Path(__file__).resolve().parent
-        print(f"Current working directory: {cwd}")
         file_path = cwd / "html" / "index.html"
-        print(f"Opening documentation: {file_path}")
+        self.notify(f"Opening documentation: {file_path}")
         if not file_path.exists():
-            # Must not be running from the pre-built executable
             file_path = cwd / ".." / "docs" / "_build" / "html" / "index.html"
 
         if not file_path.exists():
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(f"Documentation not found at {file_path}.")
-            msg.setWindowTitle("Documentation")
-            msg.exec_()
+            self.notify(f"Documentation not found at {file_path}.", bg=1)
             return
 
         url = f"file://{pathname2url(str(file_path.absolute()))}"
@@ -780,15 +826,10 @@ class MainWindow(QMainWindow):
                     raise ValueError("Bin size must be greater than 0.")
                 self.bin_size = bin_size
             except ValueError as e:
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setText(str(e))
-                msg.setWindowTitle("Invalid Bin Size")
-                msg.exec_()
+                self.notify(str(e), bg=1)
 
     # TODO: Do we actually want this function? Can be a bit annoying if you accidentally click it while zooming or something. Maybe make it cmd+click?
     def handle_region_clicked(self, start, stop):
-        print(f"Region clicked: {start}, {stop}")
         for i in range(4):
             if self.plotted_channels[i] is not None:
                 self.graph_widget.plot_widgets[i].setXRange(start, stop)
@@ -870,11 +911,7 @@ class MainWindow(QMainWindow):
         if ok:
             if order_amount < 1:
                 order_amount = 1
-                msg = QMessageBox()
-                msg.setIcon(QMessageBox.Warning)
-                msg.setText("Order amount must be greater than 0.")
-                msg.setWindowTitle("Invalid Order Amount")
-                msg.exec_()
+                self.notify("Order amount must be greater than 0.")
 
             self.order_amount = order_amount
             self.toggle_order(self.show_order_checkbox.checkState())
@@ -976,8 +1013,6 @@ class MainWindow(QMainWindow):
                 self.plotted_channels[i].row,
                 self.plotted_channels[i].col,
             ]["signal"]
-
-            print(f"Creating spectrogram for channel {i + 1}")
 
             f, _, Sxx = spectrogram(
                 eeg_data,
@@ -1171,7 +1206,6 @@ class MainWindow(QMainWindow):
 
     def update_tab_layout(self, index):
         if not self.is_recording_video:
-            print(f"Updating tab layout: {index}")
             if self.main_tab_widget.currentWidget() == self.main_tab:
                 if self.left_pane:
                     self.left_pane.setVisible(True)
@@ -1248,7 +1282,6 @@ class MainWindow(QMainWindow):
                 cell.setText(str(i))
 
     def hide_seizure_order(self):
-        print("Hiding seizure order")
         for row in range(self.grid_widget.rows):
             for col in range(self.grid_widget.cols):
                 cell = self.grid_widget.cells[row][col]
@@ -1490,9 +1523,7 @@ class MainWindow(QMainWindow):
                 current_time = self.progress_bar.value() / self.sampling_rate
                 self.markers.append(current_time)
                 self.progress_bar.setMarkers(self.markers)
-                print(f"Added marker at {current_time}")
             elif event.key() == Qt.Key_Return:
-                print("Enter pressed")
                 if self.need_confirmation:
                     self.discharge_start_dialog.confirm(True)
                     self.need_confirmation = False
@@ -1611,12 +1642,11 @@ class MainWindow(QMainWindow):
 
                         self.cluster_tracker.seizures.append(seizure)
         except Exception as e:
-            print(f"Error loading discharges: {e}")
-            print("Attempting to load deprecated discharges")
+            self.notify(f"Error loading discharges: {e}", bg=2)
             try:
                 self.load_discharges_deprecated(time_range)
             except Exception as e:
-                print(f"Error loading deprecated discharges: {e}")
+                self.notify(f"Error loading deprecated discharges: {e}", bg=2)
 
     def load_discharges_deprecated(self, time_range):
         with h5py.File(self.file_path, "r") as f:
@@ -1657,7 +1687,6 @@ class MainWindow(QMainWindow):
                 self.cluster_tracker.seizures.append(seizure)
 
             start, end = time_range.split("_")
-        print(f"Attempting to save discharges to new format: {start} - {end}")
         self.cluster_tracker.save_discharges_to_hdf5(
             self.file_path, float(start), float(end)
         )
@@ -1680,7 +1709,7 @@ class MainWindow(QMainWindow):
         self.discharges_to_analyze = [x for x in discharges_x if start <= x <= stop]
 
         if not self.discharges_to_analyze:
-            print("No discharges to analyze in the selected region")
+            self.notify("No discharges to analyze in the selected region", bg=1)
             return
 
         self.is_auto_analyzing = True
@@ -1691,7 +1720,7 @@ class MainWindow(QMainWindow):
             self.discharges_to_analyze
         ):
             if self.is_auto_analyzing:
-                print("Auto-analysis complete")
+                self.notify("Auto-analysis complete", bg=0)
 
                 self.cluster_tracker.save_discharges_to_hdf5(
                     self.file_path, *self.custom_region
@@ -1700,7 +1729,6 @@ class MainWindow(QMainWindow):
             return
 
         discharge_x = self.discharges_to_analyze[self.current_discharge_index]
-        print(f"Analyzing discharge at {discharge_x}")
         discharge_index = int(discharge_x * self.sampling_rate)
         start_index = max(0, discharge_index - int(0.1 * self.sampling_rate))
         end_index = min(
@@ -1749,7 +1777,6 @@ class MainWindow(QMainWindow):
 
         if file_path:
             self.file_path = Path(file_path)
-            print("Selected file path:", self.file_path)
 
             # TODO: Separate this into a separate function and add more robust error handling
             try:
@@ -1763,7 +1790,7 @@ class MainWindow(QMainWindow):
                     + dateSlice.split("slice")[1][:1]
                 )
                 imageName = f"{dateSliceNumber}_pic_cropped.jpg"
-                print(f"Trying to find image: {imageName}")
+                self.notify(f"Trying to find image: {imageName}")
 
                 imageFolder = os.path.dirname(file_path)
                 image_pattern = os.path.join(
@@ -1798,7 +1825,7 @@ class MainWindow(QMainWindow):
                 #         print("No image selected")
 
             except Exception as e:
-                print(f"Error: {e}")
+                self.notify(f"Error: {e}", 2)
 
         self.set_widgets_enabled()
 
@@ -2412,14 +2439,14 @@ class MainWindow(QMainWindow):
         button_clicked = self.sender()
         if button_clicked is not None:
             if button_clicked.text().__contains__("Run"):
-                print("Running analysis")
+                # self.notify("Running analysis")
                 do_analysis = True
             elif button_clicked.text().__contains__("RAM"):
                 print(f"Button text: {button_clicked.text()}")
-                print("Running view with low RAM")
+                # self.notify("Running view with low RAM")
                 do_analysis = False
             else:
-                print("Running view without analysis")
+                # self.notify("Running view without analysis")
                 do_analysis = False
 
         else:
@@ -2489,12 +2516,9 @@ class MainWindow(QMainWindow):
             else:
                 temp_data_path = os.path.expanduser("~/temp_data")
 
-            print("Temp data path:", temp_data_path)
-
             with h5py.File(self.file_path, "r") as f:
                 channels = f["/3BRecInfo/3BMeaStreams/Raw/Chs"][()]
                 num_channels = len(channels)
-                print(f"Number of channels: {num_channels}")
                 self.loading_dialog.progress_bar.setRange(0, num_channels)
             self.analysis_thread.file_path = self.file_path
             self.analysis_thread.do_analysis = do_analysis
@@ -2508,7 +2532,7 @@ class MainWindow(QMainWindow):
             self.analysis_thread.start()
 
         except Exception as e:
-            print(f"Error: {e}")
+            self.notify(f"Error: {e}", 2)
 
     def get_drive(self):
         drives = []
@@ -2626,13 +2650,11 @@ class MainWindow(QMainWindow):
         self.set_widgets_enabled()
 
     def cancel_analysis(self):
-        print("Cancelling Analysis")
         self.analysis_thread.requestInterruption()
         self.analysis_thread.wait()
 
         self.analysis_thread.eng = None
         self.loading_dialog.hide()
-        print("Analysis Cancelled")
 
     def skipBackward(self):
         if self.data is None or self.plotted_channels == [None] * 4:
@@ -2841,10 +2863,8 @@ if __name__ == "__main__":
     print("Hello! You are now on the development branch :D")
     app = QApplication(sys.argv)
     qdarktheme.setup_theme()
-
     font_path = get_font_path()
     font_id = QFontDatabase.addApplicationFont(font_path)
-
     font_size = get_font_size(app)
 
     if font_id == -1:
@@ -2859,47 +2879,70 @@ if __name__ == "__main__":
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
     else:
-        print("Font loaded successfully")
-        # Get the exact font family name that was loaded
         families = QFontDatabase.applicationFontFamilies(font_id)
         if families:
-            loaded_family = families[0]  # Use the first family name returned
-            print(f"Font loaded successfully from: {font_path}")
-            print(f"Using font family: {loaded_family}")
+            loaded_family = families[0]
             font = QFont(loaded_family, font_size)
             app.setFont(font)
         else:
-            print("Warning: Font file loaded but no family names found")
-            font = QFont(FONT_FAMILY, font_size)  # Fallback to expected family name
+            font = QFont(FONT_FAMILY, font_size)
             app.setFont(font)
 
     def confirm_latest_version(self):
         def handle_update_button(button):
-            def on_update_completed(success):
-                self.download_msg.close()
-
-                if success:
-                    sys.exit()
-                else:
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText("Update process failed.")
-                    msg.setWindowTitle("Update")
-                    msg.exec_()
-
             if button.text() == "&Yes":
-                self.download_msg = QMessageBox(self)
-                self.download_msg.setIcon(QMessageBox.Information)
-                self.download_msg.setText("Downloading update...")
-                self.download_msg.setWindowTitle("Update in Progress")
-                self.download_msg.setStandardButtons(QMessageBox.NoButton)
-                self.download_msg.show()
+                try:
+                    # Path to the updater in Application Support
+                    # updater_path = (
+                    #     Path().home()
+                    #     / "Library"
+                    #     / "Application Support"
+                    #     / "MEA GUI"
+                    #     / "MEAUpdater.app"
+                    # )
 
-                self.update_thread = UpdateThread(self.latest_release)
-                self.update_thread.update_completed.connect(on_update_completed)
-                self.update_thread.start()
+                    # TODO: This is only MAC specific
+                    cwd = Path(__file__).resolve().parent
+                    updater_path = (
+                        cwd / "MEAUpdater.app"
+                        if sys.platform == MAC
+                        else cwd / "MEAUpdater.exe"
+                    )
+                    # updater_path = Path(
+                    #     "/Applications/MEA GUI.app/Contents/Resources/MEAUpdater.app/"
+                    # )
+                    self.notify(f"Updater path: {updater_path}")
+                    # msg = QMessageBox()
+                    # msg.setIcon(QMessageBox.Information)
+                    # msg.setText(f"Using updater path: {updater_path}")
+                    # msg.setWindowTitle("Update")
+                    # msg.exec_()
 
-        update_available, self.latest_release = check_for_update()
+                    if updater_path.exists():
+                        # Launch the updater and exit
+                        if sys.platform == MAC:
+                            subprocess.Popen(
+                                ["open", str(updater_path), "--args", VERSION]
+                            )
+                        elif sys.platform == WIN:
+                            subprocess.Popen(
+                                ["start", str(updater_path), "--args", VERSION],
+                                shell=True,
+                            )
+                        # wait for the updater to start
+                        time.sleep(2)
+                        sys.exit(0)
+                    else:
+                        self.notify("Update failed: Updater application not found.", 1)
+                except Exception as e:
+                    self.notify(f"Update failed: {str(e)}", 1)
+
+        # Check for updates
+        current_dir = Path("/Applications/")
+        updater = AppUpdater(current_version=VERSION, install_dir=current_dir)
+        print("Checking for updates...")
+        update_available, release = updater.check_for_update()
+
         if update_available:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
@@ -2913,7 +2956,10 @@ if __name__ == "__main__":
 
     window = MainWindow()
     window.showMaximized()
+    # TODO: Implement the windows version of the updater
     confirm_latest_version(window)
+    window.read_update_message()
+
     try:
         if sys.argv[1]:
             window.file_path = sys.argv[1]
@@ -2921,4 +2967,5 @@ if __name__ == "__main__":
             window.run_analysis()
     except IndexError:
         print("No file path provided")
+
     sys.exit(app.exec_())
