@@ -479,8 +479,7 @@ class ClusterTracker:
                         print(f"Error saving seizure data: {e}")
                         continue
 
-                results = self.analyze_discharge_speeds(file_path, start, stop)
-                print(f"Saved {results['total_discharges']} discharges to HDF5 file.")
+                self.analyze_discharge_speeds(file_path, start, stop)
         except Exception as e:
             print(f"Error saving seizures to HDF: {e}")
             msg = QMessageBox()
