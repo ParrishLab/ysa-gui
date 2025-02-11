@@ -32,12 +32,14 @@ class ClusterTracker:
         min_consecutive_frames=3,
         sampling_rate=100,
         min_seizure_length=0.5,
+        main_window=None,
     ):
         self.clusters = []
         self.max_distance = max_distance
         self.min_consecutive_frames = min_consecutive_frames
         self.sampling_rate = sampling_rate
         self.min_seizure_length = min_seizure_length
+        self.main_window = main_window
         self.cluster_lines = []
         self.centroid_items = []
         self.colors = [
@@ -447,6 +449,11 @@ class ClusterTracker:
                     timeframe_group = discharges_group[timeframe_group_name]
 
                 for i, seizure in enumerate(self.seizures):
+                    if seizure is None:
+                        self.main_window.notify(
+                            f"Warning: Seizure at index {i} is None", bg=1
+                        )
+                        continue
                     seizure_id = f"discharge_{i}"
 
                     if seizure_id in timeframe_group:
@@ -480,6 +487,9 @@ class ClusterTracker:
                         continue
 
                 self.analyze_discharge_speeds(file_path, start, stop)
+                # NOTE: This was causing errors when saving to HDF5
+                # results = self.analyze_discharge_speeds(file_path, start, stop)
+                # print(f"Saved {results['total_discharges']} discharges to HDF5 file.")
         except Exception as e:
             print(f"Error saving seizures to HDF: {e}")
             msg = QMessageBox()
