@@ -400,7 +400,7 @@ class MainWindow(QMainWindow):
         square_widget.setLayout(square_layout)
         square_layout.addWidget(self.grid_widget)
 
-        self.cluster_tracker = ClusterTracker(main_window=self)
+        self.cluster_tracker = ClusterTracker()
 
         self.legend_widget = LegendWidget()
         self.legend_widget.setVisible(False)
