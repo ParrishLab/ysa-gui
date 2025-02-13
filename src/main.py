@@ -2962,7 +2962,7 @@ if __name__ == "__main__":
 
     try:
         if sys.argv[1]:
-            window.file_path = sys.argv[1]
+            window.file_path = Path(sys.argv[1])
             window.set_widgets_enabled()
             window.run_analysis()
     except IndexError:
