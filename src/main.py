@@ -6,7 +6,7 @@ import subprocess
 import sys
 from pathlib import Path
 import time
-from urllib.request import pathname2url # TEST ADD COMMENT 
+from urllib.request import pathname2url  # TEST ADD COMMENT
 
 import h5py
 import numpy as np
@@ -98,7 +98,7 @@ from widgets.Media import (
 from widgets.NotificationWidget import NotificationWidget
 from widgets.ProgressBar import EEGScrubberWidget
 from widgets.RasterPlot import RasterPlot
-from widgets.Settings import (q
+from widgets.Settings import (
     DBSCANSettingsWidget,
     PeakSettingsWidget,
     SettingsWidgetManager,
