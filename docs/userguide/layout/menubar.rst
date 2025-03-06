@@ -6,11 +6,12 @@ Menu Bar
 
 The menu bar is located at the top of the application window and contains the following actions:
 
-  - :ref:`File`
-  - :ref:`Edit`
-  - :ref:`view`
-  - :ref:`Help`
+  - :ref:`File<file>`
+  - :ref:`Edit<edit>`
+  - :ref:`View<view>`
+  - :ref:`Help<help>`
 
+.. _file:
 File
 ====
 Contains actions regarding opening and saving files.
@@ -68,6 +69,7 @@ Save MEA with Channel Plots
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Opens up a file dialog where the user can save the MEA grid with channel plots as a PNG or SVG.
 
+.. _edit:
 Edit
 ====
 Contains actions for setting parameters used in the analysis.
@@ -226,6 +228,7 @@ The y-axis will automatically adjust to the frequency range set in the spectrogr
    :align: center
    :width: 600px
 
+.. _help:
 Help
 ====
 For now, this menu only contains a "Documentation" action that opens this user guide within the application.
