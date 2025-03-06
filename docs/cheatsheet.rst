@@ -13,6 +13,17 @@ Cheat Sheet
 
 Testing
 -------
+
+List of headers with links to them:
+  - :ref:`header_2`Header
+  - :ref:`Table`
+  - :ref:`table_header`
+
+.. _header_2:
+
+Testing - Header 2
+~~~~~~~~~~~~~~~~~~
+
 For testing, you can use the following command:
 
 .. code-block:: bash
@@ -47,6 +58,10 @@ Or, if you have `tox` installed, you can run the following command:
             )
         self.discharge_finder.finished.connect(self.on_discharge_finder_finished)
         self.discharge_finder.start()
+
+.. _table-header:
+Table
+-----
 
 +------------------------+------------+----------+----------+
 | Header row, column 1   | Header 2   | Header 3 | Header 4 |
