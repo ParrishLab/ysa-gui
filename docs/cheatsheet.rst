@@ -10,9 +10,14 @@ Cheat Sheet
 .. important::
    Still need to write the user guide.
 
-
 Testing
 -------
+Testing-1
+~~~~~~~~~
+
+  - :ref:`Original Title`
+  - :ref:`header_2`
+
 For testing, you can use the following command:
 
 .. code-block:: bash
@@ -66,11 +71,13 @@ This is a paragraph that contains `a link`_.
    This is an example of a ``see also`` admonition.
 
 
-This is a header
+Original Title
 ================
 
+The page now scrolls down here.
 
-This is a header
+.. _header_2:
+Header Test 2
 ================
 
 
