@@ -17,9 +17,9 @@ try:
     from helpers.extensions import sz_se_detect
 
     print("C++ extension loaded successfully")
-except ImportError:
+except ImportError as e:
     cpp_import_failed = True
-    print("C++ extension failed to load")
+    print(f"C++ extension failed to load: {e}")
 
 
 class CppAnalysisThread(QThread):
