@@ -60,7 +60,6 @@ jobs:
           cd ${{ github.workspace }}/src/helpers/extensions
 
           # Build and install the extensions
-          MACOSX_DEPLOYMENT_TARGET="12.0" \
           CXXFLAGS="-std=c++17 -O3 -arch ${{ matrix.arch }}" \
           LDFLAGS="-arch ${{ matrix.arch }}" \
           python3.10 setup.py build_ext --inplace
@@ -97,7 +96,6 @@ jobs:
       - name: Build with PyInstaller
         env:
           ARCHFLAGS: "-arch ${{ matrix.arch }}"
-          MACOSX_DEPLOYMENT_TARGET: "12.0"
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
             source $HOME/.bash_profile
