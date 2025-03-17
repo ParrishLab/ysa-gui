@@ -8,7 +8,7 @@ The GUI is built using the `PyQt5 <https://www.riverbankcomputing.com/static/Doc
 
 .. danger::
 
-   This project is under active development. You have been warned.
+   This project is under active development.
 
 Contents
 --------
@@ -16,4 +16,3 @@ Contents
 .. toctree::
    userguide/userguide
    contribute
-   cheatsheet
