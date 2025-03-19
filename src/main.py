@@ -2911,7 +2911,7 @@ if __name__ == "__main__":
                     # updater_path = Path(
                     #     "/Applications/MEA GUI.app/Contents/Resources/MEAUpdater.app/"
                     # )
-                    self.notify(f"Updater path: {updater_path}")
+                    self.notify(f"Updater path: {updater_path}", bg=0)
                     # msg = QMessageBox()
                     # msg.setIcon(QMessageBox.Information)
                     # msg.setText(f"Using updater path: {updater_path}")
@@ -2933,9 +2933,11 @@ if __name__ == "__main__":
                         time.sleep(2)
                         sys.exit(0)
                     else:
-                        self.notify("Update failed: Updater application not found.", 1)
+                        self.notify(
+                            "Update failed: Updater application not found.", bg=1
+                        )
                 except Exception as e:
-                    self.notify(f"Update failed: {str(e)}", 1)
+                    self.notify(f"Update failed: {str(e)}", bg=1)
 
         # Check for updates
         current_dir = Path("/Applications/")
