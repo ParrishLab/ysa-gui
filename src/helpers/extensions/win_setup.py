@@ -26,13 +26,13 @@ else:
 # Dll search in the same directory
 link_args = [
     f"/LIBPATH:{hdf5_lib_dir}",
-    f"/DEPENDENTLOADFLAG:0x2000",
+    "/DEPENDENTLOADFLAG:0x2000",
 ]
 
 # DELAYLOAD approach
 # link_args = [
 #     f"/LIBPATH:{hdf5_lib_dir}",
-#     f"/DELAYLOAD:hdf5.dll",
+#     "/DELAYLOAD:hdf5.dll",
 #     "delayimp.lib"
 # ]
 
