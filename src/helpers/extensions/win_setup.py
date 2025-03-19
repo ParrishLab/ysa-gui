@@ -7,7 +7,7 @@ import sys
 
 hdf5_dir = os.path.join(os.environ.get("GITHUB_WORKSPACE", ""), "HDF5-1.14.5-win64")
 if not os.path.exists(hdf5_dir):
-    hdf5_dir = "Your path"
+    hdf5_dir = "C:\\Users\\ksc33\\OneDrive\\Documents\\HDF5-1.14.5-win64\\HDF5-1.14.5-win64"
 hdf5_include_dir = os.path.join(hdf5_dir, "include")
 hdf5_lib_dir = os.path.join(hdf5_dir, "lib")
 
