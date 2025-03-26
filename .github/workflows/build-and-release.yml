@@ -295,6 +295,19 @@ jobs:
             --add-binary "$HDF5_DIR\bin\hdf5.dll;." `
             --add-binary "$HDF5_DIR\bin\hdf5_cpp.dll;."
 
+      - name: Build Updater Application
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+          cd src\helpers\update
+          $workspace = "${{ github.workspace }}"
+
+          pyinstaller --noconfirm --clean --distpath "dist_update" \
+            "$workspace\src\helpers\update\win_updater.spec"
+
+      - name: Check dist folder
+        run: Get-ChildItem "${{ github.workspace }}\dist_update\"
+
       - name: Create Installer
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
