@@ -16,3 +16,5 @@ Honestly, all it boils down to is:
 2. Make your changes.
 3. Submit a pull request.
 4. Bada bing, bada boom.
+
+TODO: Document complicated HDF5 C++ installation.
