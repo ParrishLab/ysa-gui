@@ -18,6 +18,7 @@ from helpers.Constants import MARKER, SIZE
 from widgets.ScatterPlot import ScatterPlot
 
 
+# TODO: Fix color mode for groups (any time not using SE entrance cluster, delete color modes)
 class Group:
     def __init__(self, channels, image, color, number):
         self.channels = channels

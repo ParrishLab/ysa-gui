@@ -2933,6 +2933,7 @@ if __name__ == "__main__":
                     if updater_path.exists():
                         # Launch the updater and exit
                         if sys.platform == MAC:
+                            print("Opening updater")
                             subprocess.Popen(
                                 ["open", str(updater_path), "--args", VERSION]
                             )
