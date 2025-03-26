@@ -2909,9 +2909,10 @@ if __name__ == "__main__":
                         if sys.platform == MAC
                         else cwd / "MEAUpdater.exe"
                     )
-                    # updater_path = Path(
-                    #     "/Applications/MEA GUI.app/Contents/Resources/MEAUpdater.app/"
-                    # )
+                    self.notify(f"Orig updater path: {updater_path}", bg=0)
+                    updater_path = Path(
+                        "/Applications/MEA GUI.app/Contents/Frameworks/MEAUpdater.app/"
+                    )
                     self.notify(f"Updater path: {updater_path}", bg=0)
                     # msg = QMessageBox()
                     # msg.setIcon(QMessageBox.Information)
