@@ -299,11 +299,11 @@ jobs:
         shell: pwsh
         run: |
           .\venv\Scripts\Activate.ps1
-          cd src\helpers\update
-          $workspace = "${{ github.workspace }}"
-
-          pyinstaller --noconfirm --clean --distpath "dist_update" \
-            "$workspace\src\helpers\update\win_updater.spec"
+          pyinstaller --noconfirm --clean --distpath "dist_update" `
+            --name "MEAUpdater" `
+            --onefile `
+            --windowed `
+            "${{ github.workspace }}\src\helpers\update\updater_app.py"
 
       - name: Check dist folder
         run: Get-ChildItem "${{ github.workspace }}\dist_update\"
