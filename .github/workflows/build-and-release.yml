@@ -78,20 +78,6 @@ jobs:
             make html
           fi
 
-      - name: Build Updater Application
-        env:
-          ARCHFLAGS: "-arch ${{ matrix.arch }}"
-        run: |
-          source venv/bin/activate
-          pyinstaller --noconfirm --clean \
-            "${{ github.workspace }}/src/helpers/update/updater.spec"
-
-          # Create the Application Support directory structure in package_root
-          mkdir -p "${{ github.workspace }}/package_root/Library/Application Support/MEA GUI"
-
-          # Copy the updater application
-          cp -R "${{ github.workspace }}/dist/MEAUpdater.app" \
-            "${{ github.workspace }}/package_root/Library/Application Support/MEA GUI/"
 
       - name: Build with PyInstaller
         env:
@@ -140,12 +126,26 @@ jobs:
               --add-data "${{ github.workspace }}/resources/fonts/GeistMonoNerdFontMono-Regular.otf:."
           fi
 
+      - name: Build Updater Application
+        env:
+          ARCHFLAGS: "-arch ${{ matrix.arch }}"
+        run: |
+          source venv/bin/activate
+          pyinstaller --noconfirm --clean --distpath "dist_update" \
+            "${{ github.workspace }}/src/helpers/update/updater.spec"
+
+      - name: Check dist folder
+        run: ls -la ${{ github.workspace }}/dist_update/
+
       - name: Prepare Package
         run: |
           mkdir -p ${{ github.workspace }}/package_root/MEA\ GUI.app
           rm -rf ${{ github.workspace }}/package_root/MEA\ GUI.app
           cp -R ${{ github.workspace }}/dist/main.app ${{ github.workspace }}/package_root/MEA\ GUI.app
+          cp -R "${{ github.workspace }}/dist_update/MEAUpdater.app" \
+            ${{ github.workspace }}/package_root/MEA\ GUI.app/Contents/Frameworks/
           chmod -R 755 ${{ github.workspace }}/package_root/MEA\ GUI.app
+          chmod -R 755 "${{ github.workspace }}/package_root/MEA GUI.app/Contents/Frameworks/MEAUpdater.app"
           pkgbuild --root ${{ github.workspace }}/package_root --identifier com.booka66.meagui --install-location /Applications --version 1.0 ${{ github.workspace }}/MEA_GUI_MacOS_${{ matrix.arch }}.pkg
 
       - name: Upload Artifact
