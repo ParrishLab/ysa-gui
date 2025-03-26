@@ -16,6 +16,8 @@ import qdarktheme
 from NewUpdater import AppUpdater
 import subprocess
 
+from helpers.Constants import MAC, WIN
+
 
 class UpdateWorker(QThread):
     progress = pyqtSignal(str, int)
@@ -138,7 +140,11 @@ class UpdaterWindow(QMainWindow):
         layout.addWidget(self.progress_bar)
 
         # Center the window
-        screen = QApplication.primaryScreen().geometry()
+        screen = QApplication.primaryScreen()
+        if not screen:
+            raise RuntimeError("No screen found")
+
+        screen = screen.geometry()
         self.move(
             (screen.width() - self.width()) // 2, (screen.height() - self.height()) // 2
         )
@@ -196,7 +202,18 @@ def main():
 
     qdarktheme.setup_theme()
 
-    updater = AppUpdater(current_version=version, install_dir=Path("/Applications/"))
+    if sys.platform == MAC:
+        install_dir = Path("/Applications/")
+    elif sys.platform == WIN:
+        if sys.maxsize > 2**32:
+            install_dir = Path("C:/Program Files/")
+        else:
+            install_dir = Path("C:/Program Files (x86)/")
+    else:
+        # TODO: Linux placeholder
+        install_dir = Path("/usr/local/bin/")
+
+    updater = AppUpdater(current_version=version, install_dir=install_dir)
     update_available, release = updater.check_for_update()
 
     if update_available and release:

@@ -9,10 +9,16 @@ import shutil
 from pathlib import Path
 from packaging import version
 
+from helpers.Constants import MAC
+
 GITHUB_REPO = "booka66/mea-gui"
 GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
-# NOTE: Need to add the windows protected path
-PROTECTED_PATHS = ["Contents/Resources/MEAUpdater.app"]
+# TODO: Need to add the windows protected path
+PROTECTED_PATHS = (
+    ["Contents/Frameworks/MEAUpdater.app"]
+    if sys.platform == MAC
+    else ["MEAUpdater.app"]
+)
 
 
 class AppUpdater:
@@ -31,7 +37,7 @@ class AppUpdater:
         self.machine = platform.machine()
         self.temp_dir = Path(os.path.expanduser("~")) / ".app_updates"
 
-    # NOTE: Make sure this works on windows
+    # TODO: Make sure this works on windows
     def _is_protected_path(self, path):
         """Check if a path should be protected during updates"""
         try:
@@ -120,13 +126,13 @@ class AppUpdater:
 
     def _is_app_installed(self):
         """Check if the application is installed in the target directory"""
-        if self.system == "Darwin":
+        if self.system == MAC:
             return (self.app_path / "MEA GUI.app").exists()
         else:
             return (self.app_path / "MEA_GUI.exe").exists()
 
     def _get_download_url(self, assets):
-        if self.system == "Darwin":
+        if self.system == MAC:
             arch_suffix = "arm64" if self.machine == "arm64" else "x86_64"
             asset_name = f"MEA_GUI_MacOS_{arch_suffix}.pkg"
         else:
@@ -149,7 +155,7 @@ class AppUpdater:
             if not download_url:
                 raise Exception("No suitable update found for your platform")
 
-            ext = ".pkg" if self.system == "Darwin" else ".exe"
+            ext = ".pkg" if self.system == MAC else ".exe"
             update_file = self.temp_dir / f"update{ext}"
 
             print(f"Downloading from {download_url}...")
@@ -393,7 +399,7 @@ class AppUpdater:
             except Exception as e:
                 print(f"Cleanup failed: {e}")
 
-    # NOTE: Need to make this work on windows
+    # TODO: Need to make this work on windows
     def _update_windows(self, exe_file):
         try:
             app_location = self.app_path
@@ -445,7 +451,7 @@ class AppUpdater:
 
     def install_update(self, update_file):
         try:
-            if self.system == "Darwin":
+            if self.system == MAC:
                 success = self._update_macos(update_file)
             else:
                 success = self._update_windows(update_file)

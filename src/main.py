@@ -2902,23 +2902,33 @@ if __name__ == "__main__":
                     # )
 
                     # TODO: This is only MAC specific
-                    cwd = Path(__file__).resolve().parent
-                    self.notify(f"Current working directory: {cwd}", bg=0)
-                    updater_path = (
-                        cwd / "MEAUpdater.app"
-                        if sys.platform == MAC
-                        else cwd / "MEAUpdater.exe"
-                    )
-                    self.notify(f"Orig updater path: {updater_path}", bg=0)
-                    updater_path = Path(
-                        "/Applications/MEA GUI.app/Contents/Frameworks/MEAUpdater.app/"
-                    )
+                    #
+                    # cwd = Path(__file__).resolve().parent
+                    # self.notify(f"Current working directory: {cwd}", bg=0)
+                    # updater_path = (
+                    #     cwd / "MEAUpdater.app"
+                    #     if sys.platform == MAC
+                    #     else cwd / "MEAUpdater.exe"
+                    # )
+                    # self.notify(f"Orig updater path: {updater_path}", bg=0)
+                    if sys.platform == MAC:
+                        updater_path = Path(
+                            "/Applications/MEA GUI.app/Contents/Frameworks/MEAUpdater.app/"
+                        )
+                    elif sys.platform == WIN:
+                        if sys.maxsize > 2**32:
+                            updater_path = Path(
+                                "C:/Program Files/MEA GUI/MEAUpdater.exe"
+                            )
+                        else:
+                            updater_path = Path(
+                                "C:/Program Files (x86)/MEA GUI/MEAUpdater.exe"
+                            )
+                    else:
+                        # TODO: Linux placeholder
+                        updater_path = Path("/usr/local/bin/MEAUpdater")
+
                     self.notify(f"Updater path: {updater_path}", bg=0)
-                    # msg = QMessageBox()
-                    # msg.setIcon(QMessageBox.Information)
-                    # msg.setText(f"Using updater path: {updater_path}")
-                    # msg.setWindowTitle("Update")
-                    # msg.exec_()
 
                     if updater_path.exists():
                         # Launch the updater and exit
