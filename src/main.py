@@ -2903,6 +2903,7 @@ if __name__ == "__main__":
 
                     # TODO: This is only MAC specific
                     cwd = Path(__file__).resolve().parent
+                    self.notify(f"Current working directory: {cwd}", bg=0)
                     updater_path = (
                         cwd / "MEAUpdater.app"
                         if sys.platform == MAC
