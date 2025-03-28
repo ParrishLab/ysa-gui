@@ -312,121 +312,125 @@ class ClusterTracker:
 
                 # Process each timeframe
                 for timeframe_name in discharges_group.keys():
-                    timeframe_group = discharges_group[timeframe_name]
-                    zip_path = output_path / f"discharges_{timeframe_name}.zip"
+                    try:
+                        timeframe_group = discharges_group[timeframe_name]
+                        zip_path = output_path / f"discharges_{timeframe_name}.zip"
 
-                    with zipfile.ZipFile(zip_path, "w") as zf:
-                        # Export speed statistics
-                        if "analysis_stats" in timeframe_group:
-                            stats_dataset = timeframe_group["analysis_stats"]
+                        with zipfile.ZipFile(zip_path, "w") as zf:
+                            # Export speed statistics
+                            if "analysis_stats" in timeframe_group:
+                                stats_dataset = timeframe_group["analysis_stats"]
 
-                            # Group statistics by category
-                            categories = {
-                                "avg_speed": {},
-                                "instant_speed": {},
-                                "correlation": {},
-                                "other": {},
-                            }
-
-                            for key, value in stats_dataset.attrs.items():
-                                if key.startswith("avg_speed_"):
-                                    categories["avg_speed"][
-                                        key.replace("avg_speed_", "")
-                                    ] = value
-                                elif key.startswith("instant_speed_"):
-                                    categories["instant_speed"][
-                                        key.replace("instant_speed_", "")
-                                    ] = value
-                                elif "corr" in key:
-                                    categories["correlation"][key] = value
-                                else:
-                                    categories["other"][key] = value
-
-                            # Create separate DataFrames for each category
-                            for category, stats in categories.items():
-                                if stats:
-                                    df = pd.DataFrame([stats]).T
-                                    df.columns = ["value"]
-                                    csv_buffer = io.StringIO()
-                                    df.to_csv(csv_buffer)
-                                    zf.writestr(
-                                        f"{category}_stats.csv", csv_buffer.getvalue()
-                                    )
-                                    # Also save as MAT file
-                                    mat_buffer = io.BytesIO()
-                                    savemat(mat_buffer, stats)
-                                    zf.writestr(
-                                        f"{category}_stats.mat", mat_buffer.getvalue()
-                                    )
-
-                        # Export individual discharge data
-                        all_discharges = []
-                        all_discharges_dict = {}
-                        for discharge_id in timeframe_group.keys():
-                            if discharge_id == "analysis_stats":
-                                continue
-
-                            discharge = timeframe_group[discharge_id]
-                            discharge_data = {
-                                "discharge_id": discharge_id,
-                                "start_time": discharge.attrs["start_time"],
-                                "end_time": discharge.attrs["end_time"],
-                                "duration": discharge.attrs["duration"],
-                                "length": discharge.attrs["length"],
-                                "avg_speed": discharge.attrs["avg_speed"],
-                                "time_since_last_discharge": discharge.attrs[
-                                    "time_since_last_discharge"
-                                ],
-                                "points": discharge.attrs["points"].tolist(),
-                                "timestamps": discharge.attrs["timestamps"].tolist(),
-                                "instant_speeds": discharge.attrs[
-                                    "instant_speeds"
-                                ].tolist(),
-                                "start_point": discharge.attrs["start_point"].tolist(),
-                                "end_point": discharge.attrs["end_point"].tolist(),
-                            }
-                            all_discharges.append(discharge_data)
-                            all_discharges_dict[discharge_id] = discharge_data
-
-                        # Save all discharges to a single CSV
-                        if all_discharges:
-                            discharges_df = pd.DataFrame(all_discharges)
-                            csv_buffer = io.StringIO()
-                            discharges_df.to_csv(csv_buffer, index=False)
-                            zf.writestr("all_discharges.csv", csv_buffer.getvalue())
-
-                            mat_buffer = io.BytesIO()
-                            structured_array = {
-                                key: np.array([value])
-                                for key, value in all_discharges_dict.items()
-                            }
-                            savemat(mat_buffer, structured_array, do_compression=True)
-                            zf.writestr("all_discharges.mat", mat_buffer.getvalue())
-
-                            # Also save detailed time series data for each discharge
-                            for discharge in all_discharges:
-                                time_series_data = {
-                                    "timestamp": discharge["timestamps"],
-                                    "instant_speed": discharge["instant_speeds"],
-                                    "point_x": [p[0] for p in discharge["points"]],
-                                    "point_y": [p[1] for p in discharge["points"]],
+                                # Group statistics by category
+                                categories = {
+                                    "avg_speed": {},
+                                    "instant_speed": {},
+                                    "correlation": {},
+                                    "other": {},
                                 }
-                                ts_df = pd.DataFrame(time_series_data)
+
+                                for key, value in stats_dataset.attrs.items():
+                                    if key.startswith("avg_speed_"):
+                                        categories["avg_speed"][
+                                            key.replace("avg_speed_", "")
+                                        ] = value
+                                    elif key.startswith("instant_speed_"):
+                                        categories["instant_speed"][
+                                            key.replace("instant_speed_", "")
+                                        ] = value
+                                    elif "corr" in key:
+                                        categories["correlation"][key] = value
+                                    else:
+                                        categories["other"][key] = value
+
+                                # Create separate DataFrames for each category
+                                for category, stats in categories.items():
+                                    if stats:
+                                        df = pd.DataFrame([stats]).T
+                                        df.columns = ["value"]
+                                        csv_buffer = io.StringIO()
+                                        df.to_csv(csv_buffer)
+                                        zf.writestr(
+                                            f"{category}_stats.csv", csv_buffer.getvalue()
+                                        )
+                                        # Also save as MAT file
+                                        mat_buffer = io.BytesIO()
+                                        savemat(mat_buffer, stats)
+                                        zf.writestr(
+                                            f"{category}_stats.mat", mat_buffer.getvalue()
+                                        )
+
+                            # Export individual discharge data
+                            all_discharges = []
+                            all_discharges_dict = {}
+                            for discharge_id in timeframe_group.keys():
+                                if discharge_id == "analysis_stats":
+                                    continue
+
+                                discharge = timeframe_group[discharge_id]
+                                discharge_data = {
+                                    "discharge_id": discharge_id,
+                                    "start_time": discharge.attrs["start_time"],
+                                    "end_time": discharge.attrs["end_time"],
+                                    "duration": discharge.attrs["duration"],
+                                    "length": discharge.attrs["length"],
+                                    "avg_speed": discharge.attrs["avg_speed"],
+                                    "time_since_last_discharge": discharge.attrs[
+                                        "time_since_last_discharge"
+                                    ],
+                                    "points": discharge.attrs["points"].tolist(),
+                                    "timestamps": discharge.attrs["timestamps"].tolist(),
+                                    "instant_speeds": discharge.attrs[
+                                        "instant_speeds"
+                                    ].tolist(),
+                                    "start_point": discharge.attrs["start_point"].tolist(),
+                                    "end_point": discharge.attrs["end_point"].tolist(),
+                                }
+                                all_discharges.append(discharge_data)
+                                all_discharges_dict[discharge_id] = discharge_data
+
+                            # Save all discharges to a single CSV
+                            if all_discharges:
+                                discharges_df = pd.DataFrame(all_discharges)
                                 csv_buffer = io.StringIO()
-                                ts_df.to_csv(csv_buffer, index=False)
-                                zf.writestr(
-                                    f"discharge_{discharge['discharge_id']}_timeseries.csv",
-                                    csv_buffer.getvalue(),
-                                )
+                                discharges_df.to_csv(csv_buffer, index=False)
+                                zf.writestr("all_discharges.csv", csv_buffer.getvalue())
 
                                 mat_buffer = io.BytesIO()
-                                savemat(
-                                    mat_buffer, time_series_data, do_compression=True
-                                )
-                                zf.writestr(
-                                    f"discharge_{discharge['discharge_id']}_timeseries.mat",
-                                    mat_buffer.getvalue(),
-                                )
+                                structured_array = {
+                                    key: np.array([value])
+                                    for key, value in all_discharges_dict.items()
+                                }
+                                savemat(mat_buffer, structured_array, do_compression=True)
+                                zf.writestr("all_discharges.mat", mat_buffer.getvalue())
+
+                                # Also save detailed time series data for each discharge
+                                for discharge in all_discharges:
+                                    time_series_data = {
+                                        "timestamp": discharge["timestamps"],
+                                        "instant_speed": discharge["instant_speeds"],
+                                        "point_x": [p[0] for p in discharge["points"]],
+                                        "point_y": [p[1] for p in discharge["points"]],
+                                    }
+                                    ts_df = pd.DataFrame(time_series_data)
+                                    csv_buffer = io.StringIO()
+                                    ts_df.to_csv(csv_buffer, index=False)
+                                    zf.writestr(
+                                        f"discharge_{discharge['discharge_id']}_timeseries.csv",
+                                        csv_buffer.getvalue(),
+                                    )
+
+                                    mat_buffer = io.BytesIO()
+                                    savemat(
+                                        mat_buffer, time_series_data, do_compression=True
+                                    )
+                                    zf.writestr(
+                                        f"discharge_{discharge['discharge_id']}_timeseries.mat",
+                                        mat_buffer.getvalue(),
+                                    )
+                    except Exception as e:
+                        print(f"Error processing time frame {timeframe_name}")
+                        self.main_window.notify(f"Error processing time frame {timeframe_name}. Delete and re-track time frame.", 2)
             return True
 
         except Exception as e:
