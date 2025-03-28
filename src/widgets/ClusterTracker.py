@@ -351,13 +351,15 @@ class ClusterTracker:
                                         csv_buffer = io.StringIO()
                                         df.to_csv(csv_buffer)
                                         zf.writestr(
-                                            f"{category}_stats.csv", csv_buffer.getvalue()
+                                            f"{category}_stats.csv",
+                                            csv_buffer.getvalue(),
                                         )
                                         # Also save as MAT file
                                         mat_buffer = io.BytesIO()
                                         savemat(mat_buffer, stats)
                                         zf.writestr(
-                                            f"{category}_stats.mat", mat_buffer.getvalue()
+                                            f"{category}_stats.mat",
+                                            mat_buffer.getvalue(),
                                         )
 
                             # Export individual discharge data
@@ -379,11 +381,15 @@ class ClusterTracker:
                                         "time_since_last_discharge"
                                     ],
                                     "points": discharge.attrs["points"].tolist(),
-                                    "timestamps": discharge.attrs["timestamps"].tolist(),
+                                    "timestamps": discharge.attrs[
+                                        "timestamps"
+                                    ].tolist(),
                                     "instant_speeds": discharge.attrs[
                                         "instant_speeds"
                                     ].tolist(),
-                                    "start_point": discharge.attrs["start_point"].tolist(),
+                                    "start_point": discharge.attrs[
+                                        "start_point"
+                                    ].tolist(),
                                     "end_point": discharge.attrs["end_point"].tolist(),
                                 }
                                 all_discharges.append(discharge_data)
@@ -401,7 +407,9 @@ class ClusterTracker:
                                     key: np.array([value])
                                     for key, value in all_discharges_dict.items()
                                 }
-                                savemat(mat_buffer, structured_array, do_compression=True)
+                                savemat(
+                                    mat_buffer, structured_array, do_compression=True
+                                )
                                 zf.writestr("all_discharges.mat", mat_buffer.getvalue())
 
                                 # Also save detailed time series data for each discharge
@@ -422,7 +430,9 @@ class ClusterTracker:
 
                                     mat_buffer = io.BytesIO()
                                     savemat(
-                                        mat_buffer, time_series_data, do_compression=True
+                                        mat_buffer,
+                                        time_series_data,
+                                        do_compression=True,
                                     )
                                     zf.writestr(
                                         f"discharge_{discharge['discharge_id']}_timeseries.mat",
@@ -430,7 +440,10 @@ class ClusterTracker:
                                     )
                     except Exception as e:
                         print(f"Error processing time frame {timeframe_name}")
-                        self.main_window.notify(f"Error processing time frame {timeframe_name}. Delete and re-track time frame.", 2)
+                        self.main_window.notify(
+                            f"Error processing time frame {timeframe_name}. Delete and re-track time frame.",
+                            bg=2,
+                        )
             return True
 
         except Exception as e:
