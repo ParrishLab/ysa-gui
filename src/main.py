@@ -8,6 +8,7 @@ from pathlib import Path
 import time
 from urllib.request import pathname2url
 
+from typing import Optional
 import h5py
 import numpy as np
 import pyqtgraph as pg
@@ -68,14 +69,13 @@ from helpers.Constants import (
     FONT_FAMILY,
     FONT_FILE,
     LARGE_FONT_SIZE,
-    MAC,
     SCREEN_DIAGONLA_THRESHOLD,
     SE,
     SEIZURE,
     SMALL_FONT_SIZE,
     VERSION,
-    WIN,
 )
+from helpers.cross_os import get_os_specific
 from helpers.update.NewUpdater import GITHUB_API_URL, AppUpdater
 from threads.AnalysisThread import AnalysisThread
 from threads.MatlabEngineThread import MatlabEngineThread
@@ -145,7 +145,7 @@ class MainWindow(QMainWindow):
         # Channel settings
         self.active_channels = None
         self.selected_channel = None
-        self.plotted_channels: list[ColorCell] = [None] * 4
+        self.plotted_channels: list[Optional[ColorCell]] = [None] * 4
         self.selected_subplot = None
 
         # Raster settings
@@ -174,7 +174,7 @@ class MainWindow(QMainWindow):
         self.is_auto_analyzing = False
         self.low_pass_cutoff = 35
         self.discharge_starts_points = []
-        self.discharge_start_dialog: DischargeStartDialog = None
+        self.discharge_start_dialog: Optional[DischargeStartDialog] = None
         self.last_found_discharge_time = None
         self.track_discharge_beginnings = False
 
@@ -671,12 +671,6 @@ class MainWindow(QMainWindow):
         self.notify(
             f"Attempting to read update message from {update_message_path}", bg=0
         )
-        # self.notify(
-        #     f"Attempting to read update message from {update_message_path}", bg=1
-        # )
-        # self.notify(
-        #     f"Attempting to read update message from {update_message_path}", bg=2
-        # )
 
         self.pull_update_message(update_message_path)
         if not seen_flag_path.exists() and update_message_path.exists():
@@ -2825,10 +2819,10 @@ class MainWindow(QMainWindow):
 
 def get_font_path():
     if getattr(sys, "frozen", False):
-        if sys.platform == MAC:
-            base_path = os.path.join(os.path.dirname(sys.executable), "..", "Resources")
-        else:
-            base_path = os.path.join(os.path.dirname(sys.executable), "_internal")
+        base_path = get_os_specific(
+            os.path.join(os.path.dirname(sys.executable), "..", "Resources"),
+            os.path.join(os.path.dirname(sys.executable), "_internal"),
+        )
         return os.path.join(base_path, FONT_FILE)
     else:
         return os.path.join(
@@ -2838,6 +2832,9 @@ def get_font_path():
 
 def get_font_size(app: QApplication):
     screen = app.primaryScreen()
+    if not screen:
+        raise RuntimeError("No primary screen found.")
+
     dpi = screen.physicalDotsPerInch()
 
     screen_width = screen.size().width() / dpi
@@ -2850,14 +2847,6 @@ def get_font_size(app: QApplication):
     else:
         return SMALL_FONT_SIZE
 
-
-if sys.platform == MAC:
-    font_dir = "/Library/Fonts/"
-elif sys.platform == WIN:
-    font_dir = os.path.join(os.environ["WINDIR"], "Fonts")
-else:
-    print("Unsupported operating system.")
-    sys.exit(1)
 
 if __name__ == "__main__":
     print("Hello! You are now on the development branch :D")
@@ -2901,7 +2890,6 @@ if __name__ == "__main__":
                     #     / "MEAUpdater.app"
                     # )
 
-                    # TODO: This is only MAC specific
                     #
                     # cwd = Path(__file__).resolve().parent
                     # self.notify(f"Current working directory: {cwd}", bg=0)
@@ -2911,33 +2899,40 @@ if __name__ == "__main__":
                     #     else cwd / "MEAUpdater.exe"
                     # )
                     # self.notify(f"Orig updater path: {updater_path}", bg=0)
-                    if sys.platform == MAC:
-                        updater_path = Path(
+                    # if sys.platform == "darwin":
+                    #     updater_path = Path(
+                    #         "/Applications/MEA GUI.app/Contents/Frameworks/MEAUpdater.app/"
+                    #     )
+                    # elif sys.platform == "win32":
+                    #     if sys.maxsize > 2**32:
+                    #         updater_path = Path(
+                    #             "C:/Program Files/MEA GUI/MEAUpdater.exe"
+                    #         )
+                    #     else:
+                    #         updater_path = Path(
+                    #             "C:/Program Files (x86)/MEA GUI/MEAUpdater.exe"
+                    #         )
+                    # else:
+                    #     updater_path = Path("/usr/local/bin/MEAUpdater")
+
+                    updater_path = get_os_specific(
+                        Path(
                             "/Applications/MEA GUI.app/Contents/Frameworks/MEAUpdater.app/"
-                        )
-                    elif sys.platform == WIN:
-                        if sys.maxsize > 2**32:
-                            updater_path = Path(
-                                "C:/Program Files/MEA GUI/MEAUpdater.exe"
-                            )
-                        else:
-                            updater_path = Path(
-                                "C:/Program Files (x86)/MEA GUI/MEAUpdater.exe"
-                            )
-                    else:
-                        # TODO: Linux placeholder
-                        updater_path = Path("/usr/local/bin/MEAUpdater")
+                        ),
+                        Path("C:/Program Files (x86)/MEA GUI/MEAUpdater.exe"),
+                        Path("C:/Program Files/MEA GUI/MEAUpdater.exe"),
+                    )
 
                     self.notify(f"Updater path: {updater_path}", bg=0)
 
                     if updater_path.exists():
                         # Launch the updater and exit
-                        if sys.platform == MAC:
+                        if sys.platform == "darwin":
                             print("Opening updater")
                             subprocess.Popen(
                                 ["open", str(updater_path), "--args", VERSION]
                             )
-                        elif sys.platform == WIN:
+                        elif sys.platform == "win32":
                             subprocess.Popen(
                                 ["start", str(updater_path), "--args", VERSION],
                                 shell=True,
@@ -2952,9 +2947,12 @@ if __name__ == "__main__":
                 except Exception as e:
                     self.notify(f"Update failed: {str(e)}", bg=1)
 
-        # Check for updates
-        # TODO: Implement the windows version of the updater
-        current_dir = Path("/Applications/")
+        current_dir = get_os_specific(
+            Path("/Applications/"),
+            Path("C:/Program Files (x86)/MEA GUI/"),
+            Path("C:/Program Files/MEA GUI/"),
+        )
+
         updater = AppUpdater(current_version=VERSION, install_dir=current_dir)
         print("Checking for updates...")
         update_available, _ = updater.check_for_update()

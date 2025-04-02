@@ -3,15 +3,16 @@ import sys
 import urllib.request
 import subprocess
 
+from helpers.cross_os import get_os_specific
+
 
 def download_and_run_file():
     download_url = (
         "https://github.com/booka66/mea-gui/releases/download/v1.0.11/MEA_GUI_MacOS.pkg"
     )
-    file_name = (
-        "mea_gui_update_parrish_lab_DELETE_ME.pkg"
-        if sys.platform == "darwin"
-        else "mea_gui_update_parrish_lab_DELETE_ME.exe"
+    file_name = get_os_specific(
+        "mea_gui_update_parrish_lab_DELETE_ME.pkg",
+        "mea_gui_update_parrish_lab_DELETE_ME.exe",
     )
     download_folder = os.path.join(os.path.expanduser("~"), "Downloads")
     file_path = os.path.join(download_folder, file_name)

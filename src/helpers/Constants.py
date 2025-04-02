@@ -35,9 +35,6 @@ TOTAL_POINTS = 20_000
 
 CELL_SIZE = 60  # micrometers
 
-MAC = "darwin"
-WIN = "win32"
-
 # Font-specific constants
 FONT_FILE = "GeistMonoNerdFontMono-Regular.otf"
 FONT_FAMILY = "GeistMono Nerd Font Mono"
