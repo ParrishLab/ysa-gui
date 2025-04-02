@@ -309,7 +309,7 @@ jobs:
         run: Get-ChildItem "${{ github.workspace }}\dist_update\"
 
       - name: Create Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        uses: zhuzichu520/inno-setup-action@v1.0.0 # NOTE: Minionguyjpro/Inno-Setup-Action@v1.2.2 was the old one but disappeared
         with:
           path: src/helpers/update/MEA_GUI_Installer.iss
 
