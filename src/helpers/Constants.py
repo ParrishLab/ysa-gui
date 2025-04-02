@@ -1,6 +1,6 @@
 from PyQt5.QtGui import QColor
 
-VERSION = "v0.0.24"
+VERSION = "v0.0.26"
 
 # Maybe use Gruvbox color:
 fg0 = "#fbf1c7"
