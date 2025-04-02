@@ -309,9 +309,9 @@ jobs:
         run: Get-ChildItem "${{ github.workspace }}\dist_update\"
 
       - name: Create Installer
-        uses: zhuzichu520/inno-setup-action@v1.0.0 # NOTE: Minionguyjpro/Inno-Setup-Action@v1.2.2 was the old one but disappeared
+        uses: nadeemjazmawe/inno-setup-action-cli@v6.0.5 # NOTE: Minionguyjpro/Inno-Setup-Action@v1.2.2 was the old one but disappeared
         with:
-          path: src/helpers/update/MEA_GUI_Installer.iss
+          filepath: src/helpers/update/MEA_GUI_Installer.iss
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
