@@ -29,8 +29,32 @@ class UpdateWorker(QThread):
             current_version=current_version, install_dir=install_dir
         )
 
+        self.setup_logging()
+
+    def get_log_file(self):
+        if sys.platform == "darwin":
+            log_file = Path(os.path.expanduser("~")) / ".mea_updater" / "updater.log"
+        elif sys.platform == "win32":
+            log_file = (
+                Path(os.path.expanduser("~"))
+                / "AppData"
+                / "Local"
+                / "mea_updater"
+                / "updater.log"
+            )
+        return log_file
+
+    def setup_logging(self):
         import logging
 
+        log_file = self.get_log_file()
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(log_file), logging.StreamHandler()],
+        )
         self.logger = logging.getLogger(__name__)
 
     def run(self):
@@ -213,6 +237,7 @@ def main():
     if update_available and release:
         window = UpdaterWindow(release=release, current_version=version)
         window.show()
+        window.raise_()
         return app.exec()
     else:
         print("No update available")

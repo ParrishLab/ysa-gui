@@ -2953,10 +2953,11 @@ if __name__ == "__main__":
                     self.notify(f"Update failed: {str(e)}", bg=1)
 
         # Check for updates
+        # TODO: Implement the windows version of the updater
         current_dir = Path("/Applications/")
         updater = AppUpdater(current_version=VERSION, install_dir=current_dir)
         print("Checking for updates...")
-        update_available, release = updater.check_for_update()
+        update_available, _ = updater.check_for_update()
 
         if update_available:
             msg = QMessageBox()

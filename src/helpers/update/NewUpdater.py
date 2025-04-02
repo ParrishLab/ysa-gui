@@ -1,4 +1,5 @@
 # NewUpdater.py
+import logging
 import os
 import stat
 import sys
@@ -32,9 +33,32 @@ class AppUpdater:
                 if self.is_frozen
                 else Path(os.path.dirname(os.path.abspath(__file__)))
             )
-        self.system = platform.system()
-        self.machine = platform.machine()
         self.temp_dir = Path(os.path.expanduser("~")) / ".app_updates"
+        self.setup_logging()
+
+    def get_log_file(self):
+        if sys.platform == "darwin":
+            log_file = Path(os.path.expanduser("~")) / ".mea_updater" / "updater.log"
+        elif sys.platform == "win32":
+            log_file = (
+                Path(os.path.expanduser("~"))
+                / "AppData"
+                / "Local"
+                / "mea_updater"
+                / "updater.log"
+            )
+        return log_file
+
+    def setup_logging(self):
+        log_file = self.get_log_file()
+        log_file.parent.mkdir(parents=True, exist_ok=True)
+
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
+            handlers=[logging.FileHandler(log_file), logging.StreamHandler()],
+        )
+        self.logger = logging.getLogger(__name__)
 
     # TODO: Make sure this works on windows
     def _is_protected_path(self, path):
@@ -125,14 +149,17 @@ class AppUpdater:
 
     def _is_app_installed(self):
         """Check if the application is installed in the target directory"""
-        if self.system == "darwin":
+        if sys.platform == "darwin":
             return (self.app_path / "MEA GUI.app").exists()
         else:
             return (self.app_path / "MEA_GUI.exe").exists()
 
     def _get_download_url(self, assets):
-        if self.system == "darwin":
-            arch_suffix = "arm64" if self.machine == "arm64" else "x86_64"
+        self.logger.info(f"System: {sys.platform}, Machine: {platform.machine()}")
+        self.logger.info(f"Available assets: {[asset['name'] for asset in assets]}")
+
+        if sys.platform == "darwin":
+            arch_suffix = "arm64" if platform.machine() == "arm64" else "x86_64"
             asset_name = f"MEA_GUI_MacOS_{arch_suffix}.pkg"
         else:
             asset_name = "MEA_GUI_Windows.exe"
@@ -154,10 +181,10 @@ class AppUpdater:
             if not download_url:
                 raise Exception("No suitable update found for your platform")
 
-            ext = ".pkg" if self.system == "darwin" else ".exe"
+            ext = ".pkg" if sys.platform == "darwin" else ".exe"
             update_file = self.temp_dir / f"update{ext}"
 
-            print(f"Downloading from {download_url}...")
+            self.logger.info(f"Downloading from {download_url}...")
             response = requests.get(download_url, stream=True)
             response.raise_for_status()
 
@@ -188,14 +215,10 @@ class AppUpdater:
         """
         Attempts to remove the application using elevated privileges if needed.
         """
-        import logging
-
-        logger = logging.getLogger(__name__)
-
         try:
             # Get a more precise check for running application
             app_name = target_app.name.replace(".app", "")
-            logger.info(f"Checking if {app_name} is running")
+            self.logger.info(f"Checking if {app_name} is running")
 
             # More precise process check using pgrep
             ps_result = subprocess.run(
@@ -209,12 +232,12 @@ class AppUpdater:
                 )
 
                 if lsof_result.returncode == 0:
-                    logger.error("Application is confirmed to be running")
+                    self.logger.error("Application is confirmed to be running")
                     raise Exception(
                         "Application is currently running. Please close it before updating."
                     )
 
-            logger.info(f"Attempting to remove: {target_app}")
+            self.logger.info(f"Attempting to remove: {target_app}")
 
             # First try to kill any remaining file locks
             subprocess.run(
@@ -229,10 +252,10 @@ class AppUpdater:
             # Try normal removal first
             try:
                 shutil.rmtree(target_app)
-                logger.info("Successfully removed app without privileges")
+                self.logger.info("Successfully removed app without privileges")
                 return True
             except PermissionError:
-                logger.info("Permission denied, attempting with admin privileges")
+                self.logger.info("Permission denied, attempting with admin privileges")
                 # If normal removal fails, try with admin privileges
                 path = str(target_app).replace('"', '\\"')
 
@@ -245,14 +268,14 @@ class AppUpdater:
 
                 command = f'rm -rf "{path}"'
                 if self._request_admin_privileges(command):
-                    logger.info("Successfully removed app with admin privileges")
+                    self.logger.info("Successfully removed app with admin privileges")
                     return True
-                logger.error("Failed to remove app even with admin privileges")
+                self.logger.error("Failed to remove app even with admin privileges")
                 raise Exception(
                     "Failed to remove existing application - permission denied"
                 )
         except Exception as e:
-            logger.exception(f"Error removing application: {str(e)}")
+            self.logger.exception(f"Error removing application: {str(e)}")
             raise
 
     # NOTE: Does windows have a similar command to osascript?
@@ -261,10 +284,6 @@ class AppUpdater:
         Executes a command with admin privileges using osascript.
         Uses proper AppleScript syntax with improved error handling.
         """
-        import logging
-
-        logger = logging.getLogger(__name__)
-
         escaped_command = command.replace('"', '\\"')
         script = f'''
         try
@@ -284,14 +303,14 @@ class AppUpdater:
             )
 
             if "Error:" in result.stdout:
-                logger.error(f"Admin privileges error: {result.stdout}")
+                self.logger.error(f"Admin privileges error: {result.stdout}")
                 return False
 
-            logger.info("Successfully executed command with admin privileges")
+            self.logger.info("Successfully executed command with admin privileges")
             return True
 
         except subprocess.CalledProcessError as e:
-            logger.error(f"Admin privileges error: {e.stderr}")
+            self.logger.error(f"Admin privileges error: {e.stderr}")
             return False
 
     def _update_macos(self, pkg_file):
@@ -450,7 +469,7 @@ class AppUpdater:
 
     def install_update(self, update_file):
         try:
-            if self.system == "darwin":
+            if sys.platform == "darwin":
                 success = self._update_macos(update_file)
             else:
                 success = self._update_windows(update_file)
