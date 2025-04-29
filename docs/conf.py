@@ -27,7 +27,18 @@ extensions = [
     "sphinx.ext.todo",
     "sphinx.ext.autodoc",
     "sphinxcontrib.video",
+    'hoverxref.extension',
+    'sphinx.ext.intersphinx',
+    'sphinx.ext.autosectionlabel',
+    'sphinx.ext.todo',
+    'sphinx.ext.viewcode',
+    'sphinx.ext.autodoc',
+    'sphinx.ext.napoleon',
 ]
+
+# Added to allow for hovering references to glossary definitions in "terminology.rst" page
+hoverxref_roles = ['term', 'ref']
+hoverxref_domains = ['std']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]

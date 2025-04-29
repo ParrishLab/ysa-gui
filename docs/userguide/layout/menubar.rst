@@ -184,6 +184,7 @@ On each trace plot and the raster plot, there are red play heads that indicate t
 
    When hovering over the trace plots, holding "s" will "seek" the play heads to the current mouse position. For the raster plot, clicking on a point will seek the play heads to that point.
 
+.. _anti_aliasing:
 Anti-aliasing
 ~~~~~~~~~~~~~
 Anti-aliasing smooths the edges of the trace plots. For performance reasons, it is disabled by default. Enabling it considerably slows down the interaction with the trace plots.
@@ -222,6 +223,8 @@ Spectrograms
 Displays the spectrogram(s) of the selected channel(s) in the trace plots. 
 Instead of representing millivolts over time, the spectrogram represents the frequency content of the signal over time.
 The y-axis will automatically adjust to the frequency range set in the spectrogram settings, which is limited by the Nyquist frequency.
+
+Signals must be sampled at a high enough rate to avoid :term:`aliasing`, which occurs when frequencies exceed the :term:`Nyquist frequency`. (See section on :ref:`anti-aliasing`.)
 
 .. image:: ../../_static/spectrogram.gif
    :alt: Spectrogram

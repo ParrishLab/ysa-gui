@@ -1,12 +1,35 @@
 User Guide
 ==========
 
-This user guide is split into several sections that cover the installation, configuration, and usage of meaGUI.
-If you're new to meaGUI, it is recommended to start with the :ref:`installation` section to get the application up and running.
-From there, you can explore the various features and options available in the application starting with the :ref:`layout` section.
+👋 Welcome to the meaGUI User Guide!
+
+This guide is organized into several sections covering installation, setup, and how to use the application's main features.
+
+If you're new to meaGUI, start with the :ref:`installation` section to set up the application.  
+Then, continue with the :ref:`walkthrough` for a step-by-step guide through opening files, running analyses, and viewing results.
 
 .. tip::
-   The search bar at the top of the page can be used to quickly find the information you're looking for. It is incredibly useful for finding specific topics or sections within the user guide.
+   🔍 Use the search bar at the top of the page to quickly find specific topics across the guide.
+
+
+Main Sections
+-------------
+
+📦 **:doc:`Installation <installation>`**  
+   Set up meaGUI on your machine
+
+🛠️ **:doc:`Configuration <configuration>`**  
+   Adjust settings for your data and recordings
+
+🎛️ **:doc:`Walkthrough <analysis/walkthrough>`**  
+   Step-by-step guide to running analyses
+
+🧠 **:doc:`Advanced Features <layout/layout>`**  
+   Understand the interface layout, features, and deeper analysis options
+
+📚 **:doc:`Terminology <terminology>`**  
+   Glossary of key terms used in the GUI
+
 
 .. toctree::
    :maxdepth: 1
@@ -21,8 +44,8 @@ From there, you can explore the various features and options available in the ap
    :hidden:
    :caption: User Interface
 
-   terminology
+   analysis/walkthrough
    layout/layout
-   analysis/analysis
+   terminology
 
 
