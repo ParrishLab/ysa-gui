@@ -12,6 +12,8 @@ Before starting, it is important to understand what the discharge propagation tr
 This understanding will help the user better able to set and fine tune the parameters of the algorithm.
 Admittedly, the algorithm is not perfect and may require some manual intervention to get the best results.
 
+The system detects each :term:`discharge event` and uses the :term:`DBSCAN algorithm` to cluster electrodes based on spatial recruitment.
+
 There are two main steps to the discharge propagation tracking algorithm:
 
   1. Discharge detection with a peak finding algorithm
