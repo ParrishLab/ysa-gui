@@ -50,7 +50,7 @@ Once opened, a preview of the data will appear in the left-hand "MEA Grid" pane.
 
 After opening your MEA file, you should **visually check your data** to ensure quality before running any analysis.
 
-.. note::
+.. tip::
    It's a good practice to scan through the recording for any major noise or missing data before starting an analysis.
 
 First, choose what you want to view...
@@ -166,8 +166,12 @@ Once complete, you'll see:
 Results are automatically saved and can be exported for further processing.
 
 .. note::
-Use the Right Pane to switch between views (events, raster plots, statistics).
+  Use the Right Pane to switch between views (events, raster plots, statistics).
 
+.. tip::
+  Want to explore how a discharge spreads across the slice?
+
+  After completing analysis, you can dive deeper using the :doc:`Discharge Propagation Tracking <dischargetracking>` tool to visualize spatial dynamics of seizure-like events.
 
 
 Common Issues
