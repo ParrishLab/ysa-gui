@@ -27,25 +27,26 @@ Main Sections
 🧠 :doc:`Advanced Features <layout/layout>`
    Understand the interface layout, features, and deeper analysis options
 
+   * 📍 :doc:`Discharge Propagation Tracking <analysis/dischargetracking>`  
+         Visualize how seizure activity spreads across the MEA over time
+
 📚 :doc:`Terminology <terminology>`
    Glossary of key terms used in the GUI
 
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
    :caption: Getting Started
 
    installation
    configuration
+   analysis/walkthrough
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :hidden:
-   :caption: User Interface
+   :caption: Advanced Features
 
-   analysis/walkthrough
-   layout/layout
-   terminology
-
-
+   userguide/analysis/dischargetracking
+   userguide/layout/layout

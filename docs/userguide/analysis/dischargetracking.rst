@@ -6,6 +6,10 @@ Discharge Propagation Tracking
 Tracking the propagation of discharges is one of the more difficult tasks to complete with the GUI.
 Given the complexity of the task, it may take the user some time to become familiar with the process.
 
+.. note::
+  This tool assumes you've already completed a full :doc:`analysis run <walkthrough>` and have detected seizure-like events (SLEs).
+
+
 Introduction
 ============
 Before starting, it is important to understand what the discharge propagation tracking algorithm is doing behind the scenes.

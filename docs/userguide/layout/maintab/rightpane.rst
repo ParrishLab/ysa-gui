@@ -37,6 +37,10 @@ The controls for mouse interaction are as follows:
   - If :ref:`seizure_regions` are visible, clicking on a region will zoom into that region and place the playhead at the start of the region
   - Hold ``g`` to measure the time difference between two points on the trace plots
 
+.. seealso::
+
+   🧭 You can use the :doc:`Discharge Propagation Tracking <analysis/dischargetracking>` tool for a more detailed view of how events spread across the MEA.
+
 Context Menu
 ------------
 .. image:: ../../../_static/trace_plots_context_menu.png
