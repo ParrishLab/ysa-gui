@@ -1,8 +1,8 @@
 .. _walkthrough:
 
-========
-Analysis
-========
+===========
+Walkthrough
+===========
 
 The MEA GUI allows you to detect and quantify :term:`Seizure-Like Event (SLE)`s and other neural activity patterns from your processed :term:`Multi-Electrode Array (MEA)` recordings. This page walks you through the full workflow— from opening files to running analyses and viewing results.
 
@@ -15,27 +15,28 @@ Whether you're an experienced neuroscience researcher or an undergraduate resear
 Before analyzing data, you must load your desired MEA recording into the GUI.
 
 Steps to Open a File:
+~~~~~~~~~~~~~~~~~~~~~
 
-  1. Select the "Open File" button just below the graphs on the right-hand side of the screen. 
+1. Select the "Open File" button just below the graphs on the right-hand side of the screen. 
 
-    .. image:: ../../_static/gui-walkthrough-opening-file.1.png
-      :alt: "Open File" button selection
-      :align: center
-      :width: 600px
+  .. image:: ../../_static/gui-walkthrough-opening-file.1.png
+    :alt: "Open File" button selection
+    :align: center
+    :width: 600px
 
-  2. Browse to the .brw MEA file you want to open, and click "Open".
+2. Browse to the .brw MEA file you want to open, and click "Open".
 
-    .. image:: ../../_static/gui-walkthrough-opening-file.2.png
-      :alt: "Open" button selection
-      :align: center
-      :width: 600px
+  .. image:: ../../_static/gui-walkthrough-opening-file.2.png
+    :alt: "Open" button selection
+    :align: center
+    :width: 600px
 
-  4. Select the "Quick View" button to the right of the "Open File" button.
+4. Select the "Quick View" button to the right of the "Open File" button.
 
-    .. image:: ../../_static/gui-walkthrough-quick-view.png
-      :alt: "Quick View" button selection
-      :align: center
-      :width: 600px
+  .. image:: ../../_static/gui-walkthrough-quick-view.png
+    :alt: "Quick View" button selection
+    :align: center
+    :width: 600px
 
 Once opened, a preview of the data will appear in the left-hand "MEA Grid" pane.
 
@@ -56,12 +57,12 @@ First, choose what you want to view:
 - **Raster Plots**: Click the "Raster Plot" button to display spike trains across electrodes.  
   (Use this to check for active electrodes and obvious artifacts.)
 
-  .. admonition:: 📈 Explore Raster Plots
+  .. admonition:: Explore Raster Plots 📈
 
     Curious about how spikes are visualized across electrodes?  
     See the section on :ref:`Raster Plots <raster_plot>` for a deeper dive into interpreting activity on the MEA grid.
 
-- **LFP Traces**: Click any electrode on the MEA Grid to view its :term:`Local Field Potential (LFP)` trace over time. The LFP trace reflects slow voltage fluctuations from groups of neurons near the selected electrode, and it is helpful for spotting large discharges or seizure onset patterns.
+- :term:`**Location Field Potential (LFP)` Traces**: Click any electrode on the MEA Grid to view its :term:`Local Field Potential (LFP)` trace over time. The LFP trace reflects slow voltage fluctuations from groups of neurons near the selected electrode, and it is helpful for spotting large discharges or seizure onset patterns.
   
   As a discharge propagates across the slice, the false color display on the MEA Grid dynamically updates to show which electrodes are active and when. Each square's color reflects the relative signal intensity at that electrode:
   
@@ -178,10 +179,9 @@ Related Pages
 - For definitions of ":term:`Discharge`", ":term:`Seizure-Like Event (SLE)`", ":term:`Artifact`", and more, visit the :doc:`terminology.rst` page.
 
 
-
 .. toctree::
   :maxdepth: 1
+  :hidden:
 
   ./dischargetracking.rst
-
-
+  

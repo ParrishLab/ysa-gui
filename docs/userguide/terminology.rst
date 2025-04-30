@@ -61,7 +61,7 @@ Terminology
         The visual interface that allows users to interact with the software without using command-line commands.
 
     Discharge event
-    A brief burst of electrical activity detected in a localized region of the brain slice. In the context of this GUI, a discharge event is typically detected using amplitude or frequency thresholds on Local Field Potential (LFP) signals.
+        A brief burst of electrical activity detected in a localized region of the brain slice. In the context of this GUI, a discharge event is typically detected using amplitude or frequency thresholds on Local Field Potential (LFP) signals.
 
     Discharge propagation
         The spread of a discharge event across the electrode array over time. It reflects the spatial and temporal recruitment of neural populations and is visualized using false color maps and LFP traces from multiple channels.

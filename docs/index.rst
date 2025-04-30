@@ -10,6 +10,11 @@ The GUI is built using the `PyQt5 <https://www.riverbankcomputing.com/static/Doc
 
    This project is under active development. Features may change!
 
+Getting Started
+---------------
+
+🚀 Ready to dive in? Head over to the :doc:`User Guide <userguide/userguide>` to begin!
+
 Contents
 --------
 
@@ -17,24 +22,14 @@ Contents
    :caption: User Guide
    :maxdepth: 3
 
+   userguide/userguide
+   userguide/terminology
    userguide/installation
    userguide/configuration
-   userguide/analysis/walkthrough
-   userguide/analysis/dischargetracking
-   userguide/terminology
    userguide/layout/layout
-   userguide/layout/menubar
-   userguide/maintab/maintab
-   userguide/maintab/leftpane
-   userguide/maintab/rightpane
 
 .. toctree::
    :caption: Contributing
    :maxdepth: 1
 
    contribute/index
-
-Getting Started
----------------
-
-🚀 Ready to dive in? Head over to the :doc:`User Guide <userguide/userguide>` to begin!
