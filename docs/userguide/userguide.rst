@@ -12,8 +12,11 @@ Then, continue with the :ref:`walkthrough` for a step-by-step guide through open
    🔍 Use the search bar at the top of the page to quickly find specific topics across the guide.
 
 
-Main Sections
--------------
+Contents
+--------
+
+Getting Started
+~~~~~~~~~~~~~~~
 
 📦 :doc:`Installation <installation>`
    Set up meaGUI on your machine
@@ -21,32 +24,45 @@ Main Sections
 🛠️ :doc:`Configuration <configuration>`  
    Adjust settings for your data and recordings
 
-🎛️ :doc:`Walkthrough <analysis/walkthrough>`  
+🛣️ :doc:`Walkthrough <analysis/walkthrough>`  
    Step-by-step guide to running analyses
 
-🧠 :doc:`Advanced Features <layout/layout>`
-   Understand the interface layout, features, and deeper analysis options
 
-   * 📍 :doc:`Discharge Propagation Tracking <analysis/dischargetracking>`  
-         Visualize how seizure activity spreads across the MEA over time
+Advanced Features
+~~~~~~~~~~~~~~~~~
 
-📚 :doc:`Terminology <terminology>`
-   Glossary of key terms used in the GUI
+🗺️ :doc:`Layout Overview <layout/layout>`  
+   Explore the structure of the GUI — how menus, panes, and tabs fit together.
+
+   ⚙️ :doc:`Menubar <layout/menubar>`  
+      Learn what each menu item does — including access to file operations, configuration, and help.
+
+   🧮 :doc:`Main Tab Overview <maintab/maintab>`  
+      Understand the role of the main analysis tab and its sub-tools.
+
+      🖱️ :doc:`Left Pane <maintab/leftpane>`  
+         Interact with the MEA grid, select electrodes, and view the false color map or the raster plot.
+
+      📊 :doc:`Right Pane <maintab/rightpane>`  
+         Analyze visualizations using tools like trace plots and the control panel.
+
+🧭 :doc:`Discharge Propagation Tracking <analysis/dischargetracking>`  
+   Visualize how seizure-like events spread across the slice — frame-by-frame across time and space.
 
 
 .. toctree::
    :maxdepth: 2
-   :hidden:
    :caption: Getting Started
+   :hidden:
 
    installation
    configuration
    analysis/walkthrough
 
 .. toctree::
-   :maxdepth: 2
-   :hidden:
+   :maxdepth: 3
    :caption: Advanced Features
+   :hidden:
 
-   userguide/analysis/dischargetracking
-   userguide/layout/layout
+   analysis/dischargetracking
+   layout/layout
