@@ -34,9 +34,3 @@ Helpful Links
 - GitHub repo: https://github.com/your-org/meaGUI
 - Issues: https://github.com/your-org/meaGUI/issues
 - Documentation: https://mea-gui.readthedocs.io
-
-.. toctree::
-   :maxdepth: 4
-   :hidden:
-
-   self

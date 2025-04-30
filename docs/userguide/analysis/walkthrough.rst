@@ -192,10 +192,3 @@ Related Pages
 - :doc:`../layout/menubar`
 
 - For definitions of ":term:`Discharge`", ":term:`Seizure-Like Event (SLE)`", ":term:`Artifact`", and more, visit the :doc:`../terminology` page.
-
-
-.. toctree::
-  :maxdepth: 1
-  :hidden:
-
-  ./dischargetracking.rst
