@@ -1,8 +1,8 @@
 .. _layout:
 
-==============================
-Layout and Basic Functionality
-==============================
+======
+Layout
+======
 
 .. toctree::
   :maxdepth: 1

@@ -57,5 +57,3 @@ There are two ways to install the application:
 
 .. note::
   Some algorithms have the option of using a MATLAB implementation. If you want to use them, you need to have MATLAB installed on your system, build from source, and use pip to install the ``matlab`` and ``matlabengine`` packages. Note that you'll need to download the correct version of matlabengine to work with your MATLAB installation.
-
-

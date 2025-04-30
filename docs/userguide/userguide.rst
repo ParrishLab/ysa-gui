@@ -15,19 +15,19 @@ Then, continue with the :ref:`walkthrough` for a step-by-step guide through open
 Main Sections
 -------------
 
-📦 :doc:`**Installation** <installation>`
+📦 :doc:`Installation <installation>`
    Set up meaGUI on your machine
 
-🛠️ :doc:`**Configuration** <configuration>`  
+🛠️ :doc:`Configuration <configuration>`  
    Adjust settings for your data and recordings
 
-🎛️ :doc:`**Walkthrough** <analysis/walkthrough>`  
+🎛️ :doc:`Walkthrough <analysis/walkthrough>`  
    Step-by-step guide to running analyses
 
-🧠 :doc:`**Advanced** Features <layout/layout>`
+🧠 :doc:`Advanced Features <layout/layout>`
    Understand the interface layout, features, and deeper analysis options
 
-📚 :doc:`**Terminology** <terminology>`
+📚 :doc:`Terminology <terminology>`
    Glossary of key terms used in the GUI
 
 

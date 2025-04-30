@@ -150,6 +150,7 @@ Detected events are displayed as colored cells on the MEA grid. Blue cells repre
 
    TODO: Link to page explaining Norby's algorithm. Also probably change the wording to be more clear.
 
+.. _false_color_map:
 False Color Map
 ~~~~~~~~~~~~~~~
 The false color map displays the activity of each channel in a color gradient. The color of each channel is determined by calculating the range of values within the bin size and normalizing them to a color gradient.

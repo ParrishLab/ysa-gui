@@ -20,7 +20,7 @@ Contents
 
 .. toctree::
    :caption: User Guide
-   :maxdepth: 3
+   :maxdepth: 1
 
    userguide/userguide
    userguide/terminology
@@ -32,4 +32,4 @@ Contents
    :caption: Contributing
    :maxdepth: 1
 
-   contribute/index
+   contribute
