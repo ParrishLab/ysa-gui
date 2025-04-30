@@ -15,7 +15,7 @@ Terminology
     Channel
         A data stream corresponding to a single electrode's recording. In the GUI, each electrode is associated with one channel, which carries the digitized signal data from that electrode.
 
-    Raster plot
+    Raster Plot
         A graphical representation showing the timing of spikes (action potentials) recorded across multiple electrodes. Each row represents one electrode, and each tick mark represents a detected spike at a specific time. Useful for visualizing patterns of neuronal activity across the array.
 
     Threshold detection
