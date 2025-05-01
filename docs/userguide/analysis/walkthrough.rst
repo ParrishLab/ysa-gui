@@ -17,28 +17,28 @@ Before analyzing data, load your MEA recording into the GUI.
 Steps to Open a File:
 ~~~~~~~~~~~~~~~~~~~~~
 
-1. Select the "Open File" button just below the graphs on the right-hand side of the screen. 
+1. Select the ``Open File`` button just below the graphs on the right-hand side of the screen. 
 
 .. image:: ../../_static/gui-walkthrough-opening-file.1.png
   :alt: "Open File" button selection
   :align: center
   :width: 600px
 
-2. Browse to the ".brw" MEA file you want to open and click "Open".
+2. Browse to the ``.brw`` MEA file you want to open and click ``Open``.
 
 .. image:: ../../_static/gui-walkthrough-opening-file.2.png
   :alt: "Open" button selection
   :align: center
   :width: 600px
 
-4. Select the "Quick View" button to the right of the "Open File" button.
+4. Select the ``Quick View`` button to the right of the ``Open File`` button.
 
 .. image:: ../../_static/gui-walkthrough-quick-view.png
   :alt: "Quick View" button selection
   :align: center
   :width: 600px
 
-Once opened, a preview of the data will appear in the left-hand "MEA Grid" pane.
+Once opened, a preview of the data will appear in the left-hand ``MEA Grid`` pane.
 
 .. note::
   Files should be pre-processed using the GUI's processing tools or imported from compatible sources. Raw files without timestamps or signal alignment may not load properly.
@@ -56,7 +56,7 @@ After opening your MEA file, you should **visually check your data** to ensure q
 First, choose what you want to view...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-- **Raster Plots**: Select the ":term:`Raster Plot`" tab to display spike trains across electrodes.  
+- **Raster Plots**: Select the :term:`Raster Plot` tab to display spike trains across electrodes.  
   (Use this to check for active electrodes and obvious artifacts.)
 
 .. image:: ../../_static/gui-walkthrough-raster-plot.png
@@ -123,7 +123,7 @@ You can save and load custom configurations from the Configuration menu.
 4. Run Analysis
 ---------------
 
-After configuring, press the **Run Analysis** button at the bottom of the Analysis tab.
+After configuring, press the ``Run Analysis`` button at the bottom of the Analysis tab.
 
 .. image:: ../../_static/gui-walkthrough-run-analysis.png
   :alt: "Run Analysis" button selection
@@ -169,7 +169,7 @@ Results are automatically saved and can be exported for further processing.
   Use the Right Pane to switch between views (events, raster plots, statistics).
 
 .. tip::
-  Want to explore how a discharge spreads across the slice?
+  🧭 Want to explore how a discharge spreads across the slice?
 
   After completing analysis, you can dive deeper using the :doc:`Discharge Propagation Tracking <dischargetracking>` tool to visualize spatial dynamics of seizure-like events.
 
@@ -177,7 +177,7 @@ Results are automatically saved and can be exported for further processing.
 Common Issues
 ~~~~~~~~~~~~~
 
-* File won't open? Confirm it is processed and in ".brw" format.
+* File won't open? Confirm it is processed and in ``.brw`` format.
 
 * Analysis returns no events? Try lowering your :term:`Threshold detection` value.
 
