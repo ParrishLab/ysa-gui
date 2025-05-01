@@ -11,8 +11,8 @@ There are two ways to install the application:
     - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_arm64.pkg>`__ for MacOS (Apple Silicon)
     - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_x86_64.pkg>`__ for MacOS (Intel)
 
-    .. note::
-      The installers are not signed, so you may need to allow the installation in the system settings. On Windows, it may be flagged as a potential threat, but choose to keep it anyway.
+  .. note::
+    The installers are not signed, so you may need to allow the installation in the system settings. On Windows, it may be flagged as a potential threat, but choose to keep it anyway.
 
 
 2. Manually from the source code:

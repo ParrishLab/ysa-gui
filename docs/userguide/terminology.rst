@@ -25,7 +25,7 @@ Terminology
         A method of identifying clusters of rapid spikes that may indicate heightened neural activity, sometimes preceding a seizure.
 
     Channel  
-        A data stream corresponding to a single electrode's recording. In the GUI, each electrode is associated with one channel, which carries the digitized signal data from that electrode.
+        A data stream corresponding to a single electrode's recording. In the GUI, each electrode is associated with one channel, which carries the digitized signal data from that electrode in the MEA.
 
     DBSCAN algorithm  
         Density-Based Spatial Clustering of Applications with Noise — a machine learning algorithm that groups data points into clusters based on their density. In this GUI, DBSCAN may be used to identify spatial clusters of electrodes involved in a discharge or seizure event.
@@ -64,13 +64,20 @@ Terminology
         A graphical representation showing the timing of spikes (action potentials) recorded across multiple electrodes. Each row represents one electrode, and each tick mark represents a detected spike at a specific time. Useful for visualizing patterns of neuronal activity across the array.
 
     Seizure-Like Event (SLE)  
-        A burst of abnormal electrical activity detected in brain slice recordings; used here as a basic unit of analysis.
+        A discrete burst of abnormal electrical activity in brain slice recordings that resembles an epileptic seizure but is typically shorter and less severe than status epilepticus (SE). SLEs may arise spontaneously in ex vivo preparations and are often used as experimental models of seizure behavior.
+
+        In this GUI, SLEs are automatically detected using threshold-based criteria and appear in visualizations such as raster plots and LFP traces. Spike events associated with SLEs are marked in blue in the raster plot. You can toggle color modes in the trace plot to see SLE activity in blue to visually differentiate SLE activity across selected channels.
 
     Spectrogram  
         A visual representation of how the frequency content of a signal changes over time. In neuroscience, spectrograms are often used to detect shifts in power across frequency bands during seizure events or other dynamic network activity.
 
     Spike  
         A rapid increase in voltage that often corresponds to neuronal firing.
+
+    Status Epilepticus (SE)  
+        A prolonged seizure state characterized by continuous or rapidly repeating seizure activity, typically lasting more than 5 minutes without recovery between events. Medically, SE is considered a neurological emergency that can lead to long-term brain damage, neuronal death, or life-threatening complications if not treated promptly.
+
+        In this GUI, SE events are automatically detected based on defined thresholds and visualized alongside other seizure-like activity. They are marked with orange spike indicators in the raster plot. You can also toggle the color mode in the trace plot to see SE events in yellow, making it easier to distinguish SE from other activity across multiple views.
 
     Synchronous activity  
         When many electrodes detect similar signals at nearly the same time, indicating widespread neural coordination (often seen in seizures).

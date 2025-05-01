@@ -14,7 +14,6 @@ Then, continue with the :ref:`walkthrough` for a step-by-step guide through open
 
 Contents
 --------
-
 Getting Started
 ~~~~~~~~~~~~~~~
 
@@ -37,13 +36,13 @@ Advanced Features
    ⚙️ :doc:`Menubar <layout/menubar>`  
       Learn what each menu item does — including access to file operations, configuration, and help.
 
-   🧮 :doc:`Main Tab Overview <maintab/maintab>`  
+   🧮 :doc:`Main Tab Overview <layout/maintab/maintab>`  
       Understand the role of the main analysis tab and its sub-tools.
 
-      🖱️ :doc:`Left Pane <maintab/leftpane>`  
+      🖱️ :doc:`Left Pane <layout/maintab/leftpane>`  
          Interact with the MEA grid, select electrodes, and view the false color map or the raster plot.
 
-      📊 :doc:`Right Pane <maintab/rightpane>`  
+      📊 :doc:`Right Pane <layout/maintab/rightpane>`  
          Analyze visualizations using tools like trace plots and the control panel.
 
 🧭 :doc:`Discharge Propagation Tracking <analysis/dischargetracking>`  
@@ -64,5 +63,5 @@ Advanced Features
    :caption: Advanced Features
    :hidden:
 
-   analysis/dischargetracking
    layout/layout
+   analysis/dischargetracking

@@ -39,7 +39,7 @@ The controls for mouse interaction are as follows:
 
 .. seealso::
 
-   🧭 You can use the :doc:`Discharge Propagation Tracking <analysis/dischargetracking>` tool for a more detailed view of how events spread across the MEA.
+   🧭 You can use the :doc:`Discharge Propagation Tracking <../analysis/dischargetracking>` tool for a more detailed view of how events spread across the MEA.
 
 Context Menu
 ------------
