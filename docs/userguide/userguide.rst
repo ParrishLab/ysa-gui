@@ -33,7 +33,7 @@ Advanced Features
 🗺️ :doc:`Layout Overview <layout/layout>`  
    Explore the structure of the GUI — how menus, panes, and tabs fit together.
 
-   ⚙️ :doc:`Menubar <layout/menubar>`  
+   ⚙️ :doc:`Menu Bar <layout/menubar>`  
       Learn what each menu item does — including access to file operations, configuration, and help.
 
    🧮 :doc:`Main Tab Overview <layout/maintab/maintab>`  

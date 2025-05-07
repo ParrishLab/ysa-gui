@@ -5,51 +5,51 @@ Installation
 
 There are two ways to install the application:
 
-1. Downloading an installer for your operating system and following the instructions (recommended):
+1. **Downloading an installer** for your operating system and following the instructions (recommended):
 
-    - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_Windows.exe>`__ for Windows
-    - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_arm64.pkg>`__ for MacOS (Apple Silicon)
-    - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_x86_64.pkg>`__ for MacOS (Intel)
+  - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_Windows.exe>`__ for Windows
+  - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_arm64.pkg>`__ for MacOS (Apple Silicon)
+  - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_x86_64.pkg>`__ for MacOS (Intel)
 
-  .. note::
-    The installers are not signed, so you may need to allow the installation in the system settings. On Windows, it may be flagged as a potential threat, but choose to keep it anyway.
+.. note::
+  The installers are not signed, so you may need to allow the installation in the system settings. On Windows, it may be flagged as a potential threat, but choose to keep it anyway.
 
 
-2. Manually from the source code:
+2. Manually from the **source code**:
 
-    - Clone the repository and navigate to the project directory:
-        .. code-block:: bash
+  - Clone the repository and navigate to the project directory:
+    .. code-block:: bash
 
-          git clone https://github.com/booka66/mea-gui.git
-          cd mea-gui
+      git clone https://github.com/booka66/mea-gui.git
+      cd mea-gui
 
-    - Create a virtual environment:
-        .. code-block:: bash
+  - Create a virtual environment:
+    .. code-block:: bash
 
-          python -m venv mea_env
+      python -m venv mea_env
 
-    - Activate the virtual environment:
-        - Windows:
+  - Activate the virtual environment:
+    - Windows:
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-          mea_env/Scripts/activate
+      mea_env/Scripts/activate
 
-        - MacOS:
+    - MacOS:
 
-        .. code-block:: bash
+    .. code-block:: bash
 
-          source mea_env/bin/activate
+      source mea_env/bin/activate
 
-    - Install the dependencies:
-        .. code-block:: bash
+  - Install the dependencies:
+    .. code-block:: bash
 
-          pip install -r src/helpers/update/requirements.txt
+      pip install -r src/helpers/update/requirements.txt
 
-    - Run the application:
-        .. code-block:: bash
+  - Run the application:
+    .. code-block:: bash
 
-          python src/main.py
+      python src/main.py
 
 .. important::
   The instructions for building from the source code assume that you have Python 3.10.9 installed on your system. 

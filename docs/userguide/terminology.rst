@@ -82,8 +82,11 @@ Terminology
     Synchronous activity  
         When many electrodes detect similar signals at nearly the same time, indicating widespread neural coordination (often seen in seizures).
 
-    Threshold detection  
-        A method to identify when a signal crosses a pre-set voltage or frequency limit, used to detect seizures.
+    Peak  
+        A local maximum in the Local Field Potential (LFP) signal, often representing a spike or a feature of interest in neural activity. In this GUI, peaks are detected using configurable thresholds (e.g., amplitude, distance between peaks) and are used as the basis for spike and burst detection during analysis.
+
+    Peak detection threshold  
+        The minimum amplitude a peak must reach to be considered valid during spike or burst detection. This threshold helps distinguish meaningful peaks from noise in the LFP signal. In this GUI, peak detection thresholds can be configured through the Menu Bar and are a key parameter in identifying spike events.
 
     Window size  
         The time segment (e.g., 10 seconds) used for analyzing continuous data streams.

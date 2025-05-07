@@ -95,7 +95,7 @@ Set Peak Settings
 ^^^^^^^^^^^^^^^^^
 Hovering over this action displays a window containing parameters used for a peak finding algorithm.
 
-  - Peak Threshold: The number of standard deviations above the mean after which a point may be considered a peak.
+  - :term:`Peak detection threshold`: The number of standard deviations above the mean after which a point may be considered a peak.
   - Min Distance: The minimum number of samples between peaks necessary to consider them separate events.
   - SNR Threshold: The minimum signal-to-noise ratio threshold of an electrode necessary to consider a peak within the given electrode. This acts as a filter to remove noisy or inactive channels.
 
