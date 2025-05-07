@@ -4,7 +4,7 @@
 Walkthrough
 ===========
 
-The MEA GUI allows you to detect and quantify :term:`Seizure-Like Event (SLE)`s and other neural activity patterns from your processed :term:`Multi-Electrode Array (MEA)` recordings. This page walks you through the full workflow— from opening files to running analyses and viewing results.
+The MEA GUI allows you to detect and quantify :term:`Seizure-Like Event (SLE)` s and other neural activity patterns from your processed :term:`Multi-Electrode Array (MEA)` recordings. This page walks you through the full workflow— from opening files to running analyses and viewing results.
 
 Whether you're an experienced neuroscience researcher or an undergraduate research assistant, this step-by-step guide will help you understand and use the analysis tools effectively.
 
@@ -101,29 +101,15 @@ First, choose what you want to view...
 3. Configure Analysis Settings
 ------------------------------
 
-Open the Analysis tab from the main tab bar.
-
-Here you can set:
-
-- :term:`Threshold detection` (in mV)
-
-- Analysis :term:`Window size` (e.g., 10s, 30s, 60s)
-
-- Event classification rules
-
-Which electrodes to include (useful for excluding noisy ones)
-
-Settings are pre-filled with default values suitable for common slice recordings.
-
 .. note::
-You can save and load custom configurations from the Configuration menu.
+  Add material here after adjusting layout of analysis settings.
 
 
 
 4. Run Analysis
 ---------------
 
-After configuring, press the ``Run Analysis`` button at the bottom of the Analysis tab.
+Press the ``Run Analysis`` button at the bottom of the Analysis tab.
 
 .. image:: ../../_static/gui-walkthrough-run-analysis.png
   :alt: "Run Analysis" button selection
@@ -134,21 +120,19 @@ What Happens:
 
 - The GUI extracts :term:`Spike` and :term:`Burst` data.
 
-- It scans for :term:`Seizure-Like Event (SLE)`s.
-
-- Results are visualized and saved in the results/ folder.
+- It scans for :term:`Seizure-Like Event (SLE)` s.
 
 - Analysis usually takes 2-5 minutes per file, depending on its size.
 
 .. tip::
-Monitor progress in the status bar. You can cancel ongoing analysis with the Stop button if needed.
+  Monitor progress in the status bar. You can cancel ongoing analysis with the ⏹ ``Stop`` button if needed.
 
 .. note::
   **Quick View vs. Run Analysis**
 
-  - Use **Quick View** if you want to **watch live LFP traces** for each channel or **visualize activity** in real time on the false color map. This is ideal for quickly inspecting the recording without doing detailed analysis.
+  - Use :ref:`Quick View <quick_view>` if you want to **watch live LFP traces** for each channel or **visualize activity** in real time on the false color map. This is ideal for quickly inspecting the recording without doing detailed analysis.
 
-  - Use **Run Analysis** if you want to **detect seizures**, **track discharges**, and **generate quantitative results**. This runs the full analysis pipeline and saves structured results for further review.
+  - Use :ref:`Run Analysis <run_analysis>` if you want to **detect seizures**, **track discharges**, and **generate quantitative results**. This runs the full analysis pipeline, and from here you can save your results from further review.
 
 
 
@@ -181,7 +165,7 @@ Common Issues
 
 * Analysis returns no events? Try lowering your :term:`Threshold detection` value.
 
-* Too many false events? Consider raising your threshold or increasing the analysis :term:`Window size`.
+* Too many false events? Consider raising your :term:`Threshold detection` value or increasing the analysis :term:`Window size`.
 
 
 Related Pages

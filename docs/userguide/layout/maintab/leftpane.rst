@@ -46,7 +46,7 @@ The raster plot shows spike activity across channels. Each row corresponds to a 
 
 * **Black dots** = spikes outside seizure/SE periods
 
-You can change spike detection thresholds using the ``Edit Raster Settings`` button.
+You can change the spike :term:`Detection threshold` using the ``Edit Raster Settings`` button.
 
 Mouse controls:
 ^^^^^^^^^^^^^^^
@@ -105,6 +105,6 @@ Lasso controls:
 * ``Confirm`` = save all groups and close the window
 
 .. tip::
-  You can click Toggle Color Mode to visualize clusters or groups with distinct colors.
+  You can click ``Toggle Color Mode`` to visualize clusters or groups with distinct colors.
 
-Once groups are created, tooltips will display group names. For statistics, switch from the Main tab to the Stats tab.
+Once groups are created, tooltips will display group names. For statistics, switch from the ``Main`` tab to the ``Stats`` tab.
