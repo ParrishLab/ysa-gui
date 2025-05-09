@@ -18,17 +18,20 @@ There are two ways to install the application:
 2. Manually from the **source code**:
 
   - Clone the repository and navigate to the project directory:
+    
     .. code-block:: bash
 
       git clone https://github.com/booka66/mea-gui.git
       cd mea-gui
 
   - Create a virtual environment:
+    
     .. code-block:: bash
 
       python -m venv mea_env
 
   - Activate the virtual environment:
+  
     - Windows:
 
     .. code-block:: bash
@@ -42,11 +45,13 @@ There are two ways to install the application:
       source mea_env/bin/activate
 
   - Install the dependencies:
+    
     .. code-block:: bash
 
       pip install -r src/helpers/update/requirements.txt
 
   - Run the application:
+    
     .. code-block:: bash
 
       python src/main.py

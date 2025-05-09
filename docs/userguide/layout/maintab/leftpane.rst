@@ -40,13 +40,14 @@ Raster Plot
 
 The raster plot shows spike activity across channels. Each row corresponds to a channel; each dot is a detected spike.
 
-* **Blue dots** = spikes during seizures or :term:`Seizure-Like Event (SLE)`s
+* **Blue dots** = spikes during seizures or :term:`Seizure-Like Events (SLEs)`s
 
 * **Orange dots** = spikes during :term:`Status Epilepticus (SE)` events
 
 * **Black dots** = spikes outside seizure/SE periods
 
-You can change the spike :term:`Detection threshold` using the ``Edit Raster Settings`` button.
+.. tip::
+  You can change the spike detection threshold using the ``Edit Raster Settings`` button.
 
 Mouse controls:
 ^^^^^^^^^^^^^^^

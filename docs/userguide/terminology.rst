@@ -63,7 +63,7 @@ Terminology
     Raster Plot  
         A graphical representation showing the timing of spikes (action potentials) recorded across multiple electrodes. Each row represents one electrode, and each tick mark represents a detected spike at a specific time. Useful for visualizing patterns of neuronal activity across the array.
 
-    Seizure-Like Event (SLE)  
+    Seizure-Like Events (SLEs)  
         A discrete burst of abnormal electrical activity in brain slice recordings that resembles an epileptic seizure but is typically shorter and less severe than status epilepticus (SE). SLEs may arise spontaneously in ex vivo preparations and are often used as experimental models of seizure behavior.
 
         In this GUI, SLEs are automatically detected using threshold-based criteria and appear in visualizations such as raster plots and LFP traces. Spike events associated with SLEs are marked in blue in the raster plot. You can toggle color modes in the trace plot to see SLE activity in blue to visually differentiate SLE activity across selected channels.
