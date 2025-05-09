@@ -4,7 +4,7 @@
 Walkthrough
 ===========
 
-The MEA GUI allows you to detect and quantify :term:`Seizure-Like Event (SLE)` s and other neural activity patterns from your processed :term:`Multi-Electrode Array (MEA)` recordings. This page walks you through the full workflow— from opening files to running analyses and viewing results.
+The MEA GUI allows you to detect and quantify :term:`Seizure-Like Events (SLEs)` and other neural activity patterns from your processed :term:`Multi-Electrode Array (MEA)` recordings. This page walks you through the full workflow— from opening files to running analyses and viewing results.
 
 Whether you're an experienced neuroscience researcher or an undergraduate research assistant, this step-by-step guide will help you understand and use the analysis tools effectively.
 
@@ -120,12 +120,12 @@ What Happens:
 
 - The GUI extracts :term:`Spike` and :term:`Burst` data.
 
-- It scans for :term:`Seizure-Like Event (SLE)` s.
+- It scans for :term:`Seizure-Like Events (SLEs)`.
 
 - Analysis usually takes 2-5 minutes per file, depending on its size.
 
 .. tip::
-  Monitor progress in the status bar. You can cancel ongoing analysis with the ⏹ ``Stop`` button if needed.
+  Monitor progress in the status bar. You can cancel ongoing analysis with the ``Stop`` button if needed.
 
 .. note::
   **Quick View vs. Run Analysis**
@@ -175,4 +175,4 @@ Related Pages
 
 - :doc:`../layout/menubar`
 
-- For definitions of ":term:`Discharge`", ":term:`Seizure-Like Event (SLE)`", ":term:`Artifact`", and more, visit the :doc:`../terminology` page.
+- For definitions of ":term:`Discharge`", ":term:`Seizure-Like Events (SLEs)`", ":term:`Artifact`", and more, visit the :doc:`../terminology` page.
