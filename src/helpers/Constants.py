@@ -27,3 +27,6 @@ MAC = "darwin"
 WIN = "win32"
 FONT_FILE = "GeistMonoNerdFontMono-Regular.otf"
 FONT_FAMILY = "GeistMono Nerd Font Mono"
+SCREEN_DIAGONAL_THRESHOLD = 13
+SMALL_FONT_SIZE = 8
+LARGE_FONT_SIZE = 15

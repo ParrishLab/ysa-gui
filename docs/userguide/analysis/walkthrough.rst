@@ -53,21 +53,16 @@ After opening your MEA file, you should **visually check your data** to ensure q
 .. tip::
    It's a good practice to scan through the recording for any major noise or missing data before starting an analysis.
 
+.. note::
+  **Quick View vs. Run Analysis**
+
+  - Use :ref:`Quick View <quick_view>` if you want to **watch live LFP traces** for each channel or **visualize activity** in real time on the false color map. This is ideal for quickly inspecting the recording without doing detailed analysis.
+
+  - Use :ref:`Run Analysis <run_analysis>` if you want to **detect seizures**, **track discharges**, and **generate quantitative results**. This runs the full analysis pipeline, and from here you can save your results from further review.
+
+
 First, choose what you want to view...
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-- **Raster Plots**: Select the :term:`Raster Plot` tab to display spike trains across electrodes.  
-  (Use this to check for active electrodes and obvious artifacts.)
-
-.. image:: ../../_static/gui-walkthrough-raster-plot.png
-  :alt: "Raster Plot" tab selection
-  :align: center
-  :width: 600px
-
-.. admonition:: Explore Raster Plots 📈
-
-  Curious about how spikes are visualized across electrodes?  
-  See the section on :ref:`Raster Plots <raster_plot>` for a deeper dive into interpreting activity on the MEA grid.
 
 - **Location Field Potential (LFP) Traces**: Click any electrode on the MEA Grid to view its :term:`Local Field Potential (LFP)` trace over time. The LFP trace plot reflects slow voltage fluctuations from groups of neurons near the selected electrode, and it is helpful for spotting large discharges or seizure onset patterns.
   
@@ -96,17 +91,24 @@ First, choose what you want to view...
   .. note::
     To learn more about navigating trace plots, saving multiple channels, and using the analysis views in more depth, see the :doc:`../layout/maintab/rightpane` documentation.
 
+- **Raster Plots**: Select the :term:`Raster Plot` tab to display spike trains across electrodes.  
+  (Use this to check for active electrodes and obvious artifacts.)
+
+    - Add something here about: ``Edit Raster Settings``, modify the ``Spike Threshold`` based on what the recording looks like in the raster plot.
+
+.. image:: ../../_static/gui-walkthrough-raster-plot.png
+  :alt: "Raster Plot" tab selection
+  :align: center
+  :width: 600px
+
+.. admonition:: Explore Raster Plots 📈
+
+  Curious about how spikes are visualized across electrodes?  
+  See the section on :ref:`Raster Plots <raster_plot>` for a deeper dive into interpreting activity on the MEA grid.
 
 
-3. Configure Analysis Settings
-------------------------------
 
-.. note::
-  Add material here after adjusting layout of analysis settings.
-
-
-
-4. Run Analysis
+3. Run Analysis
 ---------------
 
 Press the ``Run Analysis`` button at the bottom of the Analysis tab.
@@ -122,17 +124,18 @@ What Happens:
 
 - It scans for :term:`Seizure-Like Events (SLEs)`.
 
-- Analysis usually takes 2-5 minutes per file, depending on its size.
+- Analysis usually takes 2-5 minutes per file, depending on the file size and downsample ratio. 
 
 .. tip::
   Monitor progress in the status bar. You can cancel ongoing analysis with the ``Stop`` button if needed.
 
+
+
+4. Configure Analysis Settings
+------------------------------
+
 .. note::
-  **Quick View vs. Run Analysis**
-
-  - Use :ref:`Quick View <quick_view>` if you want to **watch live LFP traces** for each channel or **visualize activity** in real time on the false color map. This is ideal for quickly inspecting the recording without doing detailed analysis.
-
-  - Use :ref:`Run Analysis <run_analysis>` if you want to **detect seizures**, **track discharges**, and **generate quantitative results**. This runs the full analysis pipeline, and from here you can save your results from further review.
+  Add material here after adjusting layout of analysis settings.
 
 
 
@@ -148,9 +151,6 @@ Once complete, you'll see:
 * Raster plots: With detected events highlighted.
 
 Results are automatically saved and can be exported for further processing.
-
-.. note::
-  Use the Right Pane to switch between views (events, raster plots, statistics).
 
 .. tip::
   🧭 Want to explore how a discharge spreads across the slice?
