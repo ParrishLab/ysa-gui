@@ -69,7 +69,7 @@ from helpers.Constants import (
     FONT_FAMILY,
     FONT_FILE,
     LARGE_FONT_SIZE,
-    SCREEN_DIAGONLA_THRESHOLD,
+    SCREEN_DIAGONAL_THRESHOLD,
     SE,
     SEIZURE,
     SMALL_FONT_SIZE,
@@ -378,6 +378,7 @@ class MainWindow(QMainWindow):
         self.stats_tab.setLayout(self.stats_tab_layout)
 
         self.main_tab_widget.addTab(self.main_tab, "Main")
+        self.main_tab_widget.addTab(self.real_time_analysis_tab, "Real-Time Analysis")
         self.main_tab_widget.addTab(self.stats_tab, "Stats")
 
         self.left_pane = QWidget()
@@ -2842,7 +2843,7 @@ def get_font_size(app: QApplication):
     screen_diagonal = np.sqrt(screen_width**2 + screen_height**2)
 
     # Normalize against an average screen size (e.g., 15 inches)
-    if screen_diagonal >= SCREEN_DIAGONLA_THRESHOLD:
+    if screen_diagonal >= SCREEN_DIAGONAL_THRESHOLD:
         return LARGE_FONT_SIZE
     else:
         return SMALL_FONT_SIZE

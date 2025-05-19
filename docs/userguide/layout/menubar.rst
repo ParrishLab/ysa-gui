@@ -17,7 +17,7 @@ File
 Contains actions regarding opening and saving files.
 
 Open File
-^^^^^^^^^
+"""""""""
 This is the main entry point for starting a new analysis. 
 Clicking it will open a file selection dialog where the user can select ``.brw`` files. 
 Upon selection, the application will search for an image associated with the recording.
@@ -28,25 +28,25 @@ If it doesn't find one, the user must manually select an image.
    Double check the supported image files and the logic for finding an image based on the recording.
 
 View HDF5 File
-^^^^^^^^^^^^^^
+""""""""""""""
 The ``.brw`` file is a binary file that contains the raw data from the MEA recording and is not human-readable.
 This action opens a dialog where the user can view the contents of the ``.brw`` file in a human-readable format.
 When tracking the propagation of discharges, the user can view the discharge centroids, paths, and other useful information not in the original file.
 By pressing the ``Export Discharge Stats`` button, the user can save the discharge statistics as a collection of CSV files.
 
 Downsample and Export
-^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""
 
 .. danger::
 
     This action is not yet implemented. It is intended to downsample the data and export it as a new ``.brw`` file. Pressing this button currently crashes the application.
 
 Save MEA as Video
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 Opens a video editor dialog where the user can save the MEA grid as a video.
 
 Save MEA as PNG
-^^^^^^^^^^^^^^^
+"""""""""""""""
 Opens up a file dialog where the user can save the MEA grid as a PNG.
 
 .. tip::
@@ -54,7 +54,7 @@ Opens up a file dialog where the user can save the MEA grid as a PNG.
    Left clicking on the MEA grid pulls up a context menu with the option to save the MEA as a PNG or a video.
 
 Save Channel Plots 
-^^^^^^^^^^^^^^^^^^
+""""""""""""""""""
 Opens up a file dialog where the user can save all or certain channels' plots as a PNG or SVG. It is requisite to have at least one channel plotted to enable this action.
 
 If desired, the user can hide the red play heads by checking or unchecking the box in the dialog.
@@ -62,7 +62,7 @@ If desired, the user can hide the red play heads by checking or unchecking the b
 Scale refers to the size of the saved image. The default is 4. The larger the scale, the larger the file size and longer the save time.
 
 Save MEA with Channel Plots
-^^^^^^^^^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""""""""""
 Opens up a file dialog where the user can save the MEA grid with channel plots as a PNG or SVG.
 
 
@@ -72,7 +72,7 @@ Edit
 Contains actions for setting parameters used in the analysis.
 
 Set DBSCAN Settings
-^^^^^^^^^^^^^^^^^^^
+"""""""""""""""""""
 Hovering over this action displays a window containing parameters used for the DBSCAN clustering algorithm.
 
   - Epsilon: The maximum distance between two samples for one to be considered as in the same neighborhood as the other.
@@ -92,7 +92,7 @@ Hovering over this action displays a window containing parameters used for the D
 .. _peak_settings:
 
 Set Peak Settings
-^^^^^^^^^^^^^^^^^
+"""""""""""""""""
 Hovering over this action displays a window containing parameters used for a peak finding algorithm.
 
   - :term:`Peak detection threshold`: The number of standard deviations above the mean after which a point may be considered a peak.
@@ -100,7 +100,7 @@ Hovering over this action displays a window containing parameters used for a pea
   - SNR Threshold: The minimum signal-to-noise ratio threshold of an electrode necessary to consider a peak within the given electrode. This acts as a filter to remove noisy or inactive channels.
 
 Set Spectrogram Settings
-^^^^^^^^^^^^^^^^^^^^^^^^
+""""""""""""""""""""""""
 Hovering over this action displays a window containing parameters used for generating spectrograms.
 
   - Chunk Size: The size of the window used to calculate the spectrogram.
@@ -114,17 +114,17 @@ View
 Contains actions for toggling the visibility of elements on the MEA grid and trace plots.
 
 Legend
-^^^^^^
+""""""
 The legend appears to the left of the MEA grid and displays a very simple explanation of the colors used in the MEA grid's cells.
 
 Spread Lines
-^^^^^^^^^^^^
+""""""""""""
 Spread lines highlight the propagation of the detected events. 
 Pink lines are dedicated to the spread of seizures, while darker orange lines display the spread of SE events.
 
 .. _discharge_paths:
 Discharge Paths
-^^^^^^^^^^^^^^^
+"""""""""""""""
 Discharge paths are the paths of the centroids of the clusters detected by the DBSCAN algorithm.
 
 .. image:: ../../_static/discharge_path.png
@@ -134,7 +134,7 @@ Discharge paths are the paths of the centroids of the clusters detected by the D
 
 
 Detected Events
-^^^^^^^^^^^^^^^
+"""""""""""""""
 Detected events are displayed as colored cells on the MEA grid. Blue cells represent seizure events, while orange cells represent SE events. These events are detected using Norby's algorithm.
 
 .. image:: ../../_static/detected-events.gif
@@ -148,7 +148,7 @@ Detected events are displayed as colored cells on the MEA grid. Blue cells repre
 
 .. _false_color_map:
 False Color Map
-^^^^^^^^^^^^^^^
+"""""""""""""""
 The false color map displays the activity of each channel in a color gradient. The color of each channel is determined by calculating the range of values within the bin size and normalizing them to a color gradient.
 Blue represents low activity, while red represents high activity.
 
@@ -164,7 +164,7 @@ In the image above, the false color map displays a region of high activity in th
     By default, both the detected events and the false color map are visible, so the colors blend together.
 
 Mini-map
-^^^^^^^^
+""""""""
 The mini-map appears above the four trace plots. When the user hovers over one of the trace plots, the corresponding channel is highlighted on the mini-map along with the current visible region if zoomed in.
 The user may drag the visible region on the mini-map to change the visible region on the trace plots.
 
@@ -174,7 +174,7 @@ The user may drag the visible region on the mini-map to change the visible regio
    :width: 600px
 
 Playheads
-^^^^^^^^^
+"""""""""
 On each trace plot and the raster plot, there are red play heads that indicate the current time. When exporting figures, it may be desirable to hide these play heads.
 
 .. tip::
@@ -183,7 +183,7 @@ On each trace plot and the raster plot, there are red play heads that indicate t
 
 .. _anti_aliasing:
 Anti-aliasing
-^^^^^^^^^^^^^
+"""""""""""""
 Anti-aliasing smooths the edges of the trace plots. For performance reasons, it is disabled by default. Enabling it considerably slows down the interaction with the trace plots.
 
 No anti-aliasing:
@@ -203,7 +203,7 @@ With anti-aliasing:
 .. _seizure_regions:
 
 Seizure Regions
-^^^^^^^^^^^^^^^
+"""""""""""""""
 Similar to the MEA grid's detected events, the seizure regions are displayed on the trace plots with an identical color scheme. Blue regions represent seizure events, while orange regions represent SE events.
 
 .. image:: ../../_static/seizure-regions.gif
@@ -216,7 +216,7 @@ Similar to the MEA grid's detected events, the seizure regions are displayed on 
     While visible, the user can click on a region to scale the trace plots to that region and seek the play heads to the beginning of the region.
 
 Spectrograms
-^^^^^^^^^^^^
+""""""""""""
 Displays the spectrogram(s) of the selected channel(s) in the trace plots. 
 Instead of representing millivolts over time, the spectrogram represents the frequency content of the signal over time.
 The y-axis will automatically adjust to the frequency range set in the spectrogram settings, which is limited by the Nyquist frequency.

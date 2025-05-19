@@ -21,7 +21,7 @@ class RasterPlot:
         self.spike_data = []
         self.plot_widget = None
         self.raster_red_line = None
-        self.spike_threshold = 0.06
+        self.spike_threshold = 0.2
         self.groups = []
         self.show_group_colors = False
         self.legend = None

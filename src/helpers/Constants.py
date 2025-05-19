@@ -38,6 +38,6 @@ CELL_SIZE = 60  # micrometers
 # Font-specific constants
 FONT_FILE = "GeistMonoNerdFontMono-Regular.otf"
 FONT_FAMILY = "GeistMono Nerd Font Mono"
-SCREEN_DIAGONLA_THRESHOLD = 13
+SCREEN_DIAGONAL_THRESHOLD = 13
 SMALL_FONT_SIZE = 8
 LARGE_FONT_SIZE = 15
