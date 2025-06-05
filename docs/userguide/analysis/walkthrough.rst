@@ -96,13 +96,8 @@ First, choose what you want to view...
 
     - Add something here about: ``Edit Raster Settings``, modify the ``Spike Threshold`` based on what the recording looks like in the raster plot.
 
-.. image:: ../../_static/gui-walkthrough-raster-plot.png
-  :alt: "Raster Plot" tab selection
-  :align: center
-  :width: 600px
-
-.. image:: ../../_static/gui-walkthrough-select-channels-raster-plot.gif
-  :alt: False Color Map
+.. image:: ../../_static/gui-walkthrough-raster-plot-channel-select.gif
+  :alt: Selecting channels and opening raster plot
   :align: center
   :width: 600px
 
