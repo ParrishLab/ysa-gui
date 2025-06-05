@@ -101,6 +101,11 @@ First, choose what you want to view...
   :align: center
   :width: 600px
 
+.. image:: ../../_static/gui-walkthrough-select-channels-raster-plot.gif
+  :alt: False Color Map
+  :align: center
+  :width: 600px
+
 .. admonition:: Explore Raster Plots 📈
 
   Curious about how spikes are visualized across electrodes?  
