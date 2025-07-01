@@ -1,9 +1,10 @@
 # RealTimeAnalysisWidget.py
+
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QPushButton, QLabel, QSpinBox,
     QDoubleSpinBox, QFileDialog, QGroupBox, QGridLayout, QSizePolicy
 )
-from ChannelSelection import ChannelSelection  # Assuming you also copy this class to a separate file
+from widgets.ChannelSelection import ChannelSelection  # Assuming you also copy this class to a separate file
 
 
 class RealTimeAnalysis(QWidget):
@@ -14,15 +15,15 @@ class RealTimeAnalysis(QWidget):
     def setupUI(self):
         layout = QVBoxLayout(self)
 
-        channelGroupBox = QGroupBox("Real-Time Channel Selection and Settings")
-        gridLayout = QGridLayout()
+        channelGroupBox = QGroupBox()
+        gridLayout = QGridLayout()  # This lays out the 3 columns
 
-        # Channel Selection Widget
+        # Left column: Input Grid
         self.inputGridWidget = ChannelSelection(self)
         self.inputGridWidget.setMinimumSize(400, 400)
         gridLayout.addWidget(self.inputGridWidget, 0, 0)
 
-        # Settings Widget
+        # Center column: Settings (using QVBox inside a QWidget)
         settingsWidget = QWidget()
         settingsLayout = QVBoxLayout(settingsWidget)
 
@@ -69,6 +70,11 @@ class RealTimeAnalysis(QWidget):
 
         settingsLayout.addStretch()
         gridLayout.addWidget(settingsWidget, 0, 1)
+
+        # Right column: Output Grid
+        self.outputGridWidget = ChannelSelection(self)
+        self.outputGridWidget.setMinimumSize(400, 400)
+        gridLayout.addWidget(self.outputGridWidget, 0, 2)
 
         channelGroupBox.setLayout(gridLayout)
         layout.addWidget(channelGroupBox)

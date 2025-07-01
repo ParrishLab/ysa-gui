@@ -1,4 +1,4 @@
-# ChannelSelection.py
+# ChannelSelection.py (adapted from ScatterPlot.py)
 
 import numpy as np
 from PyQt5.QtWidgets import (
@@ -27,6 +27,7 @@ class ChannelSelection(QWidget):
         layout = QVBoxLayout(self)
         fig = Figure(figsize=(5, 5), dpi=100)
         fig.set_tight_layout(True)
+        fig.patch.set_facecolor('#212024')  # <-- new
         self.canvas = FigureCanvas(fig)
         layout.addWidget(self.canvas)
 
