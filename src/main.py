@@ -3,6 +3,7 @@ import glob
 import math
 import os
 import sys
+import webbrowser
 from pathlib import Path
 from urllib.request import pathname2url
 
@@ -23,6 +24,7 @@ from PyQt5.QtGui import (
     QCursor,
     QFont,
     QFontDatabase,
+    QPalette,
     QPen,
     QPixmap,
     QPolygonF,
@@ -48,9 +50,12 @@ from PyQt5.QtWidgets import (
     QMessageBox,
     QPushButton,
     QScrollArea,
+    QSizePolicy,
     QSlider,
     QSplitter,
     QTabWidget,
+    QToolTip,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -101,6 +106,7 @@ from widgets.Settings import (
 from widgets.SquareWidget import SquareWidget
 from widgets.VideoEditor import VideoEditor
 from widgets.DocumentationViewer import DocumentationViewer
+from widgets.RealTimeAnalysis import RealTimeAnalysis
 
 import signal_analyzer
 
@@ -206,6 +212,12 @@ class MainWindow(QMainWindow):
         self.menuBar = QMenuBar(self)
         self.menuBar.setNativeMenuBar(False)
         self.setMenuBar(self.menuBar)
+        self.menuBar.setStyleSheet("""
+            QMenuBar::item {
+                padding: 6px 12px;   /* vertical, horizontal padding */
+                spacing: 20px;       /* not always supported, but worth trying */
+            }
+        """)
 
         # TODO: Add MEA Grid image upload option
         self.fileMenu = QMenu("File", self)
@@ -351,29 +363,42 @@ class MainWindow(QMainWindow):
 
     def setup_main_window(self):
         self.main_tab_widget = QTabWidget()
-        self.tab_widget = QTabWidget()
         self.main_tab_widget.currentChanged.connect(self.update_tab_layout)
+        self.left_pane_tabs_widget = QTabWidget()   # Sets up tabs in left pane of main tab (MEA Grid, Raster Plot)
         self.setCentralWidget(self.main_tab_widget)
+        self.main_tab_widget.setStyleSheet("""
+            QTabBar::tab {
+                padding: 6px 12px;    /* optional: also increases clickable area */
+            }
+        """)
 
+        # Main tab setup
         self.main_tab = QWidget()
         self.main_tab_layout = QHBoxLayout()
         self.main_tab.setLayout(self.main_tab_layout)
 
+        # Stats tab setup
         self.stats_tab = QWidget()
         self.stats_tab_layout = QVBoxLayout()
         self.stats_tab.setLayout(self.stats_tab_layout)
 
+        # Real-time analysis tab setup
+        self.real_time_analysis_tab = RealTimeAnalysis(self)
+
+        # Add tabs to top-level tab view
         self.main_tab_widget.addTab(self.main_tab, "Main")
         self.main_tab_widget.addTab(self.real_time_analysis_tab, "Real-Time Analysis")
         self.main_tab_widget.addTab(self.stats_tab, "Stats")
 
+        # Main tab left pane layout (MEA Grid + Raster Plot)
         self.left_pane = QWidget()
         self.left_layout = QVBoxLayout()
         self.left_pane.setLayout(self.left_layout)
-        self.main_tab_layout.addWidget(self.left_pane)
+        self.main_tab_layout.addWidget(self.left_pane, stretch=1)
 
-        self.left_layout.addWidget(self.tab_widget)
+        self.left_layout.addWidget(self.left_pane_tabs_widget)
 
+        ## MEA Grid setup
         self.grid_widget: QGraphicsView = GridWidget(64, 64, self)
         self.grid_widget.setMinimumHeight(self.grid_widget.height() + 100)
         self.grid_widget.cell_clicked.connect(self.on_cell_clicked)
@@ -390,6 +415,7 @@ class MainWindow(QMainWindow):
         self.cluster_tracker = ClusterTracker()
 
         self.legend_widget = LegendWidget()
+        self.legend_widget.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
         self.legend_widget.setVisible(False)
 
         mea_grid_layout = QVBoxLayout()
@@ -403,12 +429,12 @@ class MainWindow(QMainWindow):
         mea_grid_widget = QWidget()
         mea_grid_widget.setLayout(mea_grid_layout)
 
-        self.tab_widget.addTab(mea_grid_widget, "MEA Grid")
+        self.left_pane_tabs_widget.addTab(mea_grid_widget, "MEA Grid")
 
         self.second_tab_widget = QWidget()
         self.second_tab_layout = QVBoxLayout()
         self.second_tab_widget.setLayout(self.second_tab_layout)
-        self.tab_widget.addTab(self.second_tab_widget, "Raster Plot")
+        self.left_pane_tabs_widget.addTab(self.second_tab_widget, "Raster Plot")
 
         self.second_plot_widget = pg.PlotWidget()
         self.second_plot_widget.setAspectLocked(False)
@@ -432,12 +458,12 @@ class MainWindow(QMainWindow):
         self.raster_settings_layout.addWidget(self.toggle_color_mode_button)
         self.toggle_color_mode_button.clicked.connect(self.toggle_raster_color_mode)
 
-        self.tab_widget.currentChanged.connect(self.update_tab_layout)
+        self.left_pane_tabs_widget.currentChanged.connect(self.update_tab_layout)
 
         self.right_pane = QWidget()
         self.right_layout = QVBoxLayout()
         self.right_pane.setLayout(self.right_layout)
-        self.main_tab_layout.addWidget(self.right_pane)
+        self.main_tab_layout.addWidget(self.right_pane, stretch=1)
 
         self.right_splitter = QSplitter(Qt.Vertical)
         self.right_layout.addWidget(self.right_splitter)
@@ -602,6 +628,10 @@ class MainWindow(QMainWindow):
             self.toggleLinesAction.setEnabled(False)
             self.toggleRegionsAction.setEnabled(False)
 
+    # For the "Real-Time Analysis" code to run, BrainWave5 software needs to be installed locally, the path for the *.dll files should be changed below accordingly
+    def has_brainwave_license(self):
+        return Path(os.path.join("C:\\Program Files\\3Brain\\BrainWave 5", "3Brain.BrainWave.IO.dll")).exists()
+
     def resizeEvent(self, event):
         super().resizeEvent(event)
         self.redraw_arrows()
@@ -618,25 +648,22 @@ class MainWindow(QMainWindow):
         self.cluster_tracker.export_discharges_to_zip(self.file_path, output_dir)
 
     def open_docs(self):
-        cwd = Path(__file__).resolve().parent
-        print(f"Current working directory: {cwd}")
-        file_path = cwd / "html" / "index.html"
-        print(f"Opening documentation: {file_path}")
-        if not file_path.exists():
-            # Must not be running from the pre-built executable
-            file_path = cwd / ".." / "docs" / "_build" / "html" / "index.html"
+        url = "https://ysa-gui.readthedocs.io/en/develop/"
+        webbrowser.open(url)
 
-        if not file_path.exists():
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Warning)
-            msg.setText(f"Documentation not found at {file_path}.")
-            msg.setWindowTitle("Documentation")
-            msg.exec_()
-            return
+        #cwd = Path(__file__).resolve().parent
+        #file_path = cwd / "html" / "index.html"
+        #self.notify(f"Opening documentation: {file_path}")
+        #if not file_path.exists():
+        #    file_path = cwd / ".." / "docs" / "_build" / "html" / "index.html"
 
-        url = f"file://{pathname2url(str(file_path.absolute()))}"
-        self.doc_viewer = DocumentationViewer(url)
-        self.doc_viewer.show()
+        #if not file_path.exists():
+        #    self.notify(f"Documentation not found at {file_path}.", bg=1)
+        #    return
+
+        #url = f"file://{pathname2url(str(file_path.absolute()))}"
+        #self.doc_viewer = DocumentationViewer(url)
+        #self.doc_viewer.show()
 
     def toggle_events(self, checked):
         self.do_show_events = checked
@@ -661,7 +688,15 @@ class MainWindow(QMainWindow):
         self.grid_widget.toggle_overlay(checked)
 
     def toggle_legend(self, checked):
-        self.legend_widget.setVisible(checked)
+        if checked:
+            # Make legend take up space when shown
+            self.legend_widget.setSizePolicy(QSizePolicy.Preferred, QSizePolicy.Preferred)
+            self.legend_widget.setVisible(True)
+        else:
+            # Ignore layout space when hidden
+            self.legend_widget.setSizePolicy(QSizePolicy.Ignored, QSizePolicy.Preferred)
+            self.legend_widget.setVisible(False)
+
         if self.data is not None:
             self.redraw_arrows()
             self.update_grid()
@@ -940,9 +975,7 @@ class MainWindow(QMainWindow):
                 self.plotted_channels[i].col,
             ]["signal"]
 
-            print(f"Creating spectrogram for channel {i + 1}")
-
-            f, _, Sxx = spectrogram(
+            f, t, Sxx = spectrogram(
                 eeg_data,
                 fs=self.sampling_rate,
                 window="hann",
@@ -954,6 +987,8 @@ class MainWindow(QMainWindow):
             )
 
             Sxx_db = 10 * np.log10(Sxx)
+
+            # Export from here by channel to h5 (gray-out "Export Spectrograms" button until we choose to "Show Spectrogram," and add this caveat into the ReadTheDocs)
 
             freq_mask = (f >= self.fs_range[0]) & (f <= self.fs_range[1])
             Sxx_db = Sxx_db[freq_mask, :]
@@ -1139,13 +1174,13 @@ class MainWindow(QMainWindow):
                     self.left_pane.setVisible(True)
                 if self.right_pane:
                     self.right_pane.setVisible(True)
-                if self.tab_widget:
-                    if self.tab_widget.currentIndex() == 0:
+                if self.left_pane_tabs_widget:
+                    if self.left_pane_tabs_widget.currentIndex() == 0:
                         self.grid_widget.setVisible(True)
                         self.second_plot_widget.setVisible(False)
                         self.opacity_label.setVisible(True)
                         self.opacity_slider.setVisible(True)
-                    elif self.tab_widget.currentIndex() == 1:
+                    elif self.left_pane_tabs_widget.currentIndex() == 1:
                         self.grid_widget.setVisible(False)
                         self.second_plot_widget.setVisible(True)
                         self.opacity_label.setVisible(False)
@@ -1189,6 +1224,8 @@ class MainWindow(QMainWindow):
         index = self.order_combo.currentIndex()
         order = None
 
+        # if index == 0: Default
+        # Order by Seizure
         if index == 1:
             order = sorted(
                 self.active_channels,
@@ -1196,6 +1233,7 @@ class MainWindow(QMainWindow):
                     x[0] - 1, x[1] - 1, "SzTimes"
                 ),
             )
+        # Order by SE
         elif index == 2:
             order = sorted(
                 self.active_channels,
@@ -2765,6 +2803,9 @@ def get_font_path():
     
 def get_font_size(app: QApplication):
     screen = app.primaryScreen()
+    if not screen:
+        return SMALL_FONT_SIZE
+
     dpi = screen.physicalDotsPerInch()
 
     screen_width = screen.size().width() / dpi
@@ -2772,7 +2813,7 @@ def get_font_size(app: QApplication):
     screen_diagonal = np.sqrt(screen_width ** 2 + screen_height ** 2)
 
     # Normalize against an average screen size (e.g., 15 inches)
-    if screen_diagonal >= SCREEN_DIAGONAL_THRESHOLD:
+    if screen_diagonal > SCREEN_DIAGONAL_THRESHOLD:
         return LARGE_FONT_SIZE
     else:
         return 8
@@ -2800,6 +2841,16 @@ if __name__ == "__main__":
 
     font_size = get_font_size(app)
 
+    # Modify font size and palette of QToolTips
+    QToolTip.setFont(QFont("Arial", 10))
+
+    tooltip_palette = QPalette()
+    tooltip_palette.setColor(QPalette.ToolTipBase, QColor("#2b2b2b"))  # background
+    tooltip_palette.setColor(QPalette.ToolTipText, QColor("white"))    # text
+
+    app.setPalette(app.palette().resolve(tooltip_palette))
+
+    # Font family check
     if font_id == -1:
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
@@ -2862,6 +2913,17 @@ if __name__ == "__main__":
     window = MainWindow()
     window.showMaximized()
     confirm_latest_version(window)
+    window.read_update_message()
+
+    # Disable the "Real-Time Analysis" tab if license is missing
+    if not window.has_brainwave_license():
+        window.main_tab_widget.setTabEnabled(1, False)
+        window.main_tab_widget.tabBar().setTabToolTip(
+            1, "Disabled: 5Brain license not found"
+        )
+    else:
+        window.main_tab_widget.setTabEnabled(1, True)
+
     try:
         if sys.argv[1]:
             window.file_path = sys.argv[1]
