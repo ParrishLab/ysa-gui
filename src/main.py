@@ -106,7 +106,7 @@ from widgets.Settings import (
 from widgets.SquareWidget import SquareWidget
 from widgets.VideoEditor import VideoEditor
 from widgets.DocumentationViewer import DocumentationViewer
-from widgets.RealTimeAnalysis import RealTimeAnalysis
+# from widgets.RealTimeAnalysis import RealTimeAnalysis
 
 import signal_analyzer
 
@@ -236,19 +236,28 @@ class MainWindow(QMainWindow):
             lambda: ChannelExtract(self).exec_()
         )
         self.fileMenu.addAction(self.downsampleExportAction)
+
         self.fileMenu.addSeparator()
         self.createVideoAction = QAction("Save MEA as Video", self)
         self.createVideoAction.triggered.connect(self.show_video_editor)
         self.fileMenu.addAction(self.createVideoAction)
+
         self.saveGridAction = QAction("Save MEA as PNG", self)
         self.saveGridAction.triggered.connect(lambda: open_save_grid_dialog(self))
         self.fileMenu.addAction(self.saveGridAction)
+
         self.saveChannelPlotsAction = QAction("Save Channel Plots", self)
         self.saveChannelPlotsAction.triggered.connect(self.save_channel_plots)
         self.fileMenu.addAction(self.saveChannelPlotsAction)
+
         self.saveMeaWithPlotsAction = QAction("Save MEA with Channel Plots", self)
         self.saveMeaWithPlotsAction.triggered.connect(lambda: save_mea_with_plots(self))
         self.fileMenu.addAction(self.saveMeaWithPlotsAction)
+
+        self.fileMenu.addSeparator()
+        self.exportSpectrogramsAction = QAction("Export Spectrograms", self)
+        self.exportSpectrogramsAction.triggered.connect(self.export_spectrograms)
+        self.fileMenu.addAction(self.exportSpectrogramsAction)
 
         self.editMenu = QMenu("Edit", self)
         self.menuBar.addMenu(self.editMenu)
@@ -383,11 +392,11 @@ class MainWindow(QMainWindow):
         self.stats_tab.setLayout(self.stats_tab_layout)
 
         # Real-time analysis tab setup
-        self.real_time_analysis_tab = RealTimeAnalysis(self)
+        # self.real_time_analysis_tab = RealTimeAnalysis(self)
 
         # Add tabs to top-level tab view
         self.main_tab_widget.addTab(self.main_tab, "Main")
-        self.main_tab_widget.addTab(self.real_time_analysis_tab, "Real-Time Analysis")
+        # self.main_tab_widget.addTab(self.real_time_analysis_tab, "Real-Time Analysis")
         self.main_tab_widget.addTab(self.stats_tab, "Stats")
 
         # Main tab left pane layout (MEA Grid + Raster Plot)
@@ -629,8 +638,10 @@ class MainWindow(QMainWindow):
             self.toggleRegionsAction.setEnabled(False)
 
     # For the "Real-Time Analysis" code to run, BrainWave5 software needs to be installed locally, the path for the *.dll files should be changed below accordingly
+    '''
     def has_brainwave_license(self):
         return Path(os.path.join("C:\\Program Files\\3Brain\\BrainWave 5", "3Brain.BrainWave.IO.dll")).exists()
+    '''
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -2786,6 +2797,9 @@ class MainWindow(QMainWindow):
         dialog = SaveChannelPlotsDialog(self, plot_index)
         dialog.exec_()
 
+    def export_spectrograms(self):
+        return
+
 
 # TODO: Add a font size that will change size for smaller screens
 # TODO: It would be nice to make it higher quality as well
@@ -2916,6 +2930,7 @@ if __name__ == "__main__":
     window.read_update_message()
 
     # Disable the "Real-Time Analysis" tab if license is missing
+    '''
     if not window.has_brainwave_license():
         window.main_tab_widget.setTabEnabled(1, False)
         window.main_tab_widget.tabBar().setTabToolTip(
@@ -2923,6 +2938,7 @@ if __name__ == "__main__":
         )
     else:
         window.main_tab_widget.setTabEnabled(1, True)
+    '''
 
     try:
         if sys.argv[1]:
