@@ -1,11 +1,11 @@
 User Guide
 ==========
 
-👋 Welcome to the meaGUI User Guide!
+👋 Welcome to the YSA User Guide!
 
 This guide is organized into several sections covering installation, setup, and how to use the application's main features.
 
-If you're new to meaGUI, start with the :ref:`installation` section to set up the application.  
+If you're new to YSA, start with the :ref:`installation` section to set up the application.  
 Then, continue with the :ref:`walkthrough` for a step-by-step guide through opening files, running analyses, and viewing results.
 
 .. tip::
@@ -18,7 +18,7 @@ Getting Started
 ~~~~~~~~~~~~~~~
 
 📦 :doc:`Installation <installation>`
-   Set up meaGUI on your machine
+   Set up YSA on your machine
 
 🛠️ :doc:`Configuration <configuration>`  
    Adjust settings for your data and recordings
@@ -31,7 +31,7 @@ Advanced Features
 ~~~~~~~~~~~~~~~~~
 
 🗺️ :doc:`Layout Overview <layout/layout>`  
-   Explore the structure of the GUI — how menus, panes, and tabs fit together.
+   Explore the structure of YSA — how menus, panes, and tabs fit together.
 
    ⚙️ :doc:`Menu Bar <layout/menubar>`  
       Learn what each menu item does — including access to file operations, configuration, and help.
