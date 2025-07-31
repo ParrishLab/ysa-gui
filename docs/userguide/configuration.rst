@@ -1,7 +1,9 @@
 .. _configuration:
+Configuration
+=============
 
 MATLAB
-======
+------
 Certain features of the application require MATLAB to be installed on your system. 
 If you have MATLAB installed in a non-standard location, you will need to manually adjust the location of your MATLAB installation to the default location:
 
@@ -15,16 +17,14 @@ If you have MATLAB installed in a non-standard location, you will need to manual
   If you cannot install MATLAB on your system, when using the application, make sure the ``Use C++`` option is checked before running an analysis.
 
 
-
-Configuration
-=============
-
 Configuring Input Files
 -----------------------
 Downsampled and exported .brw files are ready to be loaded into YSA.
 
 .. note::
   [Insert ChannelExtract GUI information and download link here]
+  
+  - Also explain more about exporting & downsampling: What types of downsampled material the GUI can process within an approximate time frame, and the caveat that the spatial resolution can handle up to 64x64 arrays, which is currently the highest spatial resolution offered on the MEA.
 
 
 To make an .h5 file compatible with YSA, follow these formatting specifications.
