@@ -58,7 +58,7 @@ html_theme_options = {
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "show_nav_level": 1,
     "logo": {
-        "text": "YSA GUI",
+        "text": "YSA",
         "image_light": "_static/icon.ico",
         "image_dark": "_static/icon.ico",
     },
