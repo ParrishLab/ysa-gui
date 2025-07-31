@@ -7,8 +7,8 @@ MATLAB
 Certain features of the application require MATLAB to be installed on your system. 
 If you have MATLAB installed in a non-standard location, you will need to manually adjust the location of your MATLAB installation to the default location:
 
-  - Windows: ``C:\Program Files\MATLAB\R2024a``
-  - MacOS: ``/Applications/MATLAB_R2024a.app``
+- Windows: ``C:\Program Files\MATLAB\R2024a``
+- MacOS: ``/Applications/MATLAB_R2024a.app``
 
 .. note::
   Luckily, the application will automatically detect the MATLAB installation on your system if it is installed in the default location.
@@ -32,83 +32,83 @@ To make an .h5 file compatible with YSA, follow these formatting specifications.
 Data File (.h5)
 ~~~~~~~~~~~~~~~
 
-/3BData
-~~~~~~~
+  /3BData
+  ~~~~~~~
 
-Raw (Raw dataset values in 1D vector)
+  Raw (Raw dataset values in 1D vector)
 
-- Size: 1xn
-- Type: H5T_INTEGER
+  - Size: 1xn
+  - Type: H5T_INTEGER
 
-ChunkSize (Data are stored in chunks of this size)
+  ChunkSize (Data are stored in chunks of this size)
 
-- Size: 1xn
-- Type: H5T_INTEGER
-
-
-/3BRecInfo
-~~~~~~~~~~
+  - Size: 1xn
+  - Type: H5T_INTEGER
 
 
-**/3BRecInfo/3BMeaChip**
-
-Layout
-
-- Size: ['NRows' 'NCols']
-- Type: H5T_INTEGER
-
-NCols
-
-- Size: 1  Type: H5T_INTEGER
-
-NRows
-
-- Size: 1  Type: H5T_INTEGER
+  /3BRecInfo
+  ~~~~~~~~~~
 
 
+  **/3BRecInfo/3BMeaChip**
 
-**/3BRecInfo/3BMeaStreams**
+  Layout
 
-Chs
+  - Size: ['NRows' 'NCols']
+  - Type: H5T_INTEGER
 
-- Size: 143  (Number of channels with exported data)
-- Type: H5T_COMPOUND  ['Row' 'Col'] (List of the [Row Col] locations of the stored channels)
+  NCols
+
+  - Size: 1  Type: H5T_INTEGER
+
+  NRows
+
+  - Size: 1  Type: H5T_INTEGER
 
 
 
-**/3BRecInfo/3BRecVars**
+  **/3BRecInfo/3BMeaStreams**
 
-BitDepth
+  Chs
 
-- Size: 1
-- Type: H5T_INTEGER
+  - Size: 143  (Number of channels with exported data)
+  - Type: H5T_COMPOUND  ['Row' 'Col'] (List of the [Row Col] locations of the stored channels)
 
-ExperimentType
 
-- Size: 1
-- Type: H5T_INTEGER
 
-MaxVolt (mV)
+  **/3BRecInfo/3BRecVars**
 
-- Size: 1
-- Type: H5T_FLOAT
+  BitDepth
 
-MinVolt (mV)
+  - Size: 1
+  - Type: H5T_INTEGER
 
-- Size: 1
-- Type: H5T_FLOAT
+  ExperimentType
 
-NRecFrames (Total number of samples for each channel recorded)
+  - Size: 1
+  - Type: H5T_INTEGER
 
-- Size: 1
-- Type: H5T_INTEGER
+  MaxVolt (mV)
 
-SamplingRate (Hz)
+  - Size: 1
+  - Type: H5T_FLOAT
 
-- Size: 1
-- Type: H5T_FLOAT
+  MinVolt (mV)
 
-SignalInversion (-1 or 1)
+  - Size: 1
+  - Type: H5T_FLOAT
 
-- Size: 1
-- Type: H5T_FLOAT
+  NRecFrames (Total number of samples for each channel recorded)
+
+  - Size: 1
+  - Type: H5T_INTEGER
+
+  SamplingRate (Hz)
+
+  - Size: 1
+  - Type: H5T_FLOAT
+
+  SignalInversion (-1 or 1)
+
+  - Size: 1
+  - Type: H5T_FLOAT
