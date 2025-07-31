@@ -1,5 +1,21 @@
 .. _configuration:
 
+MATLAB
+======
+Certain features of the application require MATLAB to be installed on your system. 
+If you have MATLAB installed in a non-standard location, you will need to manually adjust the location of your MATLAB installation to the default location:
+
+  - Windows: ``C:\Program Files\MATLAB\R2024a``
+  - MacOS: ``/Applications/MATLAB_R2024a.app``
+
+.. note::
+  Luckily, the application will automatically detect the MATLAB installation on your system if it is installed in the default location.
+
+.. tip::
+  If you cannot install MATLAB on your system, when using the application, make sure the ``Use C++`` option is checked before running an analysis.
+
+
+
 Configuration
 =============
 
@@ -7,7 +23,9 @@ Configuring Input Files
 -----------------------
 Downsampled and exported .brw files are ready to be loaded into YSA.
 
-[Insert ChannelExtract GUI information and download link here]
+.. note::
+  [Insert ChannelExtract GUI information and download link here]
+
 
 To make an .h5 file compatible with YSA, follow these formatting specifications.
 
@@ -31,6 +49,7 @@ ChunkSize (Data are stored in chunks of this size)
 /3BRecInfo
 ~~~~~~~~~~
 
+
 **/3BRecInfo/3BMeaChip**
 
 Layout
@@ -46,12 +65,15 @@ NRows
 
 - Size: 1  Type: H5T_INTEGER
 
+
+
 **/3BRecInfo/3BMeaStreams**
 
 Chs
 
 - Size: 143  (Number of channels with exported data)
 - Type: H5T_COMPOUND  ['Row' 'Col'] (List of the [Row Col] locations of the stored channels)
+
 
 
 **/3BRecInfo/3BRecVars**
@@ -90,18 +112,3 @@ SignalInversion (-1 or 1)
 
 - Size: 1
 - Type: H5T_FLOAT
-
-
-MATLAB
-------
-Certain features of the application require MATLAB to be installed on your system. 
-If you have MATLAB installed in a non-standard location, you will need to manually adjust the location of your MATLAB installation to the default location:
-
-  - Windows: ``C:\Program Files\MATLAB\R2024a``
-  - MacOS: ``/Applications/MATLAB_R2024a.app``
-
-.. note::
-  Luckily, the application will automatically detect the MATLAB installation on your system if it is installed in the default location.
-
-.. tip::
-  If you cannot install MATLAB on your system, when using the application, make sure the ``Use C++`` option is checked before running an analysis.
