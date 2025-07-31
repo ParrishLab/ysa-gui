@@ -3,6 +3,66 @@
 Configuration
 =============
 
+Configuring Input Files
+-----------------------
+Downsampled and exported .brw files are ready to be loaded into YSA.
+
+[Insert ChannelExtract GUI information and download link here]
+
+To make an .h5 file compatible with YSA, follow these formatting specifications.
+
+Data File (.h5)
+
+  /3BData
+  ~~~~~~~
+    Raw ''#Raw dataset values in 1D vector''
+    - Size: ''1xn''
+    - Type: ''H5T_INTEGER''
+
+    ChunkSize ''#Data are stored in chunks of this size''
+    - Size: ''1xn''
+    - Type: ''H5T_INTEGER''
+
+  /3BRecInfo
+  ~~~~~~~~~~
+    **''/3BRecInfo/3BMeaChip''**
+    ''Layout''
+    - Size: ''['NRows' 'NCols']''
+    - Type: ''H5T_INTEGER''
+    ''NCols''
+    - Size: ''1''  Type: ''H5T_INTEGER''
+    ''NRows''
+    - Size: ''1''  Type: ''H5T_INTEGER''
+  
+    **''/3BRecInfo/3BMeaStreams''**
+    Chs
+    - Size: ''143  #Number of channels with exported data''
+    - Type: ''H5T_COMPOUND  ['Row' 'Col'] #List of the [Row Col] locations of the stored channels''
+
+    **''/3BRecInfo/3BRecVars''**
+    BitDepth
+    - Size: ``1``
+    - Type: ``H5T_INTEGER``
+    ExperimentType
+    - Size: ``1``
+    - Type: ``H5T_INTEGER``
+    MaxVolt (mV)
+    - Size: ``1``
+    - Type: ``H5T_FLOAT``
+    MinVolt (mV)
+    - Size: ``1``
+    - Type: ``H5T_FLOAT``
+    NRecFrames (Total number of samples for each channel recorded)
+    - Size: 1
+    - Type: H5T_INTEGER
+    SamplingRate (Hz)
+      - Size: 1
+      - Type: H5T_FLOAT
+    SignalInversion (-1 or 1)
+    - Size: 1
+    - Type: H5T_FLOAT
+  
+
 MATLAB
 ------
 Certain features of the application require MATLAB to be installed on your system. 
