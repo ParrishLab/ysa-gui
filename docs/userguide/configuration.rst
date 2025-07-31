@@ -14,7 +14,8 @@ To make an .h5 file compatible with YSA, follow these formatting specifications.
 Data File (.h5)
 ~~~~~~~~~~~~~~~
 
-/3BData::
+/3BData
+::
 
   Raw #Raw dataset values in 1D vector
 
@@ -26,29 +27,35 @@ Data File (.h5)
   - Size: 1xn
   - Type: H5T_INTEGER
 
-/3BRecInfo::
+/3BRecInfo
+::
 
   /3BRecInfo/3BMeaChip
-  Layout
 
-  - Size: ['NRows' 'NCols']
-  - Type: H5T_INTEGER
+    Layout
 
-  NCols
+    - Size: ['NRows' 'NCols']
+    - Type: H5T_INTEGER
 
-  - Size: 1  Type: H5T_INTEGER
-  
-  NRows
+    NCols
 
-  - Size: 1  Type: H5T_INTEGER
+    - Size: 1  Type: H5T_INTEGER
+    
+    NRows
 
-  /3BRecInfo/3BMeaStreams
+    - Size: 1  Type: H5T_INTEGER
+
+
+  **/3BRecInfo/3BMeaStreams**
+
   Chs
 
   - Size: 143  # Number of channels with exported data
   - Type: H5T_COMPOUND  ['Row' 'Col'] # List of the [Row Col] locations of the stored channels
 
-  /3BRecInfo/3BRecVars
+
+  **/3BRecInfo/3BRecVars**
+
   BitDepth
 
   - Size: 1
