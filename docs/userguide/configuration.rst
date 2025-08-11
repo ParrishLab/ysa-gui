@@ -29,8 +29,8 @@ Downsampled and exported .brw files are ready to be loaded into YSA.
 
 To make an .h5 file compatible with YSA, follow these formatting specifications.
 
-Data File (.h5)
-~~~~~~~~~~~~~~~
+Data File (.h5 or other HDF5 extension, e.g. .brw)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 /3BData
 ~~~~~~~
