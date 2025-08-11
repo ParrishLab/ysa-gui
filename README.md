@@ -1,5 +1,6 @@
-# MEA GUI for Parrish Lab
+# YSA GUI for Parrish Lab
+Click [here](https://mea-gui.readthedocs.io/en/latest/) to view the documentation.  
 
-# Downloads
-[Download](https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_Windows.exe) for Windows
-[Download](https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS.pkg) for MacOS
+# Downloads  
+FIX DOWNLOAD LINKS! - Download for Windows  
+Download for MacOS
