@@ -27,8 +27,9 @@ Downsampled and exported .brw files are ready to be loaded into YSA.
   - Also explain more about exporting & downsampling: What types of downsampled material the GUI can process within an approximate time frame, and the caveat that the spatial resolution can handle up to 64x64 arrays, which is currently the highest spatial resolution offered on the MEA.
   
 
-Data File (.h5)
-~~~~~~~~~~~~~~~
+
+Data File (.h5 or other HDF5 extension, e.g. .brw)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 To make an .h5 file compatible with YSA, follow these formatting specifications.
 
 /3BData
