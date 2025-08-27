@@ -6,11 +6,6 @@ At its core, YSA features a graphical user interface (GUI) that enables users to
 The GUI is built using the `PyQt5 <https://www.riverbankcomputing.com/static/Docs/PyQt5/>`_ and `pyqtgraph <http://www.pyqtgraph.org/>`_ libraries.
 
 
-.. danger::
-
-   This project is under active development. Features may change!
-
-
 Getting Started
 ---------------
 

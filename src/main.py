@@ -31,6 +31,8 @@ from PyQt5.QtGui import (
     QPen,
     QPixmap,
     QPolygonF,
+    QFontMetrics,
+    QIcon,
 )
 from PyQt5.QtWidgets import (
     QAction,
@@ -65,6 +67,17 @@ from PyQt5.QtWidgets import (
 import requests
 from scipy.signal import spectrogram
 from sklearn.cluster import DBSCAN
+
+HIGHLIGHT_STYLE = """
+QPushButton {
+    background-color: #8ab4f7;
+    color: black;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #b4c8e6;
+}
+"""
 
 from helpers.Constants import (
     ACTIVE,
@@ -125,6 +138,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle(f"YSA GUI {VERSION}")
+        self.setWindowIcon(QIcon(icon_path))
 
         # If true, the lag is way too much for the user to interact with the trace plots
         pg.setConfigOptions(antialias=False)
@@ -538,25 +552,33 @@ class MainWindow(QMainWindow):
         self.open_button = QPushButton(" Open File")
         self.open_button.clicked.connect(self.open_file)
         self.control_layout.addWidget(self.open_button)
+        auto_resize_font(self.open_button, " Open File")   # Auto-adjust font to fit the button
 
-        self.low_ram_checkbox = QCheckBox("󰡵 Low RAM Mode")
-        self.control_layout.addWidget(self.low_ram_checkbox)
+        # Highlight 'Open File' button on startup
+        self.open_button.setStyleSheet(HIGHLIGHT_STYLE)   
+        self.open_button.setToolTip("Start by opening a .brw or .h5 file")
+
+        #self.low_ram_checkbox = QCheckBox("󰡵 Low RAM Mode")
+        #self.control_layout.addWidget(self.low_ram_checkbox)
 
         self.cpp_mode_checkbox = QCheckBox(" Use C++")
         self.cpp_mode_checkbox.stateChanged.connect(self.toggle_cpp_mode)
-        self.control_layout.addWidget(self.cpp_mode_checkbox)
+        #self.control_layout.addWidget(self.cpp_mode_checkbox)  # Add into 'Settings' in top of app
 
         self.view_button = QPushButton(" Quick View")
         self.view_button.clicked.connect(self.run_analysis)
         self.control_layout.addWidget(self.view_button)
+        auto_resize_font(self.view_button, " Quick View")   # Auto-adjust font to fit the button
 
         self.run_button = QPushButton(" Run Analysis")
         self.run_button.clicked.connect(self.run_analysis)
         self.control_layout.addWidget(self.run_button)
+        auto_resize_font(self.run_button, " Run Analysis")   # Auto-adjust font to fit the button
 
         self.clear_button = QPushButton("󰆴 Clear Plots")
         self.control_layout.addWidget(self.clear_button)
         self.clear_button.clicked.connect(self.clear_plots)
+        auto_resize_font(self.clear_button, "󰆴 Clear Plots")   # Auto-adjust font to fit the button
 
         self.bottom_pane = QWidget()
         self.bottom_layout = QHBoxLayout()
@@ -1828,6 +1850,9 @@ class MainWindow(QMainWindow):
 
         if file_path:
             self.file_path = Path(file_path)
+            self.open_button.setStyleSheet("")  # Reset button to default styling
+            self.view_button.setStyleSheet(HIGHLIGHT_STYLE)
+            self.run_button.setStyleSheet(HIGHLIGHT_STYLE)
 
             # TODO: Separate this into a separate function and add more robust error handling
             try:
@@ -2491,6 +2516,8 @@ class MainWindow(QMainWindow):
         if button_clicked is not None:
             if button_clicked.text().__contains__("Run"):
                 # self.notify("Running analysis")
+                self.view_button.setStyleSheet("")
+                self.run_button.setStyleSheet("")
                 do_analysis = True
             elif button_clicked.text().__contains__("RAM"):
                 print(f"Button text: {button_clicked.text()}")
@@ -2498,6 +2525,7 @@ class MainWindow(QMainWindow):
                 do_analysis = False
             else:
                 # self.notify("Running view without analysis")
+                self.view_button.setStyleSheet("")
                 do_analysis = False
 
         else:
@@ -2573,9 +2601,9 @@ class MainWindow(QMainWindow):
                 self.loading_dialog.progress_bar.setRange(0, num_channels)
             self.analysis_thread.file_path = self.file_path
             self.analysis_thread.do_analysis = do_analysis
-            self.analysis_thread.use_low_ram = (
-                True if self.low_ram_checkbox.isChecked() else False
-            )
+            #self.analysis_thread.use_low_ram = (
+            #    True if self.low_ram_checkbox.isChecked() else False
+            #)
             self.analysis_thread.eng = self.eng
             self.analysis_thread.use_cpp = self.use_cpp
             self.analysis_thread.temp_data_path = temp_data_path
@@ -2908,6 +2936,35 @@ def get_font_size(app: QApplication):
         return SMALL_FONT_SIZE
 
 
+def auto_resize_font(button: QPushButton, text: str, max_font_size=14, min_font_size=8):
+    font = button.font()
+    for size in range(max_font_size, min_font_size - 1, - 1):
+        font.setPointSize(size)
+        metrics = QFontMetrics(font)
+        text_width = metrics.horizontalAdvance(text)
+        if text_width <= button.width() - 12:  # padding adjustment
+            break
+    button.setFont(font)
+
+
+def set_app_icon(app: QApplication, window: QMainWindow):
+    base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
+    if sys.platform == "win32":
+        icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
+    elif sys.platform == "darwin":
+        from AppKit import NSApplication, NSImage
+        icon_path = os.path.join(base_path, "..", "resources", "icon.icns")
+        nsapp = NSApplication.sharedApplication()
+        image = NSImage.alloc().initWithContentsOfFile_(icon_path)
+        nsapp.setApplicationIconImage_(image)
+        return
+    else:
+        icon_path = os.path.join(base_path, "..", "resources", "icon.png")
+
+    app.setWindowIcon(QIcon(icon_path))
+    window.setWindowIcon(QIcon(icon_path))
+
+
 if __name__ == "__main__":
     print("Hello! You are now on the development branch :D")
     app = QApplication(sys.argv)
@@ -2916,14 +2973,11 @@ if __name__ == "__main__":
     font_id = QFontDatabase.addApplicationFont(font_path)
     font_size = get_font_size(app)
 
-    # Modify font size and palette of QToolTips
-    QToolTip.setFont(QFont("Arial", 10))
-
-    tooltip_palette = QPalette()
-    tooltip_palette.setColor(QPalette.ToolTipBase, QColor("#2b2b2b"))  # background
-    tooltip_palette.setColor(QPalette.ToolTipText, QColor("white"))    # text
-
-    app.setPalette(app.palette().resolve(tooltip_palette))
+    # Get the base path depending on frozen vs. dev mode
+    if getattr(sys, "frozen", False):
+        base_path = sys._MEIPASS  # PyInstaller temp path
+    else:
+        base_path = os.path.dirname(__file__)
 
     # Font family check
     if font_id == -1:
@@ -3038,11 +3092,15 @@ if __name__ == "__main__":
         else:
             print("No update available.")
 
+    icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
+
     window = MainWindow()
     window.showMaximized()
     # TODO: Implement the windows version of the updater
     confirm_latest_version(window)
     window.read_update_message()
+
+    set_app_icon(app, window)
 
     # Disable the "Real-Time Analysis" tab if license is missing
     '''
@@ -3054,6 +3112,24 @@ if __name__ == "__main__":
     else:
         window.main_tab_widget.setTabEnabled(1, True)
     '''
+
+    # Modify font size and palette of QToolTips
+    QToolTip.setFont(QFont("Arial", 10))
+
+    tooltip_palette = QPalette()
+    tooltip_palette.setColor(QPalette.ToolTipBase, QColor("#2b2b2b"))  # background
+    tooltip_palette.setColor(QPalette.ToolTipText, QColor("white"))    # text
+
+    app.setPalette(app.palette().resolve(tooltip_palette))
+    app.setStyleSheet(app.styleSheet() + """
+    QToolTip {
+        background-color: #2b2b2b;
+        color: white;
+        border: 1px solid #444;
+        padding: 6px;
+        font: 10pt "Arial";
+    }
+    """)
 
     try:
         if sys.argv[1]:
