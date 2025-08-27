@@ -1789,7 +1789,7 @@ class MainWindow(QMainWindow):
         if file_path:
             print("Selected file path:", file_path)
             file_path = os.path.normpath(file_path)
-            self.file_path = file_path
+            self.file_path = Path(file_path)
             self.open_button.setStyleSheet("")  # Reset button to default styling
             self.view_button.setStyleSheet(HIGHLIGHT_STYLE)
             self.run_button.setStyleSheet(HIGHLIGHT_STYLE)
@@ -2446,7 +2446,11 @@ class MainWindow(QMainWindow):
         button_clicked = self.sender()
         if button_clicked is not None:
             if button_clicked.text().__contains__("Run"):
+<<<<<<< HEAD
                 print("Running analysis")
+=======
+                # self.notify("Running analysis")
+>>>>>>> 67b2556 (Merge pull request #2 from ParrishLab/port/old-develop)
                 self.view_button.setStyleSheet("")
                 self.run_button.setStyleSheet("")
                 do_analysis = True
@@ -2455,7 +2459,11 @@ class MainWindow(QMainWindow):
                 print("Running view with low RAM")
                 do_analysis = False
             else:
+<<<<<<< HEAD
                 print("Running view without analysis")
+=======
+                # self.notify("Running view without analysis")
+>>>>>>> 67b2556 (Merge pull request #2 from ParrishLab/port/old-develop)
                 self.view_button.setStyleSheet("")
                 do_analysis = False
 
@@ -2910,6 +2918,35 @@ def set_app_icon(app: QApplication, window: QMainWindow):
     window.setWindowIcon(QIcon(icon_path))
 
 
+def auto_resize_font(button: QPushButton, text: str, max_font_size=14, min_font_size=8):
+    font = button.font()
+    for size in range(max_font_size, min_font_size - 1, - 1):
+        font.setPointSize(size)
+        metrics = QFontMetrics(font)
+        text_width = metrics.horizontalAdvance(text)
+        if text_width <= button.width() - 12:  # padding adjustment
+            break
+    button.setFont(font)
+
+
+def set_app_icon(app: QApplication, window: QMainWindow):
+    base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
+    if sys.platform == "win32":
+        icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
+    elif sys.platform == "darwin":
+        from AppKit import NSApplication, NSImage
+        icon_path = os.path.join(base_path, "..", "resources", "icon.icns")
+        nsapp = NSApplication.sharedApplication()
+        image = NSImage.alloc().initWithContentsOfFile_(icon_path)
+        nsapp.setApplicationIconImage_(image)
+        return
+    else:
+        icon_path = os.path.join(base_path, "..", "resources", "icon.png")
+
+    app.setWindowIcon(QIcon(icon_path))
+    window.setWindowIcon(QIcon(icon_path))
+
+
 if __name__ == "__main__":
     import signal
 
@@ -2989,6 +3026,8 @@ if __name__ == "__main__":
             msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             msg.buttonClicked.connect(handle_update_button)
             msg.exec_()
+
+    icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
 
     icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
 
