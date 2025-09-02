@@ -43,6 +43,7 @@ jobs:
               brew upgrade cmake || true
             else
               arch -x86_64 brew install python@3.10 cmake pybind11 hdf5
+            fi
             
             arch -x86_64 /bin/bash -c "/usr/local/bin/python3.10 -m venv venv"
             source venv/bin/activate
@@ -54,6 +55,8 @@ jobs:
               brew upgrade cmake || true
             else
               brew install python@3.10 cmake pybind11 hdf5
+            fi
+
             python3.10 -m venv venv
             source venv/bin/activate
             python3.10 -m pip install pyinstaller sphinx sphinx-copybutton sphinxcontrib-video pydata_sphinx_theme setuptools wheel numpy pybind11 requests scipy PyQt5 pyqtgraph opencv-python matplotlib lttbc pyqtdarktheme==2.1.0 h5py scikit-learn tqdm Pillow pywavelets pyqtwebengine pandas
