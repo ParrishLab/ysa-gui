@@ -3,7 +3,6 @@
 temp_data/
 .DS_Store
 .idea/
-main.spec
 main
 main.app/
 main.prof
