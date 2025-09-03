@@ -53,15 +53,29 @@ jobs:
           arch -x86_64 /usr/local/bin/brew list --formula pybind11 >/dev/null 2>&1 || arch -x86_64 /usr/local/bin/brew install --formula pybind11
           arch -x86_64 /usr/local/bin/brew list --formula hdf5 >/dev/null 2>&1 || arch -x86_64 /usr/local/bin/brew install --formula hdf5
 
-      # Make a venv with the Python we just set up, and pip install deps
+      # Make a venv with the Python we just set up, and pip install Python deps
       - name: Create venv and install Python deps
         run: |
           python -m venv venv
           source venv/bin/activate
-          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip wheel
+          # Force binary wheels for numpy/scipy to avoid source-tree imports
+          pip install --only-binary=:all: "numpy==1.26.4" "scipy==1.10.1"
+          # Install the rest of your dependencies
           pip install pyinstaller sphinx sphinx-copybutton sphinxcontrib-video pydata_sphinx_theme \
-            setuptools wheel numpy pybind11 requests scipy PyQt5 pyqtgraph opencv-python matplotlib \
+            setuptools wheel pybind11 requests PyQt5 pyqtgraph opencv-python matplotlib \
             lttbc pyqtdarktheme==2.1.0 h5py scikit-learn tqdm Pillow pywavelets pyqtwebengine pandas
+
+      - name: Debug NumPy import path
+        run: |
+          source venv/bin/activate
+          python - <<'PY'
+          import sys
+          import numpy
+          print("sys.path[0:5]:", sys.path[:5])
+          print("NumPy from:", numpy.__file__)
+          assert "site-packages" in numpy.__file__, f"Unexpected NumPy location: {numpy.__file__}"
+          PY
 
       - name: Build C++ Extensions
         run: |
@@ -110,7 +124,7 @@ jobs:
               --hidden-import h5py.utils \
               --hidden-import h5py._proxy \
               --collect-data h5py \
-              ${{ github.workspace }}/src/main.py \
+              ${{ github.workspace }}/main.spec \
               --icon=${{ github.workspace }}/resources/icon.icns \
               --add-data "${{ github.workspace }}/docs/_build/:." \
               --add-data "${{ github.workspace }}/src/helpers/mat/SzDetectCat.m:." \
@@ -130,7 +144,7 @@ jobs:
               --hidden-import h5py.utils \
               --hidden-import h5py._proxy \
               --collect-data h5py \
-              ${{ github.workspace }}/src/main.py \
+              ${{ github.workspace }}/main.spec \
               --icon=${{ github.workspace }}/resources/icon.icns \
               --add-data "${{ github.workspace }}/docs/_build/:." \
               --add-data "${{ github.workspace }}/src/helpers/mat/SzDetectCat.m:." \

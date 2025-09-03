@@ -19,6 +19,9 @@ if sys.platform == "darwin":
     except Exception:
         pass
 
+# Optionally let PyInstaller pull in any other linked libs from h5py:
+binaries += collect_dynamic_libs("h5py")
+
 a = Analysis(
     ['src\\main.py'],
     pathex=[],
@@ -54,6 +57,7 @@ coll = COLLECT(
     exe,
     a.binaries,
     a.datas,
+    binaries=binaries,
     strip=False,
     upx=True,
     upx_exclude=[],
