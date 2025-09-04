@@ -95,7 +95,7 @@ jobs:
           # Build and install the extensions
           CXXFLAGS="-std=c++17 -O3 -arch ${{ matrix.arch }}" \
           LDFLAGS="-arch ${{ matrix.arch }}" \
-          python3.10 setup.py build_ext --inplace
+          python setup.py build_ext --inplace
 
           # Verify the built extensions
           ls -l *.so
@@ -116,55 +116,39 @@ jobs:
           ARCHFLAGS: "-arch ${{ matrix.arch }}"
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
-            source $HOME/.bash_profile
-            source venv/bin/activate
-            arch -x86_64 /bin/bash -c 'source venv/bin/activate && HDF5_DIR="$(arch -x86_64 brew --prefix hdf5)" pyinstaller --noconfirm --onedir --windowed \
-              --target-architecture ${{ matrix.arch }} \
-              --hidden-import h5py.defs \
-              --hidden-import h5py.utils \
-              --hidden-import h5py._proxy \
-              --collect-data h5py \
-              ${{ github.workspace }}/main.spec \
-              --icon=${{ github.workspace }}/resources/icon.icns \
-              --add-data "${{ github.workspace }}/docs/_build/:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/SzDetectCat.m:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/save_channel_to_mat.m:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/getChs.m:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/get_cat_envelop.m:." \
-              --additional-hooks-dir "${{ github.workspace }}/hooks/" \
-              --add-data "${{ github.workspace }}/src/helpers/mat/*.m:." \
-              --add-binary "$(arch -x86_64 brew --prefix hdf5)/lib/libhdf5.dylib:." \
-              --add-binary "$(arch -x86_64 brew --prefix hdf5)/lib/libhdf5_hl.dylib:." \
-              --add-data "${{ github.workspace }}/resources/fonts/GeistMonoNerdFontMono-Regular.otf:."'
+            # Rosetta shell + venv
+            source "$HOME/.bash_profile"
+            source "venv/bin/activate"
+            # Optional: provide HDF5_DIR for any build-time tools that read it
+            arch -x86_64 /bin/bash -lc '
+              source "venv/bin/activate"
+              export HDF5_DIR="$(arch -x86_64 brew --prefix hdf5)"
+              pyinstaller --noconfirm --clean "${{ github.workspace }}/main.spec"
+            '
           else
-            source venv/bin/activate
-            HDF5_DIR="$(brew --prefix hdf5)" pyinstaller --noconfirm --onedir --windowed \
-              --target-architecture ${{ matrix.arch }} \
-              --hidden-import h5py.defs \
-              --hidden-import h5py.utils \
-              --hidden-import h5py._proxy \
-              --collect-data h5py \
-              ${{ github.workspace }}/main.spec \
-              --icon=${{ github.workspace }}/resources/icon.icns \
-              --add-data "${{ github.workspace }}/docs/_build/:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/SzDetectCat.m:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/save_channel_to_mat.m:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/getChs.m:." \
-              --add-data "${{ github.workspace }}/src/helpers/mat/get_cat_envelop.m:." \
-              --additional-hooks-dir "${{ github.workspace }}/hooks/" \
-              --add-data "${{ github.workspace }}/src/helpers/mat/*.m:." \
-              --add-binary "$(brew --prefix hdf5)/lib/libhdf5.dylib:." \
-              --add-binary "$(brew --prefix hdf5)/lib/libhdf5_hl.dylib:." \
-              --add-data "${{ github.workspace }}/resources/fonts/GeistMonoNerdFontMono-Regular.otf:."
+            # Native arm64
+            source "venv/bin/activate"
+            export HDF5_DIR="$(brew --prefix hdf5)"
+            pyinstaller --noconfirm --clean "${{ github.workspace }}/main.spec"
           fi
 
       - name: Prepare Package
         run: |
-          mkdir -p ${{ github.workspace }}/package_root/MEA\ GUI.app
-          rm -rf ${{ github.workspace }}/package_root/MEA\ GUI.app
-          cp -R ${{ github.workspace }}/dist/main.app ${{ github.workspace }}/package_root/MEA\ GUI.app
-          chmod -R 755 ${{ github.workspace }}/package_root/MEA\ GUI.app
-          pkgbuild --root ${{ github.workspace }}/package_root --identifier com.booka66.meagui --install-location /Applications --version 1.0 ${{ github.workspace }}/MEA_GUI_MacOS_${{ matrix.arch }}.pkg
+          # Clean and recreate package root
+          rm -rf "${{ github.workspace }}/package_root"
+          mkdir -p "${{ github.workspace }}/package_root"
+
+          # Copy the built .app from PyInstaller's onedir layout
+          cp -R "${{ github.workspace }}/dist/YsaGUI/YsaGUI.app" "${{ github.workspace }}/package_root/MEA GUI.app"
+          chmod -R 755 "${{ github.workspace }}/package_root/MEA GUI.app"
+
+          # Use an identifier that matches your spec's bundle_identifier
+          pkgbuild \
+            --root "${{ github.workspace }}/package_root" \
+            --identifier edu.byu.parrishlab.ysagui \
+            --install-location /Applications \
+            --version 1.0 \
+            "${{ github.workspace }}/MEA_GUI_MacOS_${{ matrix.arch }}.pkg"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
