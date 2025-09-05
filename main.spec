@@ -30,9 +30,7 @@ datas = [
     ("resources/icon.ico", "resources"),
     ("resources/icon.icns", "resources"),
     ("resources/fonts/GeistMonoNerdFontMono-Regular.otf", "."),
-    Tree("docs/_build", prefix="."),         # entire built docs tree
-    Tree("src/helpers/mat", prefix="."),     # all .m helpers
-]
+] + Tree("docs/_build", prefix=".") + Tree("src/helpers/mat", prefix=".")
 
 hook_paths = ['hooks'] if os.path.isdir('hooks') else []
 
