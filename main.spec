@@ -1,7 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import os, sys, subprocess
-from PyInstaller.utils.hooks import collect_dynamic_libs
+from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules, collect_data_files
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
 
@@ -21,16 +21,29 @@ if sys.platform == "darwin":
 # binaries += collect_dynamic_libs("h5py")
 
 hiddenimports = [
+    "zstandard",
+    "urllib3",
     "h5py.defs",
     "h5py.utils",
     "h5py._proxy",
 ]
+# include every submodule in sz_se_detect (your C++ extension package)
+hiddenimports += collect_submodules("sz_se_detect")
 
+# ---- Data files ----
 datas = [
     ("resources/icon.ico", "resources"),
     ("resources/icon.icns", "resources"),
     ("resources/fonts/GeistMonoNerdFontMono-Regular.otf", "."),
-] + Tree("docs/_build", prefix=".") + Tree("src/helpers/mat", prefix=".")
+]
+# docs/_build -> .
+if os.path.isdir("docs/_build"):
+    datas += Tree("docs/_build", prefix=".")
+# MATLAB helpers -> .
+if os.path.isdir("src/helpers/mat"):
+    datas += Tree("src/helpers/mat", prefix=".")
+# h5py package data (equivalent to --collect-data h5py)
+datas += collect_data_files("h5py")
 
 hook_paths = ['hooks'] if os.path.isdir('hooks') else []
 

@@ -1,5 +1,8 @@
 name: Build and Release
 
+permissions:
+  contents: write
+
 on:
   push:
     branches: [ develop ]     # CI for integration
@@ -23,13 +26,26 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       # Install Python version determined by the matrix
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Compute version (tag or dev)
+        id: ver
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') { $v = $Matches[1] }
+          else { $shortsha = "${{ github.sha }}"[0..6] -join ''; $v = "0.0.0-dev+$shortsha" }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Update Constants.py version
+        run: |
+          sed -E -i '' 's/__version__\s*=\s*".*"/__version__ = "'${{ steps.ver.outputs.version }}'"/' src/Constants.py
 
       # Install build deps via Homebrew (ARM64 job)
       - name: Install build deps (arm64)
@@ -53,58 +69,46 @@ jobs:
           arch -x86_64 /usr/local/bin/brew list --formula pybind11 >/dev/null 2>&1 || arch -x86_64 /usr/local/bin/brew install --formula pybind11
           arch -x86_64 /usr/local/bin/brew list --formula hdf5 >/dev/null 2>&1 || arch -x86_64 /usr/local/bin/brew install --formula hdf5
 
-      # Make a venv with the Python we just set up, and pip install Python deps
-      - name: Create venv and install Python deps
+      # Install deps into the active venv before compiling C++ extensions
+      - name: Install Python deps for build (macOS)
+        if: ${{ matrix.arch == 'x86_64' }}
+        run: |
+          arch -x86_64 python3 -m venv venv_x86
+          source venv_x86/bin/activate
+          python -m pip install --upgrade pip wheel
+          pip install -r src/helpers/update/requirements.txt
+
+      - name: Install Python deps for build (macOS arm64)
+        if: ${{ matrix.arch == 'arm64' }}
         run: |
           python -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip wheel
-          # Force binary wheels for numpy/scipy to avoid source-tree imports
-          pip install --only-binary=:all: "numpy==1.26.4" "scipy==1.10.1"
-          # Install the rest of your dependencies
-          pip install pyinstaller sphinx sphinx-copybutton sphinxcontrib-video pydata_sphinx_theme \
-            setuptools wheel pybind11 requests PyQt5 pyqtgraph opencv-python matplotlib \
-            lttbc pyqtdarktheme==2.1.0 h5py scikit-learn tqdm Pillow pywavelets pyqtwebengine pandas
-
-      - name: Debug NumPy import path
-        run: |
-          source venv/bin/activate
-          python - <<'PY'
-          import sys
-          import numpy
-          print("sys.path[0:5]:", sys.path[:5])
-          print("NumPy from:", numpy.__file__)
-          assert "site-packages" in numpy.__file__, f"Unexpected NumPy location: {numpy.__file__}"
-          PY
+          pip install -r src/helpers/update/requirements.txt
 
       - name: Build C++ Extensions
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
-            source $HOME/.bash_profile
-          fi
-          source venv/bin/activate
+            source "$HOME/.bash_profile"
+            # ensure venv_x86 exists (created earlier, but safe to check)
+            [ -d venv_x86 ] || arch -x86_64 python3 -m venv venv_x86
+            source venv_x86/bin/activate
+          else
+            [ -d venv ] || python -m venv venv
+            source venv/bin/activate
+          fi 
 
-          # Dynamically find HDF5 installation paths
-          HDF5_DIR=$(brew --prefix hdf5)
-          HDF5_INCLUDE_DIR="$HDF5_DIR/include"
-          HDF5_LIB_DIR="$HDF5_DIR/lib"
-
-          # Change to the extensions directory
           cd ${{ github.workspace }}/src/helpers/extensions
-
-          # Build and install the extensions
           CXXFLAGS="-std=c++17 -O3 -arch ${{ matrix.arch }}" \
           LDFLAGS="-arch ${{ matrix.arch }}" \
           python setup.py build_ext --inplace
-
-          # Verify the built extensions
           ls -l *.so
 
       - name: Build documentation
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
             source $HOME/.bash_profile
-            arch -x86_64 /bin/bash -c "source venv/bin/activate && cd docs && make html"
+            arch -x86_64 /bin/bash -c "source venv_x86/bin/activate && cd docs && make html"
           else
             source venv/bin/activate
             cd docs
@@ -116,21 +120,11 @@ jobs:
           ARCHFLAGS: "-arch ${{ matrix.arch }}"
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
-            # Rosetta shell + venv
-            source "$HOME/.bash_profile"
-            source "venv/bin/activate"
-            # Optional: provide HDF5_DIR for any build-time tools that read it
-            arch -x86_64 /bin/bash -lc '
-              source "venv/bin/activate"
-              export HDF5_DIR="$(arch -x86_64 brew --prefix hdf5)"
-              pyinstaller --noconfirm --clean "${{ github.workspace }}/main.spec"
-            '
+            source venv_x86/bin/activate
           else
-            # Native arm64
-            source "venv/bin/activate"
-            export HDF5_DIR="$(brew --prefix hdf5)"
-            pyinstaller --noconfirm --clean "${{ github.workspace }}/main.spec"
+            source venv/bin/activate
           fi
+          pyinstaller --noconfirm main.spec
 
       - name: Prepare Package
         run: |
@@ -139,28 +133,28 @@ jobs:
           mkdir -p "${{ github.workspace }}/package_root"
 
           # Copy the built .app from PyInstaller's onedir layout
-          cp -R "${{ github.workspace }}/dist/YsaGUI/YsaGUI.app" "${{ github.workspace }}/package_root/MEA GUI.app"
-          chmod -R 755 "${{ github.workspace }}/package_root/MEA GUI.app"
+          cp -R "${{ github.workspace }}/dist/YsaGUI/YsaGUI.app" "${{ github.workspace }}/package_root/YSA GUI.app"
+          chmod -R 755 "${{ github.workspace }}/package_root/YSA GUI.app"
 
           # Use an identifier that matches your spec's bundle_identifier
           pkgbuild \
             --root "${{ github.workspace }}/package_root" \
             --identifier edu.byu.parrishlab.ysagui \
             --install-location /Applications \
-            --version 1.0 \
-            "${{ github.workspace }}/MEA_GUI_MacOS_${{ matrix.arch }}.pkg"
+            --version "${{ steps.ver.outputs.version }}" \
+          "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: macos-package-${{ matrix.arch }}
-          path: ${{ github.workspace }}/MEA_GUI_MacOS_${{ matrix.arch }}.pkg
+          path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
 
   build-windows:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -172,6 +166,30 @@ jobs:
         with:
           arch: x64
           toolset: 14.29
+
+      # Compute version once per job
+      - name: Compute version (tag or dev)
+        id: ver
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
+            $v = $Matches[1]
+          } else {
+            $shortsha = "${{ github.sha }}"[0..6] -join ''
+            $v = "0.0.0-dev+$shortsha"
+          }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      # 🔽 Insert the Constants.py update step here
+      - name: Update Constants.py version
+        shell: pwsh
+        run: |
+          $ver = '${{ steps.ver.outputs.version }}'
+          (Get-Content 'src/Constants.py' -Raw) `
+            -replace '__version__\s*=\s*["''][^"'']+["'']', "__version__ = `"$ver`"" `
+            | Set-Content 'src/Constants.py' -Encoding utf8
+
 
       - name: Create Build Directories
         shell: pwsh
@@ -231,7 +249,7 @@ jobs:
           python -m venv venv
           .\venv\Scripts\Activate.ps1
 
-          pip install pyinstaller sphinx sphinx-copybutton sphinxcontrib-video pydata_sphinx_theme setuptools wheel numpy pybind11 requests scipy PyQt5 pyqtgraph opencv-python matplotlib lttbc pyqtdarktheme==2.1.0 h5py scikit-learn tqdm Pillow pywavelets pyqtwebengine pandas zstandard "urllib3<2"
+          pip install -r src/helpers/update/requirements.txt
 
           # Verify installations
           pip list
@@ -246,10 +264,6 @@ jobs:
           $env:CL = "/MP /EHsc"
 
           # Debug information
-          Write-Host "Current directory:"
-          Get-Location
-          Write-Host "Directory contents:"
-          Get-ChildItem
           Write-Host "HDF5 Directory contents:"
           Get-ChildItem "${{ github.workspace }}/HDF5-1.14.5-win64"
 
@@ -272,35 +286,20 @@ jobs:
         shell: pwsh
         run: |
           .\venv\Scripts\Activate.ps1
-          cd src\helpers\update
-
-          $workspace = "${{ github.workspace }}"
-          $HDF5_DIR = "$workspace/HDF5-1.14.5-win64"
-
-          pyinstaller --collect-submodules=sz_se_detect --noconfirm --onedir --windowed `
-            --hidden-import zstandard `
-            --hidden-import urllib3 `
-            --hidden-import h5py.defs `
-            --hidden-import h5py.utils `
-            --hidden-import h5py._proxy `
-            --collect-data h5py `
-            "$workspace\src\main.py" `
-            --icon="$workspace\resources\icon.ico" `
-            --add-data "$workspace\docs\_build/;." `
-            --add-data "$workspace\src\helpers\mat\SzDetectCat.m;." `
-            --add-data "$workspace\src\helpers\mat\save_channel_to_mat.m;." `
-            --add-data "$workspace\src\helpers\mat\getChs.m;." `
-            --add-data "$workspace\src\helpers\mat\get_cat_envelop.m;." `
-            --additional-hooks-dir "$workspace\hooks\" `
-            --add-data "$workspace\src\helpers\mat\*.m;." `
-            --add-data "$workspace\resources\fonts\GeistMonoNerdFontMono-Regular.otf;." `
-            --add-binary "$HDF5_DIR\bin\hdf5.dll;." `
-            --add-binary "$HDF5_DIR\bin\hdf5_cpp.dll;."
+          $env:HDF5_DIR = "${{ github.workspace }}\HDF5-1.14.5-win64"   # keep if you want those DLLs bundled
+          pyinstaller --noconfirm main.spec
 
       #- name: Create Installer
       #  uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
       #  with:
       #    path: src/helpers/update/MEA_GUI_Installer.iss
+
+      - name: List dist contents (Windows)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path dist)) { throw "dist/ not found" }
+          Get-ChildItem -Recurse dist | Select-Object FullName, Length
 
       # Replacement "Create Installer" block
       - name: Ensure Inno Setup
@@ -317,32 +316,24 @@ jobs:
           if (-not (Test-Path dist)) { throw "dist/ not found" }
           Get-ChildItem -Recurse dist | Select-Object FullName, Length
 
-      - name: Compute version (tag or dev)
-        id: ver
-        shell: pwsh
-        run: |
-          $v = "${{ github.ref_name }}"
-          if ($v -notmatch '^v\d') { $v = '0.0.0-dev' }
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-
       - name: Build installer with ISCC
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $src = Resolve-Path ".\dist\YSA_GUI"   # adjust if your folder differs
-          $out = Resolve-Path ".\installer\out"
+          $src = Resolve-Path ".\dist\YsaGUI"      # or auto-detect the folder if needed
+          $out = Resolve-Path ".\src\helpers\update\Output"
           if (-not (Test-Path $out)) { New-Item -ItemType Directory $out | Out-Null }
-          iscc ".\installer\windows\setup.iss" `
-            /DAppVersion='${{ steps.ver.outputs.version }}' `
+          iscc ".\src\helpers\update\MEA_GUI_Installer.iss" `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
+            /DAppVersion="${{ steps.ver.outputs.version }}" `
             /F"YSA_GUI_Windows"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
-          path: ${{ github.workspace }}/src/helpers/update/Output/MEA_GUI_Windows.exe
+          path: ${{ github.workspace }}/src/helpers/update/Output/YSA_GUI_Windows.exe
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
@@ -350,7 +341,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Download MacOS Intel Artifact
         uses: actions/download-artifact@v4
@@ -371,7 +362,7 @@ jobs:
         id: release_info
         shell: bash
         env:
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          GITHUB_TOKEN: ${{ github.token }}
         run: |
           release_url=$(gh api \
             --method GET \
@@ -382,23 +373,23 @@ jobs:
       - name: Upload macOS Intel Package to Release
         uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.GIT_TOKEN }}
-          files: MEA_GUI_MacOS_x86_64.pkg
-          name: MEA_GUI_MacOS_Intel.pkg
+          token: ${{ github.token }}
+          files: YSA_GUI_MacOS_x86_64.pkg
+          name: YSA_GUI_MacOS_Intel.pkg
           fail_on_unmatched_files: true
 
       - name: Upload macOS Silicon Package to Release
         uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.GIT_TOKEN }}
-          files: MEA_GUI_MacOS_arm64.pkg
-          name: MEA_GUI_MacOS_Silicon.pkg
+          token: ${{ github.token }}
+          files: YSA_GUI_MacOS_arm64.pkg
+          name: YSA_GUI_MacOS_Silicon.pkg
           fail_on_unmatched_files: true
 
       - name: Upload Windows Package to Release
         uses: softprops/action-gh-release@v1
         with:
-          token: ${{ secrets.GIT_TOKEN }}
-          files: MEA_GUI_Windows.exe
-          name: MEA_GUI_Windows.exe
+          token: ${{ github.token }}
+          files: YSA_GUI_Windows.exe
+          name: YSA_GUI_Windows.exe
           fail_on_unmatched_files: true
