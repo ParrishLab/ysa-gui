@@ -297,10 +297,46 @@ jobs:
             --add-binary "$HDF5_DIR\bin\hdf5.dll;." `
             --add-binary "$HDF5_DIR\bin\hdf5_cpp.dll;."
 
-      - name: Create Installer
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        with:
-          path: src/helpers/update/MEA_GUI_Installer.iss
+      #- name: Create Installer
+      #  uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+      #  with:
+      #    path: src/helpers/update/MEA_GUI_Installer.iss
+
+      # Replacement "Create Installer" block
+      - name: Ensure Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+          $env:Path += ";C:\Program Files (x86)\Inno Setup 6"
+          Get-Command iscc -All
+
+      - name: Verify dist output
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not (Test-Path dist)) { throw "dist/ not found" }
+          Get-ChildItem -Recurse dist | Select-Object FullName, Length
+
+      - name: Compute version (tag or dev)
+        id: ver
+        shell: pwsh
+        run: |
+          $v = "${{ github.ref_name }}"
+          if ($v -notmatch '^v\d') { $v = '0.0.0-dev' }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Build installer with ISCC
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = Resolve-Path ".\dist\YSA_GUI"   # adjust if your folder differs
+          $out = Resolve-Path ".\installer\out"
+          if (-not (Test-Path $out)) { New-Item -ItemType Directory $out | Out-Null }
+          iscc ".\installer\windows\setup.iss" `
+            /DAppVersion='${{ steps.ver.outputs.version }}' `
+            /DSourceDir="$src" `
+            /DOutputDir="$out" `
+            /F"YSA_GUI_Windows"
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
