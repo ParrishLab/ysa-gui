@@ -103,7 +103,7 @@ if os.path.isdir("src/helpers/mat"):
     extra_trees.append(Tree("src/helpers/mat", prefix="."))
 
 coll = COLLECT(
-    coll_input,
+    exe,
     a.binaries, a.zipfiles, a.datas,
     *extra_trees,
     binaries=binaries,   # dynamic HDF5 list from earlier
