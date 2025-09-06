@@ -3,7 +3,7 @@
 #define SourceDir GetEnv("SourceDir")
 #define OutputDir GetEnv("OutputDir")
 #define AppVersionFromEnv GetEnv("AppVersion")
-#define FileVersionFromEnv GetEnv("FileVersion")
+#define FileVerFromEnv GetEnv("FileVer")   ; <— numeric x.x.x.x from CI
 
 ; Fallbacks if not provided or for local/manual builds
 #if SourceDir == ""
@@ -21,10 +21,10 @@
 #endif
 
 ; Strict 4-part numeric version for Windows file version resource
-#if FileVersionFromEnv == ""
-  #define MyFileVersion "0.0.0.0"
+#if FileVerFromEnv == ""
+  #define MyFileVer "0.0.0.0"
 #else
-  #define MyFileVersion FileVersionFromEnv
+  #define MyFileVer FileVerFromEnv
 #endif
 
 ; ====== Product identity (fixed across releases) ======
@@ -36,10 +36,9 @@
 [Setup]
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
-AppVersion={#MyAppVersion}
-; ↓↓↓ these MUST be numeric x.x.x.x
-VersionInfoProductVersion={#MyFileVersion}
-VersionInfoFileVersion={#MyFileVersion}
+AppVersion={#MyAppVersion}              ; shown to users
+VersionInfoVersion={#MyFileVer}         ;  must be numeric x.x.x.x
+VersionInfoProductVersion={#MyFileVer}  ; also numeric
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes

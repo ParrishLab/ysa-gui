@@ -378,6 +378,17 @@ jobs:
 
           $src = $srcDir.FullName
 
+          # Build the sanitized version number
+          $tagVer = '${{ steps.ver.outputs.version }}'   # pretty version string
+          $fileVer = ($tagVer -replace '[^0-9\.]', '')   # keep only digits & dots
+          $parts = $fileVer -split '\.'
+          while ($parts.Count -lt 3) { $parts += '0' }
+          if ($parts.Count -gt 4) { $parts = $parts[0..3] }
+          if ($parts.Count -eq 3) { $parts += '0' }
+          $fileVer = ($parts -join '.')
+          Write-Host "Display version: $tagVer"
+          Write-Host "File version: $fileVer"
+
           # Build the installer
           iscc ".\src\helpers\update\MEA_GUI_Installer.iss" `
             /DSourceDir="$src" `
