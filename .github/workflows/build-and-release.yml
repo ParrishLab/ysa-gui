@@ -190,13 +190,17 @@ jobs:
         shell: pwsh
         run: |
           $ref = "${{ github.ref_name }}"
-          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
-            $v = $Matches[1]
+          if ($ref -match '^v(\d+)\.(\d+)\.(\d+)(.*)?$') {
+            # tag: vMAJOR.MINOR.PATCH[anything]
+            $vDisplay = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
+            $vFile = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"   # 4-part numeric
           } else {
-            $shortsha = "${{ github.sha }}"[0..6] -join ''
-            $v = "0.0.0-dev+$shortsha"
+            $shortsha = ("${{ github.sha }}").Substring(0,7)
+            $vDisplay = "0.0.0-dev+$shortsha"
+            $vFile = "0.0.0.0"                                          # safe for Windows file version
           }
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "version=$vDisplay"    | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "file_version=$vFile"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       # 🔽 Insert the Constants.py update step here
       - name: Update Constants.py version
@@ -379,6 +383,7 @@ jobs:
             /DSourceDir="$src" `
             /DOutputDir="$out" `
             /DAppVersion="${{ steps.ver.outputs.version }}" `
+            /DFileVersion="${{ steps.ver.outputs.file_version }}" `
             /F"YSA_GUI_Windows"
 
 

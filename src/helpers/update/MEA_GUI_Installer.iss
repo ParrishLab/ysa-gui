@@ -3,19 +3,28 @@
 #define SourceDir GetEnv("SourceDir")
 #define OutputDir GetEnv("OutputDir")
 #define AppVersionFromEnv GetEnv("AppVersion")
+#define FileVersionFromEnv GetEnv("FileVersion")
 
 ; Fallbacks if not provided or for local/manual builds
 #if SourceDir == ""
   #define SourceDir "dist\YsaGUI"
 #endif
-
 #if OutputDir == ""
   #define OutputDir "src\helpers\update\Output"
 #endif
+
+; Display version (can be semver with suffixes)
 #if AppVersionFromEnv == ""
   #define MyAppVersion "0.0.0-dev"
 #else
   #define MyAppVersion AppVersionFromEnv
+#endif
+
+; Strict 4-part numeric version for Windows file version resource
+#if FileVersionFromEnv == ""
+  #define MyFileVersion "0.0.0.0"
+#else
+  #define MyFileVersion FileVersionFromEnv
 #endif
 
 ; ====== Product identity (fixed across releases) ======
@@ -28,6 +37,9 @@
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
+; ↓↓↓ these MUST be numeric x.x.x.x
+VersionInfoProductVersion={#MyFileVersion}
+VersionInfoFileVersion={#MyFileVersion}
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
