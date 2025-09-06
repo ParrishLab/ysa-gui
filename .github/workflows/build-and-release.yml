@@ -128,27 +128,37 @@ jobs:
 
       - name: Prepare Package
         run: |
-          # Clean and recreate package root
-          rm -rf "${{ github.workspace }}/package_root"
-          mkdir -p "${{ github.workspace }}/package_root"
+          set -euo pipefail
 
-          # Copy the built .app from PyInstaller's onedir layout
-          cp -R "${{ github.workspace }}/dist/YsaGUI/YsaGUI.app" "${{ github.workspace }}/package_root/YSA GUI.app"
-          chmod -R 755 "${{ github.workspace }}/package_root/YSA GUI.app"
+          # Find the first directory created by PyInstaller in dist/
+          DIST_DIR="$(ls -1d dist/*/ | head -n1)"
+          echo "Using dist dir: $DIST_DIR"
 
-          # Use an identifier that matches your spec's bundle_identifier
+          APP_SRC="${DIST_DIR%/}/YsaGUI.app"
+          if [ ! -d "$APP_SRC" ]; then
+            echo "ERROR: YsaGUI.app not found in $DIST_DIR"
+            echo "Dist contents:"
+            ls -la dist
+            echo "Chosen dir contents:"
+            ls -la "$DIST_DIR"
+            exit 1
+          fi
+
+          # Recreate package root
+          rm -rf package_root
+          mkdir -p package_root
+
+          # Copy the .app bundle and set perms
+          cp -R "$APP_SRC" "package_root/YSA GUI.app"
+          chmod -R 755 "package_root/YSA GUI.app"
+
+          # Build the installer pkg
           pkgbuild \
-            --root "${{ github.workspace }}/package_root" \
+            --root "package_root" \
             --identifier edu.byu.parrishlab.ysagui \
             --install-location /Applications \
             --version "${{ steps.ver.outputs.version }}" \
-          "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-package-${{ matrix.arch }}
-          path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
+            "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
 
   build-windows:
     runs-on: windows-latest
@@ -316,18 +326,54 @@ jobs:
           if (-not (Test-Path dist)) { throw "dist/ not found" }
           Get-ChildItem -Recurse dist | Select-Object FullName, Length
 
+      - name: Verify PyInstaller onedir exists (Windows)
+        shell: pwsh
+        run: |
+          if (-not (Test-Path '.\dist')) { throw "dist\ not found" }
+          $exe = Get-ChildItem '.\dist' -Recurse -Filter 'YsaGUI.exe' | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
+            throw "YsaGUI.exe not found under dist\. Did PyInstaller run successfully?"
+          }
+          "Found: $($exe.FullName)"
+
       - name: Build installer with ISCC
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $src = Resolve-Path ".\dist\YsaGUI"      # or auto-detect the folder if needed
-          $out = Resolve-Path ".\src\helpers\update\Output"
-          if (-not (Test-Path $out)) { New-Item -ItemType Directory $out | Out-Null }
+
+          # Ensure Output dir exists *before* we use it
+          $out = Join-Path $PWD 'src\helpers\update\Output'
+          if (-not (Test-Path $out)) {
+            New-Item -ItemType Directory -Force -Path $out | Out-Null
+          }
+
+          # Locate the PyInstaller onedir output that contains YsaGUI.exe
+          if (-not (Test-Path '.\dist')) { throw "dist\ not found. Did PyInstaller run?" }
+
+          $srcDir = Get-ChildItem '.\dist' -Directory |
+            Where-Object { Test-Path (Join-Path $_.FullName 'YsaGUI.exe') } |
+            Select-Object -First 1
+
+          if (-not $srcDir) {
+            # Fallback to a folder literally named YsaGUI if present
+            if (Test-Path '.\dist\YsaGUI') {
+              $srcDir = Get-Item '.\dist\YsaGUI'
+            } else {
+              Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
+              throw "Could not find a PyInstaller onedir containing YsaGUI.exe under dist\."
+            }
+          }
+
+          $src = $srcDir.FullName
+
+          # Build the installer
           iscc ".\src\helpers\update\MEA_GUI_Installer.iss" `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
             /DAppVersion="${{ steps.ver.outputs.version }}" `
             /F"YSA_GUI_Windows"
+
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
