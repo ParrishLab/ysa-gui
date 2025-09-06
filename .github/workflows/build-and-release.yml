@@ -45,7 +45,7 @@ jobs:
 
       - name: Update Constants.py version
         run: |
-          sed -E -i '' 's/__version__\s*=\s*".*"/__version__ = "'${{ steps.ver.outputs.version }}'"/' src/Constants.py
+          sed -E -i '' 's/__version__\s*=\s*".*"/__version__ = "'${{ steps.ver.outputs.version }}'"/' src/helpers/Constants.py
 
       # Install build deps via Homebrew (ARM64 job)
       - name: Install build deps (arm64)
@@ -186,9 +186,9 @@ jobs:
         shell: pwsh
         run: |
           $ver = '${{ steps.ver.outputs.version }}'
-          (Get-Content 'src/Constants.py' -Raw) `
+          (Get-Content 'src/helpers/Constants.py' -Raw) `
             -replace '__version__\s*=\s*["''][^"'']+["'']', "__version__ = `"$ver`"" `
-            | Set-Content 'src/Constants.py' -Encoding utf8
+            | Set-Content 'src/helpers/Constants.py' -Encoding utf8
 
 
       - name: Create Build Directories
