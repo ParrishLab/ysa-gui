@@ -36,12 +36,6 @@ datas = [
     ("resources/icon.icns", "resources"),
     ("resources/fonts/GeistMonoNerdFontMono-Regular.otf", "."),
 ]
-# docs/_build -> .
-if os.path.isdir("docs/_build"):
-    datas += Tree("docs/_build", prefix=".")
-# MATLAB helpers -> .
-if os.path.isdir("src/helpers/mat"):
-    datas += Tree("src/helpers/mat", prefix=".")
 # h5py package data (equivalent to --collect-data h5py)
 datas += collect_data_files("h5py")
 
@@ -101,9 +95,17 @@ if sys.platform == 'darwin':
 else:
     coll_input = exe
 
+# Prepare extra Trees for COLLECT
+extra_trees = []
+if os.path.isdir("docs/_build"):
+    extra_trees.append(Tree("docs/_build", prefix="."))
+if os.path.isdir("src/helpers/mat"):
+    extra_trees.append(Tree("src/helpers/mat", prefix="."))
+
 coll = COLLECT(
     coll_input,
     a.binaries, a.zipfiles, a.datas,
+    *extra_trees,
     binaries=binaries,   # dynamic HDF5 list from earlier
     strip=False, upx=False, name='YsaGUI'
 )
