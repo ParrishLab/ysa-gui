@@ -126,39 +126,46 @@ jobs:
           fi
           pyinstaller --noconfirm main.spec
 
+      - name: Locate built .app
+        run: |
+          set -euo pipefail
+          echo "Dist tree:"
+          find dist -maxdepth 3 -print
+
+          # Find first YsaGUI.app anywhere under dist/
+          APP_PATH="$(find dist -type d -name 'YsaGUI.app' -print -quit)"
+          if [ -z "${APP_PATH}" ]; then
+            echo "ERROR: Could not find YsaGUI.app under dist/"
+            exit 1
+          fi
+          echo "Found app at: ${APP_PATH}"
+
+          # Persist for later steps
+          echo "APP_PATH=${APP_PATH}" >> $GITHUB_ENV
+
+
       - name: Prepare Package
         run: |
           set -euo pipefail
+          rm -rf "${{ github.workspace }}/package_root"
+          mkdir -p "${{ github.workspace }}/package_root"
 
-          # Find the first directory created by PyInstaller in dist/
-          DIST_DIR="$(ls -1d dist/*/ | head -n1)"
-          echo "Using dist dir: $DIST_DIR"
+          # Copy the discovered .app to a stable name with spaces (your product name)
+          cp -R "${APP_PATH}" "${{ github.workspace }}/package_root/YSA GUI.app"
+          chmod -R 755 "${{ github.workspace }}/package_root/YSA GUI.app"
 
-          APP_SRC="${DIST_DIR%/}/YsaGUI.app"
-          if [ ! -d "$APP_SRC" ]; then
-            echo "ERROR: YsaGUI.app not found in $DIST_DIR"
-            echo "Dist contents:"
-            ls -la dist
-            echo "Chosen dir contents:"
-            ls -la "$DIST_DIR"
-            exit 1
-          fi
-
-          # Recreate package root
-          rm -rf package_root
-          mkdir -p package_root
-
-          # Copy the .app bundle and set perms
-          cp -R "$APP_SRC" "package_root/YSA GUI.app"
-          chmod -R 755 "package_root/YSA GUI.app"
-
-          # Build the installer pkg
           pkgbuild \
-            --root "package_root" \
+            --root "${{ github.workspace }}/package_root" \
             --identifier edu.byu.parrishlab.ysagui \
             --install-location /Applications \
             --version "${{ steps.ver.outputs.version }}" \
             "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package-${{ matrix.arch }}
+          path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
 
   build-windows:
     runs-on: windows-latest
