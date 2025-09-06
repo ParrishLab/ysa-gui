@@ -353,36 +353,31 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # Figure out display vs file version
-          $ref = "${{ github.ref_name }}"
-          if ($ref -match '^v(\d+)\.(\d+)\.(\d+)$') {
-            # Release tag: AppVersion=X.Y.Z, FileVersion=X.Y.Z.0
-            $displayVersion = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
-            $fileVersion    = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"
-          } else {
-            # Dev build: display can be semver-ish, but file must be numeric only
-            $shortsha = "${{ github.sha }}".Substring(0,7)
-            $displayVersion = "0.0.0-dev+$shortsha"
-            # Use run_number to avoid letters/leading zeros issues
-            $buildNum = [int]${{ github.run_number }}
-            $fileVersion = "0.0.$buildNum.0"
+          # Locate PyInstaller output (onedir or onefile fallback)
+          $src = Join-Path $PWD 'dist\YsaGUI'
+          if (-not (Test-Path $src)) {
+            $single = Join-Path $PWD 'dist\YsaGUI.exe'
+            if (Test-Path $single) {
+              # Make a temp dir that matches the expected layout for SourceDir
+              $src = Join-Path $PWD 'dist\YsaGUI_single'
+              New-Item -ItemType Directory -Force -Path $src | Out-Null
+              Copy-Item $single -Destination (Join-Path $src 'YsaGUI.exe')
+            } else {
+              Write-Host "dist contents:"; Get-ChildItem -Recurse dist | Select FullName, Length
+              throw "Cannot find PyInstaller output (neither 'dist\YsaGUI' nor 'dist\YsaGUI.exe')."
+            }
           }
 
-          Write-Host "Display version: $displayVersion"
-          Write-Host "File version: $fileVersion"
+          # Ensure Output directory exists (don't Resolve-Path on a non-existent path)
+          $out = Join-Path $PWD 'src\helpers\update\Output'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
 
-          # Resolve paths and ensure output dir exists
-          $src = Resolve-Path ".\dist\YsaGUI"
-          $out = Resolve-Path ".\src\helpers\update\Output"
-          if (-not (Test-Path $out)) { New-Item -ItemType Directory $out | Out-Null }
-
-          # Call ISCC with the two versions
-          iscc ".\src\helpers\update\MEA_GUI_Installer.iss" `
+          # Build the installer
+          & iscc '.\src\helpers\update\MEA_GUI_Installer.iss' `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
-            /DAppVersion="$displayVersion" `
-            /DFileVersion="$fileVersion" `
-            /F"YSA_GUI_Windows"
+            /DAppVersion='${{ steps.ver.outputs.version }}' `
+            /F='YSA_GUI_Windows'
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
