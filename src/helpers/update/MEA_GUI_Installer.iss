@@ -38,7 +38,6 @@ AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for thi
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}              ; shown to users
 VersionInfoVersion={#MyFileVer}         ;  must be numeric x.x.x.x
-VersionInfoProductVersion={#MyFileVer}  ; also numeric
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes

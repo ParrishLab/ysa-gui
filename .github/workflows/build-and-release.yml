@@ -353,50 +353,36 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # Ensure Output dir exists *before* we use it
-          $out = Join-Path $PWD 'src\helpers\update\Output'
-          if (-not (Test-Path $out)) {
-            New-Item -ItemType Directory -Force -Path $out | Out-Null
+          # Figure out display vs file version
+          $ref = "${{ github.ref_name }}"
+          if ($ref -match '^v(\d+)\.(\d+)\.(\d+)$') {
+            # Release tag: AppVersion=X.Y.Z, FileVersion=X.Y.Z.0
+            $displayVersion = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
+            $fileVersion    = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"
+          } else {
+            # Dev build: display can be semver-ish, but file must be numeric only
+            $shortsha = "${{ github.sha }}".Substring(0,7)
+            $displayVersion = "0.0.0-dev+$shortsha"
+            # Use run_number to avoid letters/leading zeros issues
+            $buildNum = [int]${{ github.run_number }}
+            $fileVersion = "0.0.$buildNum.0"
           }
 
-          # Locate the PyInstaller onedir output that contains YsaGUI.exe
-          if (-not (Test-Path '.\dist')) { throw "dist\ not found. Did PyInstaller run?" }
+          Write-Host "Display version: $displayVersion"
+          Write-Host "File version: $fileVersion"
 
-          $srcDir = Get-ChildItem '.\dist' -Directory |
-            Where-Object { Test-Path (Join-Path $_.FullName 'YsaGUI.exe') } |
-            Select-Object -First 1
+          # Resolve paths and ensure output dir exists
+          $src = Resolve-Path ".\dist\YsaGUI"
+          $out = Resolve-Path ".\src\helpers\update\Output"
+          if (-not (Test-Path $out)) { New-Item -ItemType Directory $out | Out-Null }
 
-          if (-not $srcDir) {
-            # Fallback to a folder literally named YsaGUI if present
-            if (Test-Path '.\dist\YsaGUI') {
-              $srcDir = Get-Item '.\dist\YsaGUI'
-            } else {
-              Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
-              throw "Could not find a PyInstaller onedir containing YsaGUI.exe under dist\."
-            }
-          }
-
-          $src = $srcDir.FullName
-
-          # Build the sanitized version number
-          $tagVer = '${{ steps.ver.outputs.version }}'   # pretty version string
-          $fileVer = ($tagVer -replace '[^0-9\.]', '')   # keep only digits & dots
-          $parts = $fileVer -split '\.'
-          while ($parts.Count -lt 3) { $parts += '0' }
-          if ($parts.Count -gt 4) { $parts = $parts[0..3] }
-          if ($parts.Count -eq 3) { $parts += '0' }
-          $fileVer = ($parts -join '.')
-          Write-Host "Display version: $tagVer"
-          Write-Host "File version: $fileVer"
-
-          # Build the installer
+          # Call ISCC with the two versions
           iscc ".\src\helpers\update\MEA_GUI_Installer.iss" `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
-            /DAppVersion="${{ steps.ver.outputs.version }}" `
-            /DFileVersion="${{ steps.ver.outputs.file_version }}" `
+            /DAppVersion="$displayVersion" `
+            /DFileVersion="$fileVersion" `
             /F"YSA_GUI_Windows"
-
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
