@@ -363,7 +363,7 @@ jobs:
               New-Item -ItemType Directory -Force -Path $src | Out-Null
               Copy-Item $single -Destination (Join-Path $src 'YsaGUI.exe')
             } else {
-              Write-Host "dist contents:"; Get-ChildItem -Recurse dist | Select FullName, Length
+              Write-Host "dist contents:"; Get-ChildItem -Recurse dist | Select-Object FullName, Length
               throw "Cannot find PyInstaller output (neither 'dist\YsaGUI' nor 'dist\YsaGUI.exe')."
             }
           }
@@ -372,11 +372,15 @@ jobs:
           $out = Join-Path $PWD 'src\helpers\update\Output'
           New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+          $displayVersion = '${{ steps.ver.outputs.version }}'
+          $fileVersion    = '${{ steps.ver.outputs.file_version }}'
+
           # Build the installer
           & iscc '.\src\helpers\update\MEA_GUI_Installer.iss' `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
-            /DAppVersion='${{ steps.ver.outputs.version }}' `
+            /DAppVersion='$displayVersion' `
+            /DFileVersion="$fileVersion" `
             /F='YSA_GUI_Windows'
 
       - name: Upload Artifact

@@ -1,10 +1,23 @@
 ; ====== Preprocessor configuration ======
-; Allow GitHub Actions to pass these via /DSourceDir /DOutputDir /DAppVersion
+; Display version (can be semver with suffixes)
+#define AppVersionFromEnv GetEnv("AppVersion")
+#if AppVersionFromEnv == ""
+  #define MyAppVersion "0.0.0-dev"
+#else
+  #define MyAppVersion AppVersionFromEnv
+#endif
+
+; Strict 4-part numeric version for Windows file version resource
+#define FileVerFromEnv GetEnv("FileVersion")
+#if FileVerFromEnv == ""
+  ; Fallback must be strictly numeric A.B.C.D (16-bit components)
+  #define MyFileVer "0.0.0.0"
+#else
+  #define MyFileVer FileVerFromEnv
+#endif
+
 #define SourceDir GetEnv("SourceDir")
 #define OutputDir GetEnv("OutputDir")
-#define AppVersionFromEnv GetEnv("AppVersion")
-#define FileVerFromEnv GetEnv("FileVer")   ; <— numeric x.x.x.x from CI
-
 ; Fallbacks if not provided or for local/manual builds
 #if SourceDir == ""
   #define SourceDir "dist\YsaGUI"
@@ -13,26 +26,13 @@
   #define OutputDir "src\helpers\update\Output"
 #endif
 
-; Display version (can be semver with suffixes)
-#if AppVersionFromEnv == ""
-  #define MyAppVersion "0.0.0-dev"
-#else
-  #define MyAppVersion AppVersionFromEnv
-#endif
-
-; Strict 4-part numeric version for Windows file version resource
-#if FileVerFromEnv == ""
-  #define MyFileVer "0.0.0.0"
-#else
-  #define MyFileVer FileVerFromEnv
-#endif
-
 ; ====== Product identity (fixed across releases) ======
 #define MyAppName "YSA GUI"
 #define MyAppPublisher "Parrish Lab"
 #define MyAppExeName "YsaGUI.exe"
 #define MyAppIconName "icon.ico"
 
+; ====== Setup ======
 [Setup]
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
@@ -52,8 +52,6 @@ OutputDir={#OutputDir}  ; write to the folder we pass from CI
 
 ; Sets EXE file properties on installer
 VersionInfoProductName={#MyAppName}
-VersionInfoProductVersion={#MyAppVersion}
-VersionInfoFileVersion={#MyAppVersion}
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
