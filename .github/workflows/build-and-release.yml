@@ -324,10 +324,37 @@ jobs:
           if (-not (Test-Path dist)) { throw "dist/ not found" }
           Get-ChildItem -Recurse dist | Select-Object FullName, Length
 
+      - name: Pre-check Inno paths
+        shell: pwsh
+        run: |
+          $ws = "${{ github.workspace }}"
+          Write-Host "Workspace: $ws"
+          $iss = Join-Path $ws 'src\helpers\update\MEA_GUI_Installer.iss'
+          if (Test-Path $iss) {
+            Write-Host "Found ISS: $(Resolve-Path $iss)"
+          } else {
+            Write-Error "ISS file NOT found: $iss"
+          }
+
+          $src = Join-Path $ws 'dist\YsaGUI'
+          if (Test-Path $src) {
+            Write-Host "Found SourceDir: $(Resolve-Path $src)"
+          } else {
+            Write-Error "SourceDir NOT found: $src"
+          }
+
+          $out = Join-Path $ws 'src\helpers\update\Output'
+          if (!(Test-Path $out)) {
+            New-Item -ItemType Directory -Force -Path $out | Out-Null
+            Write-Host "Created OutputDir: $(Resolve-Path $out)"
+          } else {
+            Write-Host "OutputDir exists: $(Resolve-Path $out)"
+          }
+
       - name: Build installer (Inno Setup Action)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: src/helpers/update/MEA_GUI_Installer.iss
+          path: ${{ github.workspace }}\src\helpers\update\MEA_GUI_Installer.iss
           options: >
             /DSourceDir="${{ github.workspace }}\dist\YsaGUI"
             /DOutputDir="${{ github.workspace }}\src\helpers\update\Output"
