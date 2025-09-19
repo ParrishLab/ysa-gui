@@ -362,9 +362,13 @@ jobs:
       - name: Build installer (Inno Setup Action)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: ${{ env.ISS_PATH }}
+          path: src/helpers/update/MEA_GUI_Installer.iss
           # IMPORTANT: don't quote numeric defines; do quote paths
-          options: /DSourceDir="${{ env.SRC_DIR }}" /DOutputDir="${{ env.OUT_DIR }}" /DAppVersion=${{ steps.ver.outputs.version }} /DFileVer=${{ steps.ver.outputs.file_version }}
+          options: >
+            /DSourceDir=dist/YsaGUI 
+            /DOutputDir=src/helpers/update/Output
+            /DAppVersion=${{ steps.ver.outputs.version }} 
+            /DFileVer=${{ steps.ver.outputs.file_version }}
 
       - name: Verify dist output
         shell: pwsh
