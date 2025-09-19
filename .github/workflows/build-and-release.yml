@@ -176,7 +176,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: 3.10.9
 
@@ -192,19 +192,30 @@ jobs:
         shell: pwsh
         run: |
           $ref = "${{ github.ref_name }}"
-          if ($ref -match '^v(\d+)\.(\d+)\.(\d+)(.*)?$') {
-            # tag: vMAJOR.MINOR.PATCH[anything]
-            $vDisplay = "$($Matches[1]).$($Matches[2]).$($Matches[3])"
-            $vFile = "$($Matches[1]).$($Matches[2]).$($Matches[3]).0"   # 4-part numeric
+          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
+            $disp = $Matches[1]
           } else {
-            $shortsha = ("${{ github.sha }}").Substring(0,7)
-            $vDisplay = "0.0.0-dev+$shortsha"
-            $vFile = "0.0.0.0"                                          # safe for Windows file version
+            $short = "${{ github.sha }}"[0..6] -join ''
+            $disp = "0.0.0-dev+$short"
           }
-          "version=$vDisplay"    | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "file_version=$vFile"  | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          # File version must be numeric a.b.c.d. Use commit chunk for the 3rd part.
+          $m = [regex]::Match($disp, '^(?<maj>\d+)\.(?<min>\d+)\.(?<pat>\d+)')
+          if ($m.Success) {
+            $a = [int]$m.Groups['maj'].Value
+            $b = [int]$m.Groups['min'].Value
+            $c = [int]$m.Groups['pat'].Value
+          } else {
+            $a = 0; $b = 0; $c = 0
+          }
+          $sha = "${{ github.sha }}"
+          $chunk = [Convert]::ToInt32($sha.Substring(0,4), 16) % 65535
+          $filever = "{0}.{1}.{2}.{3}" -f $a, $b, $chunk, 0
 
-      # 🔽 Insert the Constants.py update step here
+          "version=$disp"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "file_version=$filever" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Display version: $disp"
+          Write-Host "File version: $filever"
+
       - name: Update Constants.py version
         shell: pwsh
         run: |
@@ -308,14 +319,8 @@ jobs:
       - name: Build with PyInstaller
         shell: pwsh
         run: |
-          .\venv\Scripts\Activate.ps1
-          $env:HDF5_DIR = "${{ github.workspace }}\HDF5-1.14.5-win64"   # keep if you want those DLLs bundled
-          pyinstaller --noconfirm main.spec
-
-      #- name: Create Installer
-      #  uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-      #  with:
-      #    path: src/helpers/update/MEA_GUI_Installer.iss
+          $env:HDF5_DIR = "${{ github.workspace }}\HDF5-1.14.5-win64"
+          pyinstaller --noconfirm main.spec  # name is set inside spec -> YsaGUI
 
       - name: List dist contents (Windows)
         shell: pwsh
@@ -329,38 +334,36 @@ jobs:
         run: |
           $ws = "${{ github.workspace }}"
           Write-Host "Workspace: $ws"
-          $iss = Join-Path $ws 'src\helpers\update\MEA_GUI_Installer.iss'
-          if (Test-Path $iss) {
-            Write-Host "Found ISS: $(Resolve-Path $iss)"
-          } else {
-            Write-Error "ISS file NOT found: $iss"
-          }
 
-          $src = Join-Path $ws 'dist\YsaGUI'
-          if (Test-Path $src) {
-            Write-Host "Found SourceDir: $(Resolve-Path $src)"
-          } else {
-            Write-Error "SourceDir NOT found: $src"
-          }
+          $iss = Resolve-Path ".\src\helpers\update\MEA_GUI_Installer.iss"
+          Write-Host "Found ISS: $iss"
 
-          $out = Join-Path $ws 'src\helpers\update\Output'
-          if (!(Test-Path $out)) {
-            New-Item -ItemType Directory -Force -Path $out | Out-Null
-            Write-Host "Created OutputDir: $(Resolve-Path $out)"
-          } else {
-            Write-Host "OutputDir exists: $(Resolve-Path $out)"
-          }
+          $src = Resolve-Path ".\dist\YsaGUI"
+          Write-Host "Found SourceDir: $src"
+
+          $out = Join-Path $ws "src\helpers\update\Output"
+          if (-not (Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
+          Write-Host "Ensured OutputDir: $out"
+
+          "ISS_PATH=$iss"    | Out-File -FilePath $env:GITHUB_ENV -Append
+          "SRC_DIR=$src"     | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OUT_DIR=$out"     | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Echo env before Inno
+        shell: pwsh
+        run: |
+          Write-Host "ISS_PATH=$env:ISS_PATH"
+          Write-Host "SRC_DIR=$env:SRC_DIR"
+          Write-Host "OUT_DIR=$env:OUT_DIR"
+          Write-Host "Disp ver: ${{ steps.ver.outputs.version }}"
+          Write-Host "File ver: ${{ steps.ver.outputs.file_version }}"
 
       - name: Build installer (Inno Setup Action)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: ${{ github.workspace }}\src\helpers\update\MEA_GUI_Installer.iss
-          options: >
-            /DSourceDir="${{ github.workspace }}\dist\YsaGUI"
-            /DOutputDir="${{ github.workspace }}\src\helpers\update\Output"
-            /DAppVersion=${{ steps.ver.outputs.version }}
-            /DFileVer=${{ steps.ver.outputs.file_version }}
-            /F"YSA_GUI_Windows"
+          path: ${{ env.ISS_PATH }}
+          # IMPORTANT: don't quote numeric defines; do quote paths
+          options: /DSourceDir="${{ env.SRC_DIR }}" /DOutputDir="${{ env.OUT_DIR }}" /DAppVersion=${{ steps.ver.outputs.version }} /DFileVer=${{ steps.ver.outputs.file_version }}
 
       - name: Verify dist output
         shell: pwsh
@@ -380,60 +383,12 @@ jobs:
           }
           "Found: $($exe.FullName)"
 
-      - name: Build installer with ISCC
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-
-          # Locate PyInstaller output (onedir or onefile fallback)
-          $src = Join-Path $PWD 'dist\YsaGUI'
-          if (-not (Test-Path $src)) {
-            $single = Join-Path $PWD 'dist\YsaGUI.exe'
-            if (Test-Path $single) {
-              # Make a temp dir that matches the expected layout for SourceDir
-              $src = Join-Path $PWD 'dist\YsaGUI_single'
-              New-Item -ItemType Directory -Force -Path $src | Out-Null
-              Copy-Item $single -Destination (Join-Path $src 'YsaGUI.exe')
-            } else {
-              Write-Host "dist contents:"; Get-ChildItem -Recurse dist | Select-Object FullName, Length
-              throw "Cannot find PyInstaller output (neither 'dist\YsaGUI' nor 'dist\YsaGUI.exe')."
-            }
-          }
-
-          # Ensure Output directory exists (don't Resolve-Path on a non-existent path)
-          $out = Join-Path $PWD 'src\helpers\update\Output'
-          New-Item -ItemType Directory -Force -Path $out | Out-Null
-
-          # Derive display + file versions
-          $dispVer = '${{ steps.ver.outputs.version }}'            # e.g., 0.0.0-dev+77ceb47 or 1.2.3
-          if ($dispVer -match '^\d+\.\d+\.\d+$') {
-            $fileVer = "$dispVer.0"                                # 1.2.3 -> 1.2.3.0
-          } else {
-            # For dev builds, turn the short SHA into a number; pad/truncate to be safe
-            $sha = '${{ github.sha }}'.Substring(0,7)
-            $digits = ([int]("0x" + $sha.Substring(0,4))) % 65000  # 0..64999 to fit 16-bit
-            $fileVer = "0.0.$digits.0"                             # e.g., 0.0.30419.0
-          } 
-          Write-Host "Display version: $dispVer"
-          Write-Host "File version: $fileVer"
-
-          $displayVersion = '${{ steps.ver.outputs.version }}'
-          $fileVersion    = '${{ steps.ver.outputs.file_version }}'
-
-          # Build the installer
-          & iscc '.\src\helpers\update\MEA_GUI_Installer.iss' `
-            /DSourceDir="$src" `
-            /DOutputDir="$out" `
-            /DAppVersion=$displayVersion `
-            /DFileVersion=$fileVersion `
-            /F='YSA_GUI_Windows'
-
-      - name: Upload Artifact
+      - name: Upload Windows Installer 
         if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
-          path: ${{ github.workspace }}/src/helpers/update/Output/YSA_GUI_Windows.exe
+          path: ${{ env.OUT_DIR }}\YSA_GUI_Windows.exe
           retention-days: 1
 
   release:
@@ -448,16 +403,19 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: macos-package-x86_64
+          path: .
 
       - name: Download MacOS Silicon Artifact
         uses: actions/download-artifact@v4
         with:
           name: macos-package-arm64
+          path: .
 
       - name: Download Windows Artifact
         uses: actions/download-artifact@v4
         with:
           name: windows-package
+          path: .
 
       - name: Get Release Info
         id: release_info
