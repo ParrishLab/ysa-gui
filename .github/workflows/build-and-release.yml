@@ -162,10 +162,12 @@ jobs:
             "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
 
       - name: Upload Artifact
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: macos-package-${{ matrix.arch }}
           path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
+          retention-days: 1
 
   build-windows:
     runs-on: windows-latest
@@ -372,6 +374,19 @@ jobs:
           $out = Join-Path $PWD 'src\helpers\update\Output'
           New-Item -ItemType Directory -Force -Path $out | Out-Null
 
+          # Derive display + file versions
+          $dispVer = '${{ steps.ver.outputs.version }}'            # e.g., 0.0.0-dev+77ceb47 or 1.2.3
+          if ($dispVer -match '^\d+\.\d+\.\d+$') {
+            $fileVer = "$dispVer.0"                                # 1.2.3 -> 1.2.3.0
+          } else {
+            # For dev builds, turn the short SHA into a number; pad/truncate to be safe
+            $sha = '${{ github.sha }}'.Substring(0,7)
+            $digits = ([int]("0x" + $sha.Substring(0,4))) % 65000  # 0..64999 to fit 16-bit
+            $fileVer = "0.0.$digits.0"                             # e.g., 0.0.30419.0
+          } 
+          Write-Host "Display version: $dispVer"
+          Write-Host "File version: $fileVer"
+
           $displayVersion = '${{ steps.ver.outputs.version }}'
           $fileVersion    = '${{ steps.ver.outputs.file_version }}'
 
@@ -379,15 +394,17 @@ jobs:
           & iscc '.\src\helpers\update\MEA_GUI_Installer.iss' `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
-            /DAppVersion='$displayVersion' `
-            /DFileVersion="$fileVersion" `
+            /DAppVersion=$displayVersion `
+            /DFileVersion=$fileVersion `
             /F='YSA_GUI_Windows'
 
       - name: Upload Artifact
+        if: startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
           path: ${{ github.workspace }}/src/helpers/update/Output/YSA_GUI_Windows.exe
+          retention-days: 1
 
   release:
     if: startsWith(github.ref, 'refs/tags/v')
