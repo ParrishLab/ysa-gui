@@ -324,13 +324,16 @@ jobs:
           if (-not (Test-Path dist)) { throw "dist/ not found" }
           Get-ChildItem -Recurse dist | Select-Object FullName, Length
 
-      # Replacement "Create Installer" block
-      - name: Ensure Inno Setup
-        shell: pwsh
-        run: |
-          choco install innosetup --no-progress -y
-          $env:Path += ";C:\Program Files (x86)\Inno Setup 6"
-          Get-Command iscc -All
+      - name: Build installer (Inno Setup Action)
+        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
+        with:
+          path: src/helpers/update/MEA_GUI_Installer.iss
+          options: >
+            /DSourceDir="${{ github.workspace }}\dist\YsaGUI"
+            /DOutputDir="${{ github.workspace }}\src\helpers\update\Output"
+            /DAppVersion=${{ steps.ver.outputs.version }}
+            /DFileVer=${{ steps.ver.outputs.file_version }}
+            /F"YSA_GUI_Windows"
 
       - name: Verify dist output
         shell: pwsh
