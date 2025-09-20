@@ -366,11 +366,10 @@ jobs:
       - name: Build installer (Inno Setup Action)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
         with:
-          path: src/helpers/update/MEA_GUI_Installer.iss
-          # IMPORTANT: don't quote numeric defines; do quote paths
+          path: ${{ github.workspace }}/src/helpers/update/MEA_GUI_Installer.iss
           options: >
-            /DSourceDir="${{ github.workspace }}\dist\YsaGUI"
-            /DOutputDir="${{ github.workspace }}\src\helpers\update\Output"
+            /DSourceDir=${{ github.workspace }}/dist/YsaGUI
+            /DOutputDir=${{ github.workspace }}/src/helpers/update/Output
             /DAppVersion=${{ steps.ver.outputs.version }} 
             /DFileVer=${{ steps.ver.outputs.file_version }}
 
