@@ -363,14 +363,48 @@ jobs:
           Write-Host "OK: $src"
           Write-Host "OK: $out"
 
-      - name: Build installer (Inno Setup Action)
-        uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
-        with:
-          path: ${{ github.workspace }}/src/helpers/update/MEA_GUI_Installer.iss
-          options: >
-            /DSourceDir=${{ github.workspace }}/dist/YsaGUI
-            /DOutputDir=${{ github.workspace }}/src/helpers/update/Output
-            /DAppVersion=${{ steps.ver.outputs.version }} 
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          winget install --id JRSoftware.InnoSetup -e --silent
+          # Verify ISCC path
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { throw "ISCC not found at $iscc" }
+          Write-Host "ISCC: $iscc"
+
+      - name: Echo Inno inputs
+        shell: pwsh
+        run: |
+          Write-Host "ISS_PATH: $((Resolve-Path .\src\helpers\update\MEA_GUI_Installer.iss).Path)"
+          Write-Host "SRC_DIR : $((Resolve-Path .\dist\YsaGUI).Path)"
+          Write-Host "OUT_DIR : $((Resolve-Path .\src\helpers\update\Output).Path)"
+          Get-ChildItem .\dist\YsaGUI | Select-Object -First 5 | Format-Table -AutoSize
+
+      - name: Assert Inno inputs exist
+        shell: pwsh
+        run: |
+          $iss = "src/helpers/update/MEA_GUI_Installer.iss"
+          if (!(Test-Path $iss)) { throw "Missing ISS: $iss" }
+          if (!(Test-Path "dist/YsaGUI/YsaGUI.exe")) { throw "Missing built EXE: dist/YsaGUI/YsaGUI.exe" }
+          if (!(Test-Path "src/helpers/update/Output")) { New-Item -ItemType Directory -Force -Path "src/helpers/update/Output" | Out-Null }
+          Write-Host "OK: $iss"
+          Write-Host "OK: dist/YsaGUI"
+          Write-Host "OK: src/helpers/update/Output"
+
+      # Compile the installer
+      - name: Build installer with ISCC
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          $iss  = (Resolve-Path ".\src\helpers\update\MEA_GUI_Installer.iss").Path
+          $src  = (Resolve-Path ".\dist\YsaGUI").Path
+          $out  = (Resolve-Path ".\src\helpers\update\Output").Path
+          & $iscc $iss /Qp `
+            /DSourceDir="$src" `
+            /DOutputDir="$out" `
+            /DAppVersion=${{ steps.ver.outputs.version }} `
             /DFileVer=${{ steps.ver.outputs.file_version }}
 
       - name: Verify dist output
