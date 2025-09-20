@@ -350,14 +350,18 @@ jobs:
           "SRC_DIR=$src"     | Out-File -FilePath $env:GITHUB_ENV -Append
           "OUT_DIR=$out"     | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Echo env before Inno
+      - name: Assert Inno inputs exist
         shell: pwsh
         run: |
-          Write-Host "ISS_PATH=$env:ISS_PATH"
-          Write-Host "SRC_DIR=$env:SRC_DIR"
-          Write-Host "OUT_DIR=$env:OUT_DIR"
-          Write-Host "Disp ver: ${{ steps.ver.outputs.version }}"
-          Write-Host "File ver: ${{ steps.ver.outputs.file_version }}"
+          $iss = "src/helpers/update/MEA_GUI_Installer.iss"
+          $src = "${{ github.workspace }}\dist\YsaGUI"
+          $out = "${{ github.workspace }}\src\helpers\update\Output"
+          if (-not (Test-Path $iss)) { throw "ISS not found: $iss" }
+          if (-not (Test-Path $src)) { throw "SourceDir not found: $src" }
+          if (-not (Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
+          Write-Host "OK: $iss"
+          Write-Host "OK: $src"
+          Write-Host "OK: $out"
 
       - name: Build installer (Inno Setup Action)
         uses: Minionguyjpro/Inno-Setup-Action@v1.2.2
@@ -365,8 +369,8 @@ jobs:
           path: src/helpers/update/MEA_GUI_Installer.iss
           # IMPORTANT: don't quote numeric defines; do quote paths
           options: >
-            /DSourceDir=dist/YsaGUI 
-            /DOutputDir=src/helpers/update/Output
+            /DSourceDir="${{ github.workspace }}\dist\YsaGUI"
+            /DOutputDir="${{ github.workspace }}\src\helpers\update\Output"
             /DAppVersion=${{ steps.ver.outputs.version }} 
             /DFileVer=${{ steps.ver.outputs.file_version }}
 
