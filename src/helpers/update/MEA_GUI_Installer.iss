@@ -8,7 +8,7 @@
 #endif
 
 ; Strict 4-part numeric version for Windows file version resource
-#define FileVerFromEnv GetEnv("FileVersion")
+#define FileVerFromEnv GetEnv("FileVer")
 #if FileVerFromEnv == ""
   ; Fallback must be strictly numeric A.B.C.D (16-bit components)
   #define MyFileVer "0.0.0.0"

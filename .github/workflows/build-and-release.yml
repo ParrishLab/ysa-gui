@@ -363,15 +363,33 @@ jobs:
           Write-Host "OK: $src"
           Write-Host "OK: $out"
 
-      - name: Install Inno Setup
+      - name: Install Inno Setup (non-interactive)
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          winget install --id JRSoftware.InnoSetup -e --silent
-          # Verify ISCC path
+          $ProgressPreference = 'SilentlyContinue'
+
+          # Make sure we use the winget community source (not msstore), and accept all agreements.
+          winget source list | Out-Host
+          try { winget source remove msstore | Out-Null } catch { }
+          winget install --id JRSoftware.InnoSetup `
+            --source winget `
+            --accept-source-agreements `
+            --accept-package-agreements `
+            --silent
+
+          # Verify where ISCC landed (x86 path on hosted runners)
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) { throw "ISCC not found at $iscc" }
-          Write-Host "ISCC: $iscc"
+          if (-not (Test-Path $iscc)) {
+            $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          }
+          if (-not (Test-Path $iscc)) { throw "ISCC not found after install at: $iscc" }
+
+          # Show version for logs
+          & $iscc /? | Select-Object -First 1 | Out-Host
+
+          # Export for later steps if you want to call ISCC directly
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
 
       - name: Echo Inno inputs
         shell: pwsh
@@ -380,17 +398,6 @@ jobs:
           Write-Host "SRC_DIR : $((Resolve-Path .\dist\YsaGUI).Path)"
           Write-Host "OUT_DIR : $((Resolve-Path .\src\helpers\update\Output).Path)"
           Get-ChildItem .\dist\YsaGUI | Select-Object -First 5 | Format-Table -AutoSize
-
-      - name: Assert Inno inputs exist
-        shell: pwsh
-        run: |
-          $iss = "src/helpers/update/MEA_GUI_Installer.iss"
-          if (!(Test-Path $iss)) { throw "Missing ISS: $iss" }
-          if (!(Test-Path "dist/YsaGUI/YsaGUI.exe")) { throw "Missing built EXE: dist/YsaGUI/YsaGUI.exe" }
-          if (!(Test-Path "src/helpers/update/Output")) { New-Item -ItemType Directory -Force -Path "src/helpers/update/Output" | Out-Null }
-          Write-Host "OK: $iss"
-          Write-Host "OK: dist/YsaGUI"
-          Write-Host "OK: src/helpers/update/Output"
 
       # Compile the installer
       - name: Build installer with ISCC
