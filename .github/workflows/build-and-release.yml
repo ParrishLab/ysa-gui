@@ -438,8 +438,8 @@ jobs:
           & $iscc "$iss" /Qp `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
-            /DAppVersion=${{ steps.ver.outputs.version }} `
-            /DFileVer=${{ steps.ver.outputs.file_version }}
+            /DAppVersionFromCI=${{ steps.ver.outputs.version }} `
+            /DFileVerFromCI=${{ steps.ver.outputs.file_version }}
 
           Write-Host "Disp ver: ${{ steps.ver.outputs.version }}"
           Write-Host "File ver: ${{ steps.ver.outputs.file_version }}"

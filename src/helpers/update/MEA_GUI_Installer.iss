@@ -1,13 +1,19 @@
 ; ====== Preprocessor configuration ======
-#define AppVersionFromEnv GetEnv("AppVersion")
-#define FileVerFromEnv GetEnv("FileVer")
+#ifndef AppVersionFromCI
+  #define AppVersionFromCI "0.0.0-dev"
+#endif
 
-; Pull values passed from ISCC /D... (with safe fallbacks)
-#define MyAppVersion GetCmdParam('AppVersion', '0.0.0-dev')
-#define MyFileVer    GetCmdParam('FileVer', '0.0.0.0')
+#ifndef FileVerFromCI
+  #define FileVerFromCI "0.0.0.0"
+#endif
 
-#define SourceDir    GetCmdParam('SourceDir', '..\..\..\dist\YsaGUI')
-#define OutputDir    GetCmdParam('OutputDir', '.\Output')
+#ifndef SourceDir
+  #define SourceDir "..\..\..\dist\YsaGUI"
+#endif
+
+#ifndef OutputDir
+  #define OutputDir "."
+#endif
 
 ; ====== Product identity (fixed across releases) ======
 #define MyAppName "YSA GUI"
@@ -16,8 +22,8 @@
 #define MyAppIconName "icon.ico"
 
 ; Debug prints in the ISCC log so you can see what arrived
-#pragma message "MyAppVersion = {#MyAppVersion}"
-#pragma message "MyFileVer    = {#MyFileVer}"
+#pragma message "MyAppVersion = {#AppVersionFromCI}"
+#pragma message "MyFileVer    = {#FileVerFromCI}"
 #pragma message "SourceDir    = {#SourceDir}"
 #pragma message "OutputDir    = {#OutputDir}"
 
@@ -25,8 +31,8 @@
 [Setup]
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
-AppVersion={#MyAppVersion}              ; shown to users
-VersionInfoVersion={#MyFileVer}         ;  must be numeric x.x.x.x
+AppVersion={#AppVersionFromCI}              ; shown to users
+VersionInfoVersion={#FileVerFromCI}         ;  must be numeric x.x.x.x
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
