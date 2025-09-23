@@ -1,6 +1,10 @@
 ; ====== Preprocessor configuration ======
-; Display version (can be semver with suffixes)
 #define AppVersionFromEnv GetEnv("AppVersion")
+#define FileVerFromEnv GetEnv("FileVer")
+#define SourceDir GetEnv("SourceDir")
+#define OutputDir GetEnv("OutputDir")
+
+; Display version (can be semver with suffixes)
 #if AppVersionFromEnv == ""
   #define MyAppVersion "0.0.0-dev"
 #else
@@ -8,7 +12,6 @@
 #endif
 
 ; Strict 4-part numeric version for Windows file version resource
-#define FileVerFromEnv GetEnv("FileVer")
 #if FileVerFromEnv == ""
   ; Fallback must be strictly numeric A.B.C.D (16-bit components)
   #define MyFileVer "0.0.0.0"
@@ -16,8 +19,6 @@
   #define MyFileVer FileVerFromEnv
 #endif
 
-#define SourceDir GetEnv("SourceDir")
-#define OutputDir GetEnv("OutputDir")
 ; Fallbacks if not provided or for local/manual builds
 #if SourceDir == ""
   #define SourceDir "dist\YsaGUI"
