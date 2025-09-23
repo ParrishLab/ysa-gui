@@ -441,6 +441,10 @@ jobs:
             /DAppVersion=${{ steps.ver.outputs.version }} `
             /DFileVer=${{ steps.ver.outputs.file_version }}
 
+          Write-Host "Disp ver: ${{ steps.ver.outputs.version }}"
+          Write-Host "File ver: ${{ steps.ver.outputs.file_version }}"
+
+
       - name: Verify dist output
         shell: pwsh
         run: |

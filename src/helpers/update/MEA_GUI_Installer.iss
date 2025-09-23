@@ -4,6 +4,9 @@
 #define SourceDir GetEnv("SourceDir")
 #define OutputDir GetEnv("OutputDir")
 
+#define AppVersionParam GetStringParam("AppVersion", "0.0.0-dev")
+#define FileVer         GetStringParam("FileVer",   "0.0.0.0")
+
 ; Display version (can be semver with suffixes)
 #if AppVersionFromEnv == ""
   #define MyAppVersion "0.0.0-dev"
@@ -37,8 +40,8 @@
 [Setup]
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
-AppVersion={#MyAppVersion}              ; shown to users
-VersionInfoVersion={#MyFileVer}         ;  must be numeric x.x.x.x
+AppVersion={#AppVersionParam}              ; shown to users
+VersionInfoVersion={#FileVer}         ;  must be numeric x.x.x.x
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
