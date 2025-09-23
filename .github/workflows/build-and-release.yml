@@ -378,18 +378,28 @@ jobs:
             --accept-package-agreements `
             --silent
 
-          # Verify where ISCC landed (x86 path on hosted runners)
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (-not (Test-Path $iscc)) {
-            $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          # Try PATH first (sometimes available immediately, sometimes not)
+          $isccCmd = Get-Command iscc.exe -ErrorAction SilentlyContinue
+          if ($isccCmd) { $iscc = $isccCmd.Source }
+
+          # Probe common install locations for both x86/x64 and per-user installs
+          if (-not $iscc) {
+            $candidates = @(
+              "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+              "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
+              "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe"
+            )
+            $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           }
-          if (-not (Test-Path $iscc)) { throw "ISCC not found after install at: $iscc" }
 
-          # Show version for logs
-          & $iscc /? | Select-Object -First 1 | Out-Host
+          if (-not $iscc) {
+            Write-Host "Checked these locations:"
+            $candidates | ForEach-Object { Write-Host " - $_" }
+            throw "ISCC not found after install."
+          }
 
-          # Export for later steps if you want to call ISCC directly
-          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
+          Write-Host "Resolved ISCC at: $iscc"
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - name: Echo Inno inputs
         shell: pwsh
@@ -399,16 +409,30 @@ jobs:
           Write-Host "OUT_DIR : $((Resolve-Path .\src\helpers\update\Output).Path)"
           Get-ChildItem .\dist\YsaGUI | Select-Object -First 5 | Format-Table -AutoSize
 
-      # Compile the installer
       - name: Build installer with ISCC
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+
+          # Locate ISCC.exe robustly
+          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue)?.Source
+          if (-not $iscc) {
+            $candidates = @(
+              "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+              "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
+            )
+            $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+          if (-not $iscc) { throw "ISCC.exe not found on PATH or in Program Files." }
+          Write-Host "Using ISCC at: $iscc"
+
+          # Resolve inputs
           $iss  = (Resolve-Path ".\src\helpers\update\MEA_GUI_Installer.iss").Path
           $src  = (Resolve-Path ".\dist\YsaGUI").Path
           $out  = (Resolve-Path ".\src\helpers\update\Output").Path
-          & $iscc $iss /Qp `
+          
+          # Run ISCC (quotes are important)
+          & $iscc "$iss" /Qp `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
             /DAppVersion=${{ steps.ver.outputs.version }} `
