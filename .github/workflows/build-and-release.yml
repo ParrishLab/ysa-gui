@@ -369,8 +369,7 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $ProgressPreference = 'SilentlyContinue'
 
-          # Make sure we use the winget community source (not msstore), and accept all agreements.
-          winget source list | Out-Host
+          # Make winget non-interactive and avoid msstore prompts
           try { winget source remove msstore | Out-Null } catch { }
           winget install --id JRSoftware.InnoSetup `
             --source winget `
@@ -378,11 +377,10 @@ jobs:
             --accept-package-agreements `
             --silent
 
-          # Try PATH first (sometimes available immediately, sometimes not)
-          $isccCmd = Get-Command iscc.exe -ErrorAction SilentlyContinue
-          if ($isccCmd) { $iscc = $isccCmd.Source }
+          # Try PATH
+          $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
 
-          # Probe common install locations for both x86/x64 and per-user installs
+          # Probe common locations (x64, x86, per-user)
           if (-not $iscc) {
             $candidates = @(
               "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
@@ -414,16 +412,21 @@ jobs:
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # Locate ISCC.exe robustly
-          $iscc = (Get-Command iscc -ErrorAction SilentlyContinue)?.Source
-          if (-not $iscc) {
-            $candidates = @(
-              "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
-              "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe"
-            )
-            $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          # Use the path we saved during install
+          $iscc = $env:ISCC_PATH
+          if (-not $iscc -or -not (Test-Path $iscc)) {
+            # Fallback to PATH or well-known locations (also include per-user)
+            $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
+            if (-not $iscc) {
+              $candidates = @(
+                "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+                "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
+                "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe"
+              )
+              $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            }
           }
-          if (-not $iscc) { throw "ISCC.exe not found on PATH or in Program Files." }
+          if (-not $iscc) { throw "ISCC.exe not found on PATH or in Program Files/LocalAppData." }
           Write-Host "Using ISCC at: $iscc"
 
           # Resolve inputs
