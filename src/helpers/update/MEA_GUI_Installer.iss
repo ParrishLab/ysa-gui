@@ -1,34 +1,13 @@
 ; ====== Preprocessor configuration ======
 #define AppVersionFromEnv GetEnv("AppVersion")
 #define FileVerFromEnv GetEnv("FileVer")
-#define SourceDir GetEnv("SourceDir")
-#define OutputDir GetEnv("OutputDir")
 
-#define AppVersionParam GetStringParam("AppVersion", "0.0.0-dev")
-#define FileVer         GetStringParam("FileVer",   "0.0.0.0")
+; Pull values passed from ISCC /D... (with safe fallbacks)
+#define MyAppVersion GetCmdParam('AppVersion', '0.0.0-dev')
+#define MyFileVer    GetCmdParam('FileVer', '0.0.0.0')
 
-; Display version (can be semver with suffixes)
-#if AppVersionFromEnv == ""
-  #define MyAppVersion "0.0.0-dev"
-#else
-  #define MyAppVersion AppVersionFromEnv
-#endif
-
-; Strict 4-part numeric version for Windows file version resource
-#if FileVerFromEnv == ""
-  ; Fallback must be strictly numeric A.B.C.D (16-bit components)
-  #define MyFileVer "0.0.0.0"
-#else
-  #define MyFileVer FileVerFromEnv
-#endif
-
-; Fallbacks if not provided or for local/manual builds
-#if SourceDir == ""
-  #define SourceDir "dist\YsaGUI"
-#endif
-#if OutputDir == ""
-  #define OutputDir "src\helpers\update\Output"
-#endif
+#define SourceDir    GetCmdParam('SourceDir', '..\..\..\dist\YsaGUI')
+#define OutputDir    GetCmdParam('OutputDir', '.\Output')
 
 ; ====== Product identity (fixed across releases) ======
 #define MyAppName "YSA GUI"
@@ -36,12 +15,18 @@
 #define MyAppExeName "YsaGUI.exe"
 #define MyAppIconName "icon.ico"
 
+; Debug prints in the ISCC log so you can see what arrived
+#pragma message "MyAppVersion = {#MyAppVersion}"
+#pragma message "MyFileVer    = {#MyFileVer}"
+#pragma message "SourceDir    = {#SourceDir}"
+#pragma message "OutputDir    = {#OutputDir}"
+
 ; ====== Setup ======
 [Setup]
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
-AppVersion={#AppVersionParam}              ; shown to users
-VersionInfoVersion={#FileVer}         ;  must be numeric x.x.x.x
+AppVersion={#MyAppVersion}              ; shown to users
+VersionInfoVersion={#MyFileVer}         ;  must be numeric x.x.x.x
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
