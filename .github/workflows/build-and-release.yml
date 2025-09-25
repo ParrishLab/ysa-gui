@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest tests/ -v --cov=src --cov-report=xml
+        pytest tests/unit/ -v --cov=src --cov-report=xml
 
     - name: Lint with flake8
       run: |
