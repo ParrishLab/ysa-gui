@@ -31,8 +31,8 @@
 [Setup]
 AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
 AppName={#MyAppName}
-AppVersion={#AppVersionFromCI}              ; shown to users
-VersionInfoVersion={#FileVerFromCI}         ;  must be numeric x.x.x.x
+AppVersion={#AppVersionFromCI}              
+VersionInfoVersion={#FileVerFromCI}         
 AppPublisher={#MyAppPublisher}
 DefaultDirName={autopf}\{#MyAppName}
 DisableProgramGroupPage=yes
@@ -43,7 +43,7 @@ WizardStyle=modern
 PrivilegesRequired=lowest
 PrivilegesRequiredOverridesAllowed=dialog
 SetupIconFile="..\..\..\resources\{#MyAppIconName}"
-OutputDir={#OutputDir}  ; write to the folder we pass from CI
+OutputDir={#OutputDir}
 
 ; Sets EXE file properties on installer
 VersionInfoProductName={#MyAppName}
