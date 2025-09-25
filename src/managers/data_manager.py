@@ -250,7 +250,7 @@ class DataManager:
             self.main_window.file_path, float(start), float(end)
         )
 
-    def setup_background_image(self, file_path):
+    def setup_background_image(self, file_path: str) -> bool:
         """Setup background image for grid based on file path"""
         try:
             baseName = os.path.basename(file_path)

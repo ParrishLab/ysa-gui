@@ -5,9 +5,11 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 
+from widgets.Media import open_save_grid_dialog
+
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
-    from ..main_refactored import MainWindow
+    from main import MainWindow
 
 
 class UIManager:
@@ -57,12 +59,12 @@ class UIManager:
         self.main_window.grid_widget.setMinimumHeight(
             self.main_window.grid_widget.height() + 100)
         self.main_window.grid_widget.cell_clicked.connect(
-            self.main_window.on_cell_clicked)
+            self.main_window.event_handler.handle_cell_click)
         self.main_window.grid_widget.save_as_video_requested.connect(
             self.main_window.show_video_editor
         )
         self.main_window.grid_widget.save_as_image_requested.connect(
-            lambda: self.main_window._save_grid_dialog()
+            lambda: open_save_grid_dialog(self.main_window)
         )
 
         square_widget = SquareWidget()
@@ -119,7 +121,7 @@ class UIManager:
         self.main_window.raster_settings_layout.addWidget(
             self.main_window.edit_raster_settings_button)
         self.main_window.edit_raster_settings_button.clicked.connect(
-            self.main_window.edit_raster_settings
+            self.main_window.analysis_manager.edit_raster_settings
         )
 
         self.main_window.create_groups_button = QPushButton("Create Groups")
@@ -156,7 +158,7 @@ class UIManager:
         self.main_window.graph_widget = GraphWidget(self.main_window)
         self.main_window.graph_layout.addWidget(self.main_window.graph_widget)
         self.main_window.graph_widget.region_clicked.connect(
-            self.main_window.handle_region_clicked)
+            self.main_window.event_handler.handle_region_click)
         self.main_window.graph_widget.save_single_plot.connect(
             lambda: self.main_window.save_channel_plot(
                 self.main_window.graph_widget.active_plot_index)
@@ -260,7 +262,7 @@ class UIManager:
 
         self.progress_bar = EEGScrubberWidget()
         self.progress_bar.valueChanged.connect(
-            self.main_window.seekPosition)
+            self.main_window.playback_manager.seek_position)
         self.main_window.playback_layout.addWidget(
             self.progress_bar, 1)
 
@@ -271,35 +273,35 @@ class UIManager:
 
         self.skip_backward_button = QPushButton("")
         self.skip_backward_button.clicked.connect(
-            self.main_window.skipBackward)
+            self.main_window.playback_manager.skip_backward)
         self.progress_bar.control_layout.addWidget(
             self.skip_backward_button)
 
         self.prev_frame_button = QPushButton("")
         self.prev_frame_button.clicked.connect(
-            self.main_window.stepBackward)
+            self.main_window.playback_manager.step_backward)
         self.progress_bar.control_layout.addWidget(
             self.prev_frame_button)
 
         self.play_pause_button = QPushButton("")
         self.play_pause_button.clicked.connect(
-            self.main_window.playPause)
+            self.main_window.playback_manager.play_pause)
         self.progress_bar.control_layout.addWidget(
             self.play_pause_button)
 
         self.main_window.playback_timer = QTimer()
         self.main_window.playback_timer.timeout.connect(
-            self.main_window.updatePlayback)
+            self.main_window.playback_manager.update_playback)
 
         self.next_frame_button = QPushButton("")
         self.next_frame_button.clicked.connect(
-            self.main_window.stepForward)
+            self.main_window.playback_manager.step_forward)
         self.progress_bar.control_layout.addWidget(
             self.next_frame_button)
 
         self.skip_forward_button = QPushButton("")
         self.skip_forward_button.clicked.connect(
-            self.main_window.skipForward)
+            self.main_window.playback_manager.skip_forward)
         self.progress_bar.control_layout.addWidget(
             self.skip_forward_button)
 
@@ -309,7 +311,7 @@ class UIManager:
         )
         self.speed_combo.setCurrentIndex(2)
         self.speed_combo.currentIndexChanged.connect(
-            self.main_window.setPlaybackSpeed)
+            self.main_window.playback_manager.set_playback_speed)
 
         self.speed_combo.view().setMinimumWidth(50)
         self.progress_bar.control_layout.addWidget(

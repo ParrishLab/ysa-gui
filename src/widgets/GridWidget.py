@@ -480,7 +480,7 @@ class GridWidget(QGraphicsView):
             self.scene.removeItem(overlay)
         self.overlays.clear()
 
-    def toggle_overlay(self, checked):
+    def toggle_overlay(self, checked: bool):
         for overlay in self.overlays:
             overlay.setVisible(checked)
 
@@ -508,7 +508,7 @@ class GridWidget(QGraphicsView):
         self.curve1.setData(self.plot_x, self.plot_data1)
         self.curve2.setData(self.plot_x, self.plot_data2)
 
-    def setBackgroundImage(self, image_path):
+    def setBackgroundImage(self, image_path: str) -> None:
         try:
             self.image_path = image_path
             pixmap = QPixmap(image_path)

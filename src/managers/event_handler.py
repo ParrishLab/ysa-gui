@@ -76,13 +76,13 @@ class EventHandler:
             self.main_window.graph_widget.change_view_mode("pan")
         elif event.key() == Qt.Key_Right:
             if self.main_window.ui_manager.skip_backward_button.isEnabled():
-                self.main_window.stepForward()
+                self.main_window.playback_manager.step_forward()
         elif event.key() == Qt.Key_Left:
             if self.main_window.ui_manager.skip_forward_button.isEnabled():
-                self.main_window.stepBackward()
+                self.main_window.playback_manager.step_backward()
         elif event.key() == Qt.Key_Space:
             if self.main_window.ui_manager.play_pause_button.isEnabled():
-                self.main_window.playPause()
+                self.main_window.playback_manager.play_pause()
         elif event.key() == Qt.Key_Up:
             if self.main_window.ui_manager.speed_combo.currentIndex() < self.main_window.ui_manager.speed_combo.count() - 1:
                 self.main_window.ui_manager.speed_combo.setCurrentIndex(
@@ -96,7 +96,7 @@ class EventHandler:
         elif event.key() == Qt.Key_L:
             self.main_window.lock_to_playhead = not self.main_window.lock_to_playhead
             if self.main_window.lock_to_playhead:
-                self.main_window.lock_plots_to_playhead()
+                self.main_window.playback_manager.lock_plots_to_playhead()
         elif event.key() == Qt.Key_S:
             self._handle_seek_to_cursor()
         elif event.key() == Qt.Key_F:
@@ -104,7 +104,7 @@ class EventHandler:
         elif event.key() == Qt.Key_B:
             self.main_window.set_custom_region()
         elif event.key() == Qt.Key_A:
-            self.main_window.find_discharges()
+            self.main_window.analysis_manager.find_discharges()
         elif event.key() == Qt.Key_R:
             self._handle_draw_seizures()
         elif event.key() == Qt.Key_H:
@@ -114,7 +114,7 @@ class EventHandler:
         elif event.key() == Qt.Key_K:
             self._handle_create_continuous_heatmap()
         elif event.key() == Qt.Key_G:
-            self.main_window.auto_analyze()
+            self.main_window.analysis_manager.auto_analyze()
         elif event.key() == Qt.Key_T:
             if self.main_window.is_auto_analyzing:
                 self.main_window.is_auto_analyzing = False
@@ -147,7 +147,7 @@ class EventHandler:
                     int(seek_pos * self.main_window.sampling_rate))
                 self.main_window.update_grid()
                 if self.main_window.lock_to_playhead:
-                    self.main_window.lock_plots_to_playhead()
+                    self.main_window.playback_manager.lock_plots_to_playhead()
                 break
 
     def _handle_toggle_discharge_peaks(self):
@@ -214,7 +214,7 @@ class EventHandler:
             self.main_window.discharge_start_dialog.confirm(confirmed)
             self.main_window.need_confirmation = False
             if not confirmed:
-                self.main_window.stepForward()
+                self.main_window.playback_manager.step_forward()
 
     def handle_key_release(self, event: QKeyEvent | None):
         """Handle key release events"""

@@ -26,14 +26,14 @@ class AnalysisManager:
 
         self.main_window.loading_dialog = LoadingDialog(self.main_window)
         self.main_window.loading_dialog.analysis_cancelled.connect(
-            self.main_window.cancel_analysis)
+            self.cancel_analysis)
 
         self.main_window.analysis_thread = AnalysisThread(self.main_window)
         self.main_window.analysis_thread.progress_updated.connect(
             self.main_window.loading_dialog.update_progress
         )
         self.main_window.analysis_thread.analysis_completed.connect(
-            self.main_window.on_analysis_completed
+            self.on_analysis_completed
         )
 
     def run_analysis(self):
@@ -92,7 +92,7 @@ class AnalysisManager:
             self.main_window.loading_dialog.update_progress
         )
         self.main_window.analysis_thread.analysis_completed.connect(
-            self.main_window.on_analysis_completed
+            self.on_analysis_completed
         )
         self.main_window.hide_spread_lines()
         self.main_window.show_discharge_peaks = False
@@ -121,7 +121,7 @@ class AnalysisManager:
         self.main_window.cluster_tracker.clear()
         self.main_window.cluster_tracker.seizures.clear()
         self.main_window.cluster_tracker.seizure_graphics_items.clear()
-        self.main_window.create_grid()
+        self.main_window.data_manager.create_grid()
         self.main_window.set_widgets_enabled()
         gc.collect()
 
@@ -250,7 +250,7 @@ class AnalysisManager:
                    self.main_window.sampling_rate)
         )
 
-        self.main_window.create_grid()
+        self.main_window.data_manager.create_grid()
         self.main_window.update_grid(first=True)
         self.main_window.raster_plot = RasterPlot(
             self.main_window.data,
@@ -404,7 +404,7 @@ class AnalysisManager:
         self.main_window.ui_manager.progress_bar.setValue(start_index)
         self.main_window.update_grid()
         if self.main_window.lock_to_playhead:
-            self.main_window.lock_plots_to_playhead()
+            self.main_window.playback_manager.lock_plots_to_playhead()
 
         QTimer.singleShot(50, lambda: self.continue_analysis(end_index))
 
@@ -419,7 +419,7 @@ class AnalysisManager:
                 current_index + 1)
             self.main_window.update_grid()
             if self.main_window.lock_to_playhead:
-                self.main_window.lock_plots_to_playhead()
+                self.main_window.playback_manager.lock_plots_to_playhead()
             QTimer.singleShot(5, lambda: self.continue_analysis(end_index))
         else:
             self.main_window.current_discharge_index += 1

@@ -1,3 +1,4 @@
+from typing import List
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
 from PyQt5.QtCore import QSize, Qt
@@ -67,7 +68,7 @@ class GroupSelectionDialog(QDialog):
         splitter.setStretchFactor(0, 1)
         splitter.setStretchFactor(1, 2)
 
-        self.groups = []
+        self.groups: List[Group] = []
 
     def get_selected_points(self):
         selected_points = self.scatter_plot.selected_points
@@ -162,5 +163,5 @@ class GroupSelectionDialog(QDialog):
         image = QImage(pixmap)
         return QPixmap.fromImage(image)
 
-    def get_groups(self):
+    def get_groups(self) -> List[Group]:
         return self.groups

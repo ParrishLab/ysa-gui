@@ -205,7 +205,7 @@ class HDF5Viewer(QMainWindow):
 
         self.export_button = QPushButton("Export Discharge Stats")
         self.export_button.clicked.connect(
-            self.main_window.export_discharge_stats)
+            self.main_window.data_manager.export_discharge_stats)
         toolbar_layout.addWidget(self.export_button)
 
         toolbar_layout.addStretch()

@@ -2,9 +2,13 @@ from PyQt5.QtCore import QTimer
 
 from helpers.Constants import PAUSE_ICON, PLAY_ICON
 
+from typing import TYPE_CHECKING
+if TYPE_CHECKING:
+    from main import MainWindow
+
 
 class PlaybackManager:
-    def __init__(self, main_window):
+    def __init__(self, main_window: 'MainWindow'):
         self.main_window = main_window
 
     def skip_backward(self):
@@ -175,4 +179,3 @@ class PlaybackManager:
             self.lock_plots_to_playhead()
 
         self.main_window.update_grid()
-

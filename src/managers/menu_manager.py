@@ -1,6 +1,9 @@
 from PyQt5.QtWidgets import QMenu, QAction
 from PyQt5.QtCore import Qt
 
+from widgets.ChannelExtract import ChannelExtract
+from widgets.Media import open_save_grid_dialog, save_mea_with_plots
+
 
 class MenuManager:
     def __init__(self, main_window):
@@ -33,7 +36,7 @@ class MenuManager:
 
         self.main_window.downsampleExportAction = QAction("Downsample and Export", self.main_window)
         self.main_window.downsampleExportAction.triggered.connect(
-            lambda: self.main_window._channel_extract()
+            lambda: ChannelExtract(self.main_window).exec_()
         )
         self.main_window.fileMenu.addAction(self.main_window.downsampleExportAction)
 
@@ -45,7 +48,7 @@ class MenuManager:
 
         self.saveGridAction = QAction("Save MEA as PNG", self.main_window)
         self.saveGridAction.triggered.connect(
-            lambda: self.main_window._save_grid_dialog()
+            lambda: open_save_grid_dialog(self.main_window)
         )
         self.main_window.fileMenu.addAction(self.saveGridAction)
 
@@ -55,7 +58,7 @@ class MenuManager:
 
         self.saveMeaWithPlotsAction = QAction("Save MEA with Channel Plots", self.main_window)
         self.saveMeaWithPlotsAction.triggered.connect(
-            lambda: self.main_window._save_mea_with_plots()
+            lambda: save_mea_with_plots(self.main_window)
         )
         self.main_window.fileMenu.addAction(self.saveMeaWithPlotsAction)
 
