@@ -72,7 +72,8 @@ class ScatterPlot(QWidget):
         self.x = self.x.flatten()
         self.y = self.y.flatten()
 
-        self.ax.scatter(self.x, self.y, c="k", s=SIZE, alpha=0.3, marker=MARKER)
+        self.ax.scatter(self.x, self.y, c="k", s=SIZE,
+                        alpha=0.3, marker=MARKER)
 
         self.lasso = LassoSelector(
             self.ax,
@@ -218,7 +219,7 @@ def reconstruct_WAV_signal(
         coefs_position = channel_index * coefsChunkLength
         while coefs_position < coefsTotalLength:
             coefs = file["Well_A1/WaveletBasedEncodedRaw"][
-                coefs_position : coefs_position + coefsChunkLength
+                coefs_position: coefs_position + coefsChunkLength
             ]
             length = int(len(coefs) / 2)
 
@@ -230,7 +231,8 @@ def reconstruct_WAV_signal(
             frames = pywt.idwt(approx, details, "sym7", "periodization")
             length *= 2
             for i in range(1, compressionLevel):
-                frames = pywt.idwt(frames[:length], None, "sym7", "periodization")
+                frames = pywt.idwt(
+                    frames[:length], None, "sym7", "periodization")
                 length *= 2
             data.extend(frames[2:-2])
             coefs_position += coefsChunkLength * nChannels
@@ -261,7 +263,8 @@ def extract_channel(args):
     )
     original_sampling_rate = samplingRate
     desired_sampling_rate = chfileInfo["newSampling"]
-    downsample_factor = math.floor(original_sampling_rate / desired_sampling_rate)
+    downsample_factor = math.floor(
+        original_sampling_rate / desired_sampling_rate)
     downsampled_channel_data = channel_data[::downsample_factor]
     return downsampled_channel_data
 
@@ -290,7 +293,8 @@ def extBW5_WAV(chfileName, recfileName, chfileInfo, parameters):
         framesChunkLength = file["Well_A1/WaveletBasedEncodedRaw"].attrs[
             "DataChunkLength"
         ]
-        coefsChunkLength = math.ceil(framesChunkLength / pow(2, compressionLevel)) * 2
+        coefsChunkLength = math.ceil(
+            framesChunkLength / pow(2, compressionLevel)) * 2
         file.close()
 
     chs, ind_rec, ind_ch = np.intersect1d(
@@ -299,9 +303,11 @@ def extBW5_WAV(chfileName, recfileName, chfileInfo, parameters):
         return_indices=True,
     )
     newSampling = int(chfileInfo["newSampling"])
-    output_file_name = recfileName.split(".")[0] + "_resample_" + str(newSampling)
+    output_file_name = recfileName.split(
+        ".")[0] + "_resample_" + str(newSampling)
     output_path = output_file_name + ".brw"
-    parameters["freq_ratio"] = parameters["samplingRate"] / chfileInfo["newSampling"]
+    parameters["freq_ratio"] = parameters["samplingRate"] / \
+        chfileInfo["newSampling"]
     fs = chfileInfo["newSampling"]
 
     print("Downsampling File # ", output_path)
@@ -347,7 +353,8 @@ def extBW5_WAV(chfileName, recfileName, chfileInfo, parameters):
 
     original_sampling_rate = parameters["samplingRate"]
     desired_sampling_rate = chfileInfo["newSampling"]
-    downsample_factor = math.floor(original_sampling_rate / desired_sampling_rate)
+    downsample_factor = math.floor(
+        original_sampling_rate / desired_sampling_rate)
     new_sampling_rate = original_sampling_rate / downsample_factor
     print(f"Mine: {new_sampling_rate}")
     print(f"Original: {fs}")
@@ -406,8 +413,10 @@ def get_recFile_properties(path, typ):
             parameters["nRecFrames"] / parameters["samplingRate"]
         )
         parameters["signalInversion"] = h5["/3BRecInfo/3BRecVars/SignalInversion"][0]
-        parameters["maxUVolt"] = h5["/3BRecInfo/3BRecVars/MaxVolt"][0]  # in uVolt
-        parameters["minUVolt"] = h5["/3BRecInfo/3BRecVars/MinVolt"][0]  # in uVolt
+        # in uVolt
+        parameters["maxUVolt"] = h5["/3BRecInfo/3BRecVars/MaxVolt"][0]
+        # in uVolt
+        parameters["minUVolt"] = h5["/3BRecInfo/3BRecVars/MinVolt"][0]
         parameters["bitDepth"] = h5["/3BRecInfo/3BRecVars/BitDepth"][
             0
         ]  # number of used bit of the 2 byte coding
@@ -445,7 +454,8 @@ def get_recFile_properties(path, typ):
             )  # depending on the acq version it can be 1 or -1
             parameters["maxUVolt"] = int(4125)  # in uVolt
             parameters["minUVolt"] = int(-4125)  # in uVolt
-            parameters["bitDepth"] = int(12)  # number of used bit of the 2 byte coding
+            # number of used bit of the 2 byte coding
+            parameters["bitDepth"] = int(12)
             parameters["qLevel"] = (
                 2 ^ parameters["bitDepth"]
             )  # quantized levels corresponds to 2^num of bit to encode the signal
@@ -455,7 +465,8 @@ def get_recFile_properties(path, typ):
             parameters["recElectrodeList"] = getChMap()[
                 :
             ]  # list of the recorded channels
-            parameters["numRecElectrodes"] = len(parameters["recElectrodeList"])
+            parameters["numRecElectrodes"] = len(
+                parameters["recElectrodeList"])
         else:
             json_s = json.loads(h5["ExperimentSettings"][0].decode("utf8"))
             parameters = {}
@@ -491,7 +502,8 @@ def get_recFile_properties(path, typ):
             )  # depending on the acq version it can be 1 or -1
             parameters["maxUVolt"] = int(4125)  # in uVolt
             parameters["minUVolt"] = int(-4125)  # in uVolt
-            parameters["bitDepth"] = int(12)  # number of used bit of the 2 byte coding
+            # number of used bit of the 2 byte coding
+            parameters["bitDepth"] = int(12)
             parameters["qLevel"] = (
                 2 ^ parameters["bitDepth"]
             )  # quantized levels corresponds to 2^num of bit to encode the signal
@@ -501,7 +513,8 @@ def get_recFile_properties(path, typ):
             parameters["recElectrodeList"] = getChMap()[
                 :
             ]  # list of the recorded channels
-            parameters["numRecElectrodes"] = len(parameters["recElectrodeList"])
+            parameters["numRecElectrodes"] = len(
+                parameters["recElectrodeList"])
 
     return parameters
 
@@ -688,7 +701,8 @@ class ChannelExtract(QDialog):
 
         self.inputGridWidget = ScatterPlot(self)
         self.inputGridWidget.setMinimumSize(500, 500)
-        self.inputGridWidget.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+        self.inputGridWidget.setSizePolicy(
+            QSizePolicy.Expanding, QSizePolicy.Expanding)
         gridLayout.addWidget(self.inputGridWidget, 0, 0)
 
         settingsWidget = QWidget()
@@ -803,7 +817,8 @@ class ChannelExtract(QDialog):
             tableData = []
             self.imageDict = {}
 
-            brwFiles = [f for f in os.listdir(self.folderName) if f.endswith(".brw")]
+            brwFiles = [f for f in os.listdir(
+                self.folderName) if f.endswith(".brw")]
 
             for brwFile in brwFiles:
                 try:
@@ -836,7 +851,8 @@ class ChannelExtract(QDialog):
                             f for f in os.listdir(imageFolder) if f.lower() == imageName
                         ]
                         if imageFiles:
-                            imagePath = os.path.join(imageFolder, imageFiles[0])
+                            imagePath = os.path.join(
+                                imageFolder, imageFiles[0])
                             image = mpimg.imread(imagePath)
                         else:
                             msg = QMessageBox()
@@ -869,7 +885,8 @@ class ChannelExtract(QDialog):
                             len(chsList),
                             parameters["nRecFrames"],
                             round(
-                                parameters["nRecFrames"] / parameters["samplingRate"]
+                                parameters["nRecFrames"] /
+                                parameters["samplingRate"]
                             ),
                             parameters["samplingRate"],
                             "Not Exported",
@@ -894,7 +911,8 @@ class ChannelExtract(QDialog):
                     item.clicked.connect(lambda _, r=i: self.selectFile(r))
                 else:
                     table_item = QTableWidgetItem(str(item))
-                    table_item.setFlags(table_item.flags() & ~Qt.ItemIsEditable)
+                    table_item.setFlags(table_item.flags()
+                                        & ~Qt.ItemIsEditable)
                     table_item.setTextAlignment(Qt.AlignCenter)
                     if j == len(row) - 2:
                         table_item.setBackground(QColor("#bc4749"))
@@ -904,7 +922,8 @@ class ChannelExtract(QDialog):
 
     def selectFile(self, row):
         fileName = os.path.join(
-            self.dataTable.item(row, 0).text(), self.dataTable.item(row, 1).text()
+            self.dataTable.item(row, 0).text(
+            ), self.dataTable.item(row, 1).text()
         )
         fileName = os.path.normpath(fileName)
         self.inputFileName = fileName
@@ -1066,7 +1085,8 @@ class ChannelExtract(QDialog):
             newChs = np.zeros(len(chX), dtype=[("Row", "<i2"), ("Col", "<i2")])
             for idx, (x, y) in enumerate(zip(chX, chY)):
                 if self.uploadedImage is not None:
-                    newChs[idx] = (np.int16(y * 64 / height), np.int16(x * 64 / width))
+                    newChs[idx] = (np.int16(y * 64 / height),
+                                   np.int16(x * 64 / width))
                 else:
                     newChs[idx] = (np.int16(y), np.int16(x))
 
@@ -1134,7 +1154,8 @@ class ChannelExtract(QDialog):
                 driveLetter = os.path.splitdrive(folderName)[0]
                 run(driveLetter, folderName)
         else:
-            brwFiles = [f for f in os.listdir(self.folderName) if f.endswith(".brw")]
+            brwFiles = [f for f in os.listdir(
+                self.folderName) if f.endswith(".brw")]
             exportChFiles = [f for f in brwFiles if f.__contains__("exportCh")]
             files_string = "\n".join(exportChFiles)
             if exportChFiles:
@@ -1209,7 +1230,8 @@ class ChannelExtract(QDialog):
                 parameters["recElectrodeList"] = self.getChMap()[
                     :
                 ]  # list of the recorded channels
-                parameters["numRecElectrodes"] = len(parameters["recElectrodeList"])
+                parameters["numRecElectrodes"] = len(
+                    parameters["recElectrodeList"])
 
         return parameters
 
@@ -1264,7 +1286,8 @@ class writeBrw:
         new.attrs.__setitem__("Description", self.description)
         new.attrs.__setitem__("Version", self.version)
 
-        new.create_dataset("/3BRecInfo/3BRecVars/SamplingRate", data=[np.float64(100)])
+        new.create_dataset(
+            "/3BRecInfo/3BRecVars/SamplingRate", data=[np.float64(100)])
         new.create_dataset(
             "/3BRecInfo/3BRecVars/NRecFrames", data=[np.float64(self.frames)]
         )
@@ -1302,13 +1325,15 @@ class writeBrw:
         if "/3BData/Raw" in self.newDataset:
             dset = self.newDataset["3BData/Raw"]
             dset.resize((dset.shape[0] + newRaw.shape[0],))
-            dset[-newRaw.shape[0] :] = newRaw
+            dset[-newRaw.shape[0]:] = newRaw
 
         else:
-            self.newDataset.create_dataset("/3BData/Raw", data=newRaw, maxshape=(None,))
+            self.newDataset.create_dataset(
+                "/3BData/Raw", data=newRaw, maxshape=(None,))
 
     def writeChs(self, chs):
-        self.newDataset.create_dataset("/3BRecInfo/3BMeaStreams/Raw/Chs", data=chs)
+        self.newDataset.create_dataset(
+            "/3BRecInfo/3BMeaStreams/Raw/Chs", data=chs)
 
     def witeFrames(self, frames):
         self.newDataset.create_dataset(
@@ -1333,7 +1358,7 @@ class writeBrw:
 
         dset = brwAppend["3BData/Raw"]
         dset.resize((dset.shape[0] + rawToAppend.shape[0],))
-        dset[-rawToAppend.shape[0] :] = rawToAppend
+        dset[-rawToAppend.shape[0]:] = rawToAppend
 
         brwAppend.close()
 
@@ -1364,7 +1389,8 @@ class writeCBrw:
         new = h5py.File(newName, "w")
         new.attrs.__setitem__("Description", self.description)
         new.attrs.__setitem__("Version", self.version)
-        new.create_dataset("/3BRecInfo/3BRecVars/SamplingRate", data=[np.float64(100)])
+        new.create_dataset(
+            "/3BRecInfo/3BRecVars/SamplingRate", data=[np.float64(100)])
         new.create_dataset(
             "/3BRecInfo/3BRecVars/NewSampling", data=[np.float64(self.samplingrate)]
         )
@@ -1412,7 +1438,8 @@ class writeCBrw:
         brwAppend.create_dataset(
             "/3BRecInfo/3BRecVars/startTime", data=[np.float64(ss)]
         )
-        brwAppend.create_dataset("/3BRecInfo/3BRecVars/endTime", data=[np.float64(st)])
+        brwAppend.create_dataset(
+            "/3BRecInfo/3BRecVars/endTime", data=[np.float64(st)])
         brwAppend.close()
 
     def close(self):

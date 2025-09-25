@@ -90,7 +90,7 @@ class RasterPlot:
                     self.plot_widget.addItem(self.selected_channel_dot)
 
                     self.raster_red_line.setPos(x)
-                    self.main_window.progress_bar.setValue(
+                    self.main_window.ui_manager.progress_bar.setValue(
                         int(time * self.sampling_rate)
                     )
         except Exception:

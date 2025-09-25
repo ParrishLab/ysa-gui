@@ -517,7 +517,7 @@ class DischargeStartDialog(QDialog):
         if accepted:
             print("accepted")
             self.create_discharge_start_area(
-                self.main_window.progress_bar.value() / self.main_window.sampling_rate
+                self.main_window.ui_manager.progress_bar.value() / self.main_window.sampling_rate
             )
             self.update_discharges()
 

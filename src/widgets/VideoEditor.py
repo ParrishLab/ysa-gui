@@ -454,7 +454,7 @@ class VideoEditor(QDialog):
         if frame in self.frame_cache:
             return self.frame_cache[frame]
 
-        self.main_window.progress_bar.setValue(frame)
+        self.main_window.ui_manager.progress_bar.setValue(frame)
         self.main_window.update_grid()
 
         # Render the grid
