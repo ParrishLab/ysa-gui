@@ -66,7 +66,7 @@ from helpers.Constants import (
     MAC,
     SE,
     SEIZURE,
-    VERSION,
+    __version__,
     WIN,
 )
 from helpers.update.Updater import check_for_update
@@ -112,7 +112,7 @@ class MainWindow(QMainWindow):
 
     def __init__(self):
         super().__init__()
-        self.setWindowTitle(f"YSA GUI {VERSION}")
+        self.setWindowTitle(f"YSA GUI {__version__}")
 
         # If true, the lag is way too much for the user to interact with the trace plots
         pg.setConfigOptions(antialias=False)
@@ -1754,7 +1754,7 @@ class MainWindow(QMainWindow):
             try:
                 baseName = os.path.basename(file_path)
 
-                self.setWindowTitle(f"YSA GUI {VERSION} - {baseName}")
+                self.setWindowTitle(f"YSA GUI {__version__} - {baseName}")
                 brwFileName = os.path.basename(file_path)
                 dateSlice = "_".join(brwFileName.split("_")[:4])
                 dateSliceNumber = (
