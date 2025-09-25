@@ -8,7 +8,7 @@ import math
 from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QMessageBox
 
-from helpers.Constants import ACTIVE, BACKGROUND, SEIZURE, SE, CELL_SIZE
+from src.helpers.Constants import ACTIVE, BACKGROUND, SEIZURE, SE, CELL_SIZE
 
 
 class DataManager:

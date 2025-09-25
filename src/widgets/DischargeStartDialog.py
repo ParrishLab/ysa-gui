@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QEvent, QRectF, Qt
 import numpy as np
-from widgets.DischargeStartArea import DischargeStartArea
+from src.widgets.DischargeStartArea import DischargeStartArea
 import pyqtgraph as pg
 from matplotlib import cm
 

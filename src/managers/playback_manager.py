@@ -1,6 +1,6 @@
 from PyQt5.QtCore import QTimer
 
-from helpers.Constants import PAUSE_ICON, PLAY_ICON
+from src.helpers.Constants import PAUSE_ICON, PLAY_ICON
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:

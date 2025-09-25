@@ -12,8 +12,8 @@ from PyQt5.QtCore import Qt
 from scipy.signal import spectrogram
 from sklearn.cluster import DBSCAN
 
-from helpers.Constants import ACTIVE, SE, SEIZURE, BACKGROUND
-from widgets.RasterPlot import RasterPlot
+from src.helpers.Constants import ACTIVE, SE, SEIZURE, BACKGROUND
+from src.widgets.RasterPlot import RasterPlot
 
 
 class VisualizationManager:

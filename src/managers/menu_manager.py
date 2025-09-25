@@ -1,8 +1,8 @@
 from PyQt5.QtWidgets import QMenu, QAction
 from PyQt5.QtCore import Qt
 
-from widgets.ChannelExtract import ChannelExtract
-from widgets.Media import open_save_grid_dialog, save_mea_with_plots
+from src.widgets.ChannelExtract import ChannelExtract
+from src.widgets.Media import open_save_grid_dialog, save_mea_with_plots
 
 
 class MenuManager:
@@ -63,7 +63,7 @@ class MenuManager:
         self.main_window.fileMenu.addAction(self.saveMeaWithPlotsAction)
 
     def _setup_edit_menu(self):
-        from widgets.Settings import SettingsWidgetManager, DBSCANSettingsWidget, PeakSettingsWidget, SpectrogramSettingsWidget
+        from src.widgets.Settings import SettingsWidgetManager, DBSCANSettingsWidget, PeakSettingsWidget, SpectrogramSettingsWidget
 
         self.main_window.editMenu = QMenu("Edit", self.main_window)
         self.main_window.menuBar.addMenu(self.main_window.editMenu)

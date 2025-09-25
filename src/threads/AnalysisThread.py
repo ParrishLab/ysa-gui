@@ -9,12 +9,12 @@ import numpy as np
 from scipy.io import loadmat
 from PyQt5.QtCore import QThread, pyqtSignal
 
-from helpers.alert import alert
-from threads.ProgressUpdaterThread import ProgressUpdaterThread
+from src.helpers.alert import alert
+from src.threads.ProgressUpdaterThread import ProgressUpdaterThread
 
 cpp_import_failed = False
 try:
-    from helpers.extensions import sz_se_detect
+    from src.helpers.extensions import sz_se_detect
 
     print("C++ extension loaded successfully")
 except ImportError:

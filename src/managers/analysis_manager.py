@@ -4,16 +4,16 @@ import numpy as np
 import numpy.typing as npt
 import h5py
 from typing import Union
-from PyQt5.QtCore import QTimer
+from PyQt5.QtCore import QTimer, Qt
 from PyQt5.QtWidgets import QMessageBox, QDialog, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QPushButton
 from PyQt5.QtGui import QColor
 from sklearn.cluster import DBSCAN
 from scipy.signal import spectrogram
 import pyqtgraph as pg
 
-from helpers.Constants import SE, SEIZURE
-from threads.AnalysisThread import AnalysisThread
-from threads.DischargeFinderThread import DischargeFinderThread
+from src.helpers.Constants import SE, SEIZURE
+from src.threads.AnalysisThread import AnalysisThread
+from src.threads.DischargeFinderThread import DischargeFinderThread
 
 
 class AnalysisManager:
@@ -22,7 +22,7 @@ class AnalysisManager:
 
     def setup_analysis_thread(self):
         """Setup analysis thread and loading dialog"""
-        from widgets.LoadingDialog import LoadingDialog
+        from src.widgets.LoadingDialog import LoadingDialog
 
         self.main_window.loading_dialog = LoadingDialog(self.main_window)
         self.main_window.loading_dialog.analysis_cancelled.connect(
@@ -178,11 +178,11 @@ class AnalysisManager:
 
     def on_analysis_completed(self):
         """Handle analysis completion"""
-        from widgets.RasterPlot import RasterPlot
-        from widgets.DischargeStartDialog import DischargeStartDialog
+        from src.widgets.RasterPlot import RasterPlot
+        from src.widgets.DischargeStartDialog import DischargeStartDialog
 
         try:
-            from helpers.extensions.signal_analyzer import SignalAnalyzer
+            from src.helpers.extensions.signal_analyzer import SignalAnalyzer
         except ImportError:
             print("Failed to import signal_analyzer module.")
             SignalAnalyzer = None
@@ -431,7 +431,7 @@ class AnalysisManager:
 
     def edit_raster_settings(self):
         """Edit raster plot settings"""
-        from widgets.RasterPlot import RasterPlot
+        from src.widgets.RasterPlot import RasterPlot
 
         if self.main_window.raster_plot is None:
             self.main_window.raster_plot = RasterPlot(

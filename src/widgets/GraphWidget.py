@@ -6,8 +6,8 @@ from PyQt5.QtWidgets import (
 )
 import pyqtgraph as pg
 import numpy as np
-from helpers.Constants import SE, SEIZURE, STROKE_WIDTH, GRAPH_DOWNSAMPLE
-from widgets.CustomViewBox import TraceViewBoxMenu
+from src.helpers.Constants import SE, SEIZURE, STROKE_WIDTH, GRAPH_DOWNSAMPLE
+from src.widgets.CustomViewBox import TraceViewBoxMenu
 
 failed_import = False
 try:

@@ -17,9 +17,9 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 import random
-from widgets.ColorCell import ColorCell
-from widgets.Overlay import Overlay
-from helpers.Constants import BACKGROUND, ACTIVE
+from src.widgets.ColorCell import ColorCell
+from src.widgets.Overlay import Overlay
+from src.helpers.Constants import BACKGROUND, ACTIVE
 import pyqtgraph as pg
 import numpy as np
 

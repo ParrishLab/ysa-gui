@@ -1,0 +1,32 @@
+# Core GUI framework
+PyQt5>=5.15.0
+
+# Scientific computing
+numpy>=1.21.0
+scipy>=1.7.0
+h5py>=3.6.0
+
+# Plotting and visualization
+pyqtgraph>=0.12.0
+matplotlib>=3.5.0
+
+# Machine learning
+scikit-learn>=1.0.0
+
+# Data processing
+pandas>=1.3.0
+
+# Optional: MATLAB engine (if available)
+# matlabengine
+
+# System utilities
+psutil>=5.8.0
+
+# Image processing
+Pillow>=8.3.0
+
+# Optional: Faster downsampling
+# lttbc>=0.2.0
+
+# Development and debugging
+loguru>=0.6.0

@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import (
 from PyQt5.QtCore import Qt
 import pyqtgraph as pg
 
-from widgets.Media import open_save_grid_dialog
+from src.widgets.Media import open_save_grid_dialog
 
 from typing import TYPE_CHECKING
 if TYPE_CHECKING:
@@ -43,10 +43,10 @@ class UIManager:
             self.main_window.stats_tab, "Stats")
 
     def _setup_left_pane(self):
-        from widgets.GridWidget import GridWidget
-        from widgets.SquareWidget import SquareWidget
-        from widgets.ClusterTracker import ClusterTracker
-        from widgets.LegendWidget import LegendWidget
+        from src.widgets.GridWidget import GridWidget
+        from src.widgets.SquareWidget import SquareWidget
+        from src.widgets.ClusterTracker import ClusterTracker
+        from src.widgets.LegendWidget import LegendWidget
 
         self.main_window.left_pane = QWidget()
         self.main_window.left_layout = QVBoxLayout()
@@ -139,7 +139,7 @@ class UIManager:
         )
 
     def _setup_right_pane(self):
-        from widgets.GraphWidget import GraphWidget
+        from src.widgets.GraphWidget import GraphWidget
 
         self.main_window.right_pane = QWidget()
         self.main_window.right_layout = QVBoxLayout()
@@ -249,7 +249,7 @@ class UIManager:
             self.main_window.clear_plots)
 
     def _setup_bottom_pane(self):
-        from widgets.ProgressBar import EEGScrubberWidget
+        from src.widgets.ProgressBar import EEGScrubberWidget
 
         self.main_window.bottom_pane = QWidget()
         self.main_window.bottom_layout = QHBoxLayout()

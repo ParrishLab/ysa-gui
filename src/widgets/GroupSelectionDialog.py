@@ -15,8 +15,8 @@ from PyQt5.QtWidgets import (
     QWidget,
 )
 
-from helpers.Constants import MARKER, SIZE
-from widgets.ScatterPlot import ScatterPlot
+from src.helpers.Constants import MARKER, SIZE
+from src.widgets.ScatterPlot import ScatterPlot
 
 
 class Group:

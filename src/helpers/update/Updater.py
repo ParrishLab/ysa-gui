@@ -7,7 +7,7 @@ import requests
 import subprocess
 
 try:
-    from helpers.Constants import __version__ as VERSION
+    from src.helpers.Constants import __version__ as VERSION
 except Exception:
     # Fallback if import path changes; better to fail closed than crash the app
     VERSION = "0.0.0"

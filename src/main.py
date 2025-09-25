@@ -5,10 +5,15 @@ from pathlib import Path
 from types import FrameType
 from typing import Any, Optional, TYPE_CHECKING, List
 
+# Add project root to Python path for imports
+project_root = Path(__file__).parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 if TYPE_CHECKING:
-    from widgets.GridWidget import GridWidget
-    from widgets.GraphWidget import GraphWidget
-    from widgets.LegendWidget import LegendWidget
+    from src.widgets.GridWidget import GridWidget
+    from src.widgets.GraphWidget import GraphWidget
+    from src.widgets.LegendWidget import LegendWidget
 import numpy.typing as npt
 from urllib.request import pathname2url
 
@@ -41,7 +46,7 @@ from PyQt5.QtWidgets import (
 )
 from sklearn.cluster import DBSCAN
 
-from helpers.Constants import (
+from src.helpers.Constants import (
     ACTIVE,
     FONT_FAMILY,
     FONT_FILE,
@@ -51,21 +56,21 @@ from helpers.Constants import (
     __version__ as VERSION,
     WIN,
 )
-from helpers.update.Updater import check_for_update
-from managers.analysis_manager import AnalysisManager
-from managers.data_manager import DataManager
-from managers.event_handler import EventHandler
-from managers.menu_manager import MenuManager
-from managers.playback_manager import PlaybackManager
-from managers.ui_manager import UIManager
-from managers.visualization_manager import VisualizationManager
-from threads.MatlabEngineThread import MatlabEngineThread
-from threads.UpdateThread import UpdateThread
-from widgets.ColorCell import ColorCell
-from widgets.DocumentationViewer import DocumentationViewer
-from widgets.GroupSelectionDialog import Group, GroupSelectionDialog
-from widgets.Media import SaveChannelPlotsDialog
-from widgets.VideoEditor import VideoEditor
+from src.helpers.update.Updater import check_for_update
+from src.managers.analysis_manager import AnalysisManager
+from src.managers.data_manager import DataManager
+from src.managers.event_handler import EventHandler
+from src.managers.menu_manager import MenuManager
+from src.managers.playback_manager import PlaybackManager
+from src.managers.ui_manager import UIManager
+from src.managers.visualization_manager import VisualizationManager
+from src.threads.MatlabEngineThread import MatlabEngineThread
+from src.threads.UpdateThread import UpdateThread
+from src.widgets.ColorCell import ColorCell
+from src.widgets.DocumentationViewer import DocumentationViewer
+from src.widgets.GroupSelectionDialog import Group, GroupSelectionDialog
+from src.widgets.Media import SaveChannelPlotsDialog
+from src.widgets.VideoEditor import VideoEditor
 
 
 class MainWindow(QMainWindow):
@@ -280,7 +285,7 @@ class MainWindow(QMainWindow):
 
     def viewHDF5(self):
         """View HDF5 file contents"""
-        from widgets.HDFViewer import HDF5Viewer
+        from src.widgets.HDFViewer import HDF5Viewer
 
         if self.file_path is not None:
             if hasattr(self, "hdf5_viewer") and self.hdf5_viewer is not None:
@@ -560,7 +565,7 @@ class MainWindow(QMainWindow):
 
     def set_raster_order(self, index):
         """Set raster plot ordering"""
-        from widgets.RasterPlot import RasterPlot
+        from src.widgets.RasterPlot import RasterPlot
 
         if self.raster_plot is None:
             self.raster_plot = RasterPlot(
@@ -596,7 +601,7 @@ class MainWindow(QMainWindow):
 
     def update_raster(self):
         """Update raster plot"""
-        from widgets.RasterPlot import RasterPlot
+        from src.widgets.RasterPlot import RasterPlot
 
         if self.raster_plot is None:
             self.raster_plot = RasterPlot(
