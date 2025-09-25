@@ -336,5 +336,5 @@ class SpectrogramSettingsWidget(QWidget):
         )
 
         if self.main_window.toggleSpectrogramAction.isChecked():
-            self.main_window.hide_spectrograms()
-            self.main_window.show_spectrograms()
+            self.main_window.visualization_manager.hide_spectrograms()
+            self.main_window.visualization_manager.show_spectrograms()

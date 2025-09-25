@@ -7,9 +7,9 @@ from PyQt5.QtGui import QColor, QFont
 from PyQt5.QtWidgets import QFileDialog, QGraphicsDropShadowEffect, QMessageBox
 from scipy.signal import find_peaks
 import os
-from helpers.Constants import SE, SEIZURE
-from widgets.CustomViewBox import RasterViewBoxMenu
-from widgets.GroupSelectionDialog import Group
+from src.helpers.Constants import SE, SEIZURE
+from src.widgets.CustomViewBox import RasterViewBoxMenu
+from src.widgets.GroupSelectionDialog import Group
 
 
 class RasterPlot:
@@ -90,7 +90,7 @@ class RasterPlot:
                     self.plot_widget.addItem(self.selected_channel_dot)
 
                     self.raster_red_line.setPos(x)
-                    self.main_window.progress_bar.setValue(
+                    self.main_window.ui_manager.progress_bar.setValue(
                         int(time * self.sampling_rate)
                     )
         except Exception:

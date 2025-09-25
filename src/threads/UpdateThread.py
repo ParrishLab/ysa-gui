@@ -1,5 +1,5 @@
 from PyQt5.QtCore import QThread, pyqtSignal
-from helpers.update.Updater import download_and_install_update
+from src.helpers.update.Updater import download_and_install_update
 
 
 class UpdateThread(QThread):

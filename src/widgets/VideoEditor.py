@@ -1,6 +1,6 @@
 import math
 from time import perf_counter
-from helpers.alert import alert
+from src.helpers.alert import alert
 import numpy as np
 import cv2
 from PyQt5.QtCore import QEvent, QRectF, Qt, QTimer, pyqtSignal
@@ -454,7 +454,7 @@ class VideoEditor(QDialog):
         if frame in self.frame_cache:
             return self.frame_cache[frame]
 
-        self.main_window.progress_bar.setValue(frame)
+        self.main_window.ui_manager.progress_bar.setValue(frame)
         self.main_window.update_grid()
 
         # Render the grid

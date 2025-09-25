@@ -20,7 +20,7 @@ from PyQt5.QtCore import QRect, QSize, Qt
 import os
 import zipfile
 
-from helpers.Constants import BACKGROUND
+from src.helpers.Constants import BACKGROUND
 
 
 class SaveChannelPlotsDialog(QDialog):

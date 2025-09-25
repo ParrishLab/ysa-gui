@@ -28,20 +28,20 @@ class TraceViewBoxMenu(QMenu):
         toggle_mini_map_action = QAction("Toggle mini-map", self)
 
         find_discharges_action.triggered.connect(
-            self.parent.main_window.find_discharges
+            self.parent.main_window.analysis_manager.find_discharges
         )
-        track_discharges_action.triggered.connect(self.parent.main_window.auto_analyze)
+        track_discharges_action.triggered.connect(self.parent.main_window.analysis_manager.auto_analyze)
         stop_tracking_discharges_action.triggered.connect(self.stop_tracking_discharges)
         load_discharges_action.triggered.connect(
-            self.parent.main_window.load_discharges
+            self.parent.main_window.data_manager.load_discharges
         )
         clear_discharges_action.triggered.connect(
-            self.parent.main_window.clear_found_discharges
+            self.parent.main_window.data_manager.clear_found_discharges
         )
         clear_tracked_discharges_action.triggered.connect(self.clear_tracked_discharges)
         save_tracked_discharges_action.triggered.connect(self.save_tracked_discharges)
         export_discharge_stats_action.triggered.connect(
-            self.parent.main_window.export_discharge_stats
+            self.parent.main_window.data_manager.export_discharge_stats
         )
 
         save_single_plot_action.triggered.connect(self.save_single_plot.emit)

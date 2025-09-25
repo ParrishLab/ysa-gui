@@ -6,8 +6,8 @@ from PyQt5.QtWidgets import (
 )
 import pyqtgraph as pg
 import numpy as np
-from helpers.Constants import SE, SEIZURE, STROKE_WIDTH, GRAPH_DOWNSAMPLE
-from widgets.CustomViewBox import TraceViewBoxMenu
+from src.helpers.Constants import SE, SEIZURE, STROKE_WIDTH, GRAPH_DOWNSAMPLE
+from src.widgets.CustomViewBox import TraceViewBoxMenu
 
 failed_import = False
 try:
@@ -35,14 +35,16 @@ class GraphWidget(QWidget):
         self.minimap.hideAxis("left")
         self.minimap.setMouseEnabled(x=False, y=False)
         self.minimap.setBackground("w")
-        self.minimap_plot = self.minimap.plot(pen=pg.mkPen(color=(0, 0, 0), width=1))
+        self.minimap_plot = self.minimap.plot(
+            pen=pg.mkPen(color=(0, 0, 0), width=1))
         self.minimap_region = pg.LinearRegionItem(
             values=(0, 1), movable=True, brush=(0, 0, 255, 50)
         )
         self.minimap.addItem(self.minimap_region)
         self.minimap.setContextMenuPolicy(3)
 
-        self.minimap_region.sigRegionChanged.connect(self.minimap_region_changed)
+        self.minimap_region.sigRegionChanged.connect(
+            self.minimap_region_changed)
 
         self.minimap.setFixedHeight(100)
         self.minimap.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
@@ -170,15 +172,18 @@ class GraphWidget(QWidget):
 
     def hide_temp_marker(self):
         if self.temp_marker:
-            self.plot_widgets[self.active_plot_index].removeItem(self.temp_marker)
+            self.plot_widgets[self.active_plot_index].removeItem(
+                self.temp_marker)
             self.temp_marker = None
 
         if self.mouse_marker:
-            self.plot_widgets[self.active_plot_index].removeItem(self.mouse_marker)
+            self.plot_widgets[self.active_plot_index].removeItem(
+                self.mouse_marker)
             self.mouse_marker = None
 
         if self.time_diff_label:
-            self.plot_widgets[self.active_plot_index].removeItem(self.time_diff_label)
+            self.plot_widgets[self.active_plot_index].removeItem(
+                self.time_diff_label)
             self.time_diff_label = None
 
     def update_time_difference(self, current_time, plot_index):
@@ -186,7 +191,8 @@ class GraphWidget(QWidget):
             time_diff = current_time - self.marker_start_time
             self.time_diff_label.setText(f"Time difference: {time_diff:.3f} s")
 
-            view_range = self.plot_widgets[plot_index].getPlotItem().vb.viewRange()
+            view_range = self.plot_widgets[plot_index].getPlotItem(
+            ).vb.viewRange()
             x_center = (view_range[0][0] + view_range[0][1]) / 2
             y_center = (view_range[1][0] + view_range[1][1]) / 2
 
@@ -311,7 +317,8 @@ class GraphWidget(QWidget):
                 active_x_data, active_y_data, GRAPH_DOWNSAMPLE
             )
             curve = pg.PlotDataItem(
-                downsampled_x, downsampled_y, pen=pg.mkPen(color=(0, 0, 0), width=1)
+                downsampled_x, downsampled_y, pen=pg.mkPen(
+                    color=(0, 0, 0), width=1)
             )
             curve.setDownsampling(auto=True, method="peak")
 
@@ -376,7 +383,7 @@ class GraphWidget(QWidget):
         for red_line in self.red_lines:
             red_line.show()
 
-    def toggle_mini_map(self, checked):
+    def toggle_mini_map(self, checked: bool):
         self.do_show_mini_map = checked
         if checked:
             self.minimap.show()
@@ -459,8 +466,10 @@ class GraphWidget(QWidget):
             "font-size": "13pt",
             "font-weight": "bold",
         }
-        self.plot_widgets[plot_index].setLabel("bottom", xlabel, **axis_label_style)
-        self.plot_widgets[plot_index].setLabel("left", ylabel, **axis_label_style)
+        self.plot_widgets[plot_index].setLabel(
+            "bottom", xlabel, **axis_label_style)
+        self.plot_widgets[plot_index].setLabel(
+            "left", ylabel, **axis_label_style)
         self.plot_widgets[plot_index].getAxis("bottom").setTextPen(
             pg.mkPen(color=(0, 0, 0), width=2)
         )

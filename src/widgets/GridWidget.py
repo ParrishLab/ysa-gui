@@ -17,31 +17,11 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
 )
 import random
-from widgets.ColorCell import ColorCell
-from widgets.Overlay import Overlay
-from helpers.Constants import BACKGROUND, ACTIVE
+from src.widgets.ColorCell import ColorCell
+from src.widgets.Overlay import Overlay
+from src.helpers.Constants import BACKGROUND, ACTIVE
 import pyqtgraph as pg
 import numpy as np
-
-
-class Spark(QGraphicsEllipseItem):
-    def __init__(self, x, y):
-        super().__init__(0, 0, 3, 3)
-        self.setPos(x, y)
-        self.setBrush(QBrush(QColor(255, 165, 0)))
-        self.setPen(QPen(Qt.NoPen))
-        self.velocity = QPointF(random.uniform(-2, 2), random.uniform(-8, -4))
-        self.gravity = 0.8
-        self.life = random.randint(5, 15)
-
-    def update_position(self):
-        self.moveBy(self.velocity.x(), self.velocity.y())
-        self.velocity.setY(self.velocity.y() + self.gravity)
-        self.life -= 1
-        if self.life <= 0:
-            self.scene().removeItem(self)
-            return False
-        return True
 
 
 class PurpleDot(QGraphicsEllipseItem):
@@ -74,7 +54,8 @@ class SimpleColorDialog(QDialog):
 
         for color in self.predefined_colors:
             button = QPushButton()
-            button.setStyleSheet(f"background-color: {color.name()}; min-height: 30px;")
+            button.setStyleSheet(
+                f"background-color: {color.name()}; min-height: 30px;")
             button.clicked.connect(lambda _, c=color: self.color_chosen(c))
             self.layout.addWidget(button)
 
@@ -131,11 +112,6 @@ class GridWidget(QGraphicsView):
         self.highlighted_cells = set()
         self.lasso_history = []
 
-        self.sparks = []
-        self.spark_timer = QTimer(self)
-        self.spark_timer.timeout.connect(self.update_sparks)
-        self.spark_timer.start(16)
-
         self.is_seizure_beginning_mode = False
         self.seizure_beginnings = []
 
@@ -174,7 +150,8 @@ class GridWidget(QGraphicsView):
         )
 
     def createGrid(self):
-        self.cells = [[None for _ in range(self.cols)] for _ in range(self.rows)]
+        self.cells = [[None for _ in range(self.cols)]
+                      for _ in range(self.rows)]
         for i in range(self.rows):
             for j in range(self.cols):
                 cell = ColorCell(i, j, BACKGROUND)
@@ -199,7 +176,8 @@ class GridWidget(QGraphicsView):
             save_image_action = QAction("Save as Image", self)
             toggle_lasso_action = QAction("Create Propagation Groups", self)
             seizure_beginning_action = QAction("Place Seizure Beginning", self)
-            clear_discharge_start_areas = QAction("Clear Discharge Start Areas", self)
+            clear_discharge_start_areas = QAction(
+                "Clear Discharge Start Areas", self)
 
             context_menu.addAction(save_video_action)
             context_menu.addAction(save_image_action)
@@ -207,10 +185,13 @@ class GridWidget(QGraphicsView):
             context_menu.addAction(seizure_beginning_action)
             context_menu.addAction(clear_discharge_start_areas)
 
-            save_video_action.triggered.connect(self.save_as_video_requested.emit)
-            save_image_action.triggered.connect(self.save_as_image_requested.emit)
+            save_video_action.triggered.connect(
+                self.save_as_video_requested.emit)
+            save_image_action.triggered.connect(
+                self.save_as_image_requested.emit)
             toggle_lasso_action.triggered.connect(self.start_lasso_mode)
-            seizure_beginning_action.triggered.connect(self.start_purple_dot_mode)
+            seizure_beginning_action.triggered.connect(
+                self.start_purple_dot_mode)
             clear_discharge_start_areas.triggered.connect(
                 self.main_window.discharge_start_dialog.clear_discharge_start_areas_from_hdf5
             )
@@ -257,7 +238,8 @@ class GridWidget(QGraphicsView):
         if self.is_seizure_beginning_mode and event.button() == Qt.LeftButton:
             self.place_purple_dot(event.pos())
         elif not self.is_seizure_beginning_mode and event.button() == Qt.LeftButton:
-            item = self.scene.itemAt(self.mapToScene(event.pos()), QTransform())
+            item = self.scene.itemAt(
+                self.mapToScene(event.pos()), QTransform())
             if isinstance(item, PurpleDot):
                 self.remove_purple_dot(item)
             elif self.is_lasso_mode:
@@ -356,16 +338,6 @@ class GridWidget(QGraphicsView):
         self.lasso_history.clear()
         self.update()
         self.show_temporary_message("Cleared all lasso selections")
-
-    def create_sparks(self, pos):
-        scene_pos = self.mapToScene(pos)
-        for _ in range(1):
-            spark = Spark(scene_pos.x(), scene_pos.y())
-            self.scene.addItem(spark)
-            self.sparks.append(spark)
-
-    def update_sparks(self):
-        self.sparks = [spark for spark in self.sparks if spark.update_position()]
 
     def mouseReleaseEvent(self, event):
         if self.is_lasso_mode and event.button() == Qt.LeftButton:
@@ -508,7 +480,7 @@ class GridWidget(QGraphicsView):
             self.scene.removeItem(overlay)
         self.overlays.clear()
 
-    def toggle_overlay(self, checked):
+    def toggle_overlay(self, checked: bool):
         for overlay in self.overlays:
             overlay.setVisible(checked)
 
@@ -536,7 +508,7 @@ class GridWidget(QGraphicsView):
         self.curve1.setData(self.plot_x, self.plot_data1)
         self.curve2.setData(self.plot_x, self.plot_data2)
 
-    def setBackgroundImage(self, image_path):
+    def setBackgroundImage(self, image_path: str) -> None:
         try:
             self.image_path = image_path
             pixmap = QPixmap(image_path)

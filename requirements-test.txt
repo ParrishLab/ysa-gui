@@ -1,0 +1,32 @@
+# Testing dependencies
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-qt>=4.2.0
+pytest-xvfb>=3.0.0  # For headless GUI testing
+pytest-timeout>=2.1.0
+pytest-asyncio>=0.21.0
+
+# Mocking and test utilities
+factory-boy>=3.3.0
+freezegun>=1.2.0
+
+# Test data generation
+hypothesis>=6.82.0
+faker>=19.0.0
+
+# Coverage and reporting
+coverage>=7.3.0
+pytest-html>=3.2.0
+pytest-json-report>=1.5.0
+
+# Code quality and formatting
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+mypy>=1.5.0
+pylint>=2.17.0
+
+# Security scanning
+bandit>=1.7.0
+safety>=2.3.0

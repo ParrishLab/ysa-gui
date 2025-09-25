@@ -18,7 +18,7 @@ from PyQt5.QtWidgets import (
 )
 from PyQt5.QtCore import QEvent, QRectF, Qt
 import numpy as np
-from widgets.DischargeStartArea import DischargeStartArea
+from src.widgets.DischargeStartArea import DischargeStartArea
 import pyqtgraph as pg
 from matplotlib import cm
 
@@ -517,7 +517,7 @@ class DischargeStartDialog(QDialog):
         if accepted:
             print("accepted")
             self.create_discharge_start_area(
-                self.main_window.progress_bar.value() / self.main_window.sampling_rate
+                self.main_window.ui_manager.progress_bar.value() / self.main_window.sampling_rate
             )
             self.update_discharges()
 

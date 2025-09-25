@@ -1,0 +1,1 @@
+"""Manager classes for YSA GUI application."""
