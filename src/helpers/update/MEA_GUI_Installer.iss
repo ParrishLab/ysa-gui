@@ -29,7 +29,7 @@
 
 ; ====== Setup ======
 [Setup]
-AppId={{96289611-0927-480E-9561-C6976C2BB9F6}}  ; Keep this GUID forever for this product/edition (now, Windows will treat future installers as upgrades instead of separate apps)
+AppId={{96289611-0927-480E-9561-C6976C2BB9F6}} 
 AppName={#MyAppName}
 AppVersion={#AppVersionFromCI}              
 VersionInfoVersion={#FileVerFromCI}         
