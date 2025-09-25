@@ -1,5 +1,6 @@
 # Core GUI framework
 PyQt5>=5.15.0
+qdarktheme>=2.1.0
 
 # Scientific computing
 numpy>=1.21.0
