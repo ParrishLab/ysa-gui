@@ -1,6 +1,7 @@
 # Core GUI framework
 PyQt5>=5.15.0
 pyqtdarktheme
+pyqtwebengine
 
 # Scientific computing
 numpy>=1.21.0
@@ -33,3 +34,6 @@ Pillow>=8.3.0
 
 # Development and debugging
 loguru>=0.6.0
+tqdm
+zstandard
+urllib3
