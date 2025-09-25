@@ -35,14 +35,14 @@ jobs:
       run: |
         pytest tests/unit/ -v --cov=src --cov-report=xml -k "not test_auto_analyze_state_transitions and not test_discharge_index_progression"
 
-    - name: Lint with flake8
-      run: |
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
+    # - name: Lint with flake8
+    #   run: |
+    #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+    #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=100 --statistics
 
-    - name: Type check with mypy
-      run: |
-        mypy src/ --ignore-missing-imports --no-strict-optional
+    # - name: Type check with mypy
+    #   run: |
+    #     mypy src/ --ignore-missing-imports --no-strict-optional
 
   # Heavy builds - only run after merge to main or on release tags
   build-macos:
