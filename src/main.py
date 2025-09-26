@@ -2691,6 +2691,8 @@ class MainWindow(QMainWindow):
             self.play_pause_button.setText("")
             self.playback_timer.stop()
 
+            # COMMENT TEST
+
     def updatePlayback(self):
         speed = float(self.speed_combo.currentText())
         skip_frames = int(speed * self.sampling_rate)
