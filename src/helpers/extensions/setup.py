@@ -8,53 +8,92 @@ import subprocess
 
 def get_hdf5_paths():
     """
-    Dynamically find HDF5 installation paths using brew.
-    Falls back to environment variables or common paths if brew fails.
+    Dynamically find HDF5 installation paths.
+    Priority: (1) HDF5_DIR/HDF5_ROOT, (2) active conda env, (3) Homebrew, (4) platform fallbacks.
+    Returns: include_dir, library_dir, lib_dir (alias), libraries, extra_link_args.
     """
+    import os, subprocess, sys
+
+    def pack(inc, lib, libs=None, extra=None):
+        d = {
+            "include_dir": inc,
+            "library_dir": lib,
+            "libraries": libs or ["hdf5", "hdf5_hl"],
+            "extra_link_args": (extra or []) + (
+                [f"-Wl,-rpath,{lib}"] if sys.platform == "darwin" else []
+            ),
+        }
+        # Back-compat alias if other code still uses "lib_dir"
+        d["lib_dir"] = d["library_dir"]
+        return d
+    
+    def first_existing(paths):
+        for p in paths:
+            if os.path.isdir(p):
+                return p
+        return None
+    
+    # Respect explicit overrides for library names (optional)
+    env_libs = os.environ.get("HDF5_LIBS")
+    default_libs = env_libs.split(",") if env_libs else ["hdf5", "hdf5_hl"]
+
+    # 1) HDF5_DIR / HDF5_ROOT
+    for var in ("HDF5_DIR", "HDF5_ROOT"):
+        base = os.environ.get(var)
+        if base:
+            inc, lib = os.path.join(base, "include"), os.path.join(base, "lib")
+            if os.path.isdir(inc) and os.path.isdir(lib):
+                return pack(inc, lib)
+            
+    # 2) Active conda env
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    if conda_prefix:
+        inc, lib = os.path.join(conda_prefix, "include"), os.path.join(conda_prefix, "lib")
+        if os.path.isdir(inc) and os.path.isdir(lib):
+            return pack(inc, lib)
+        
+    # 3) Homebrew (works for both /opt/homebrew and /usr/local)
     try:
-        hdf5_dir = (
-            subprocess.check_output(["brew", "--prefix", "hdf5"]).decode().strip()
-        )
-        return {
-            "include_dir": os.path.join(hdf5_dir, "include"),
-            "lib_dir": os.path.join(hdf5_dir, "lib"),
-        }
-    except (subprocess.CalledProcessError, FileNotFoundError):
-        # Fallback paths
-        fallback_paths = {
-            "darwin": {
-                "include_dir": [
-                    "/opt/homebrew/include/hdf5",
-                    "/usr/local/include/hdf5",
-                    "/usr/include/hdf5",
-                ],
-                "lib_dir": ["/opt/homebrew/lib", "/usr/local/lib", "/usr/lib"],
-            },
-            "linux": {
-                "include_dir": [
-                    "/usr/include/hdf5/serial",
-                    "/usr/local/include/hdf5",
-                    "/usr/include/hdf5",
-                ],
-                "lib_dir": ["/usr/lib/x86_64-linux-gnu", "/usr/local/lib", "/usr/lib"],
-            },
-        }
+        prefix = subprocess.check_output(["brew", "--prefix", "hdf5"]).decode().strip()
+        inc = first_existing([os.path.join(prefix, "include", "hdf5"), os.path.join(prefix, "include")])
+        lib = os.path.join(prefix, "lib")
+        if inc and os.path.isdir(lib):
+            return pack(inc, lib)
+    except Exception:
+        pass
 
-    # Detect platform-specific paths
+    # 4) Existing platform fallbacks
+    fallback_paths = {
+        "darwin": {
+            "include_dir": [
+                "/opt/homebrew/include/hdf5",
+                "/usr/local/include/hdf5",
+                "/usr/include/hdf5",
+                "/opt/homebrew/include", 
+                "/usr/local/include",
+            ],
+            "lib_dir": ["/opt/homebrew/lib", "/usr/local/lib", "/usr/lib"],
+        },
+        "linux": {
+            "include_dir": [
+                "/usr/include/hdf5/serial",
+                "/usr/local/include/hdf5",
+                "/usr/include/hdf5",
+                "/usr/include", 
+            ],
+            "lib_dir": ["/usr/lib/x86_64-linux-gnu", "/usr/local/lib", "/usr/lib"],
+        },
+    }
+
     platform_paths = fallback_paths.get(sys.platform, fallback_paths["linux"])
-
-    # Find first existing include directory
-    include_dir = next(
-        (path for path in platform_paths["include_dir"] if os.path.exists(path)), None
-    )
-    lib_dir = next(
-        (path for path in platform_paths["lib_dir"] if os.path.exists(path)), None
-    )
+    include_dir = first_existing(platform_paths["include_dir"])
+    lib_dir = first_existing(platform_paths["lib_dir"])
 
     if not include_dir or not lib_dir:
         raise RuntimeError("Could not find HDF5 installation paths")
 
-    return {"include_dir": include_dir, "lib_dir": lib_dir}
+    # Normalize key names and add rpath on macOS
+    return pack(include_dir, lib_dir)
 
 
 # Determine compilation flags based on platform
