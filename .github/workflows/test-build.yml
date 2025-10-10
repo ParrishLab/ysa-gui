@@ -1,14 +1,10 @@
-name: Build and Release
-
-permissions:
-  contents: write
+name: Test Build
 
 on:
-  push:
-    branches: [main] # create "latest" pre-release on main
-    tags: ["v*"] # create versioned release on tags
+  pull_request:
+    branches: [main]
 
-  workflow_dispatch: {} # allow manual workflow runs
+  workflow_dispatch: {}
 
 jobs:
   build-macos:
@@ -25,7 +21,6 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
 
-      # Install Python version determined by the matrix
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
@@ -44,8 +39,7 @@ jobs:
         run: |
           sed -E -i '' 's/__version__\s*=\s*".*"/__version__ = "'${{ steps.ver.outputs.version }}'"/' src/helpers/Constants.py
 
-      # Install deps into the active venv, including ysa-signal package
-      - name: Install Python deps for build (macOS)
+      - name: Install Python deps for build (macOS x86_64)
         if: ${{ matrix.arch == 'x86_64' }}
         run: |
           arch -x86_64 python3 -m venv venv_x86
@@ -85,22 +79,15 @@ jobs:
           fi
           pyinstaller --noconfirm main.spec
 
-      - name: Locate built .app
+      - name: Verify built .app exists
         run: |
           set -euo pipefail
-          echo "Dist tree:"
-          find dist -maxdepth 3 -print
-
-          # Find first YsaGUI.app anywhere under dist/
           APP_PATH="$(find dist -type d -name 'YsaGUI.app' -print -quit)"
           if [ -z "${APP_PATH}" ]; then
             echo "ERROR: Could not find YsaGUI.app under dist/"
             exit 1
           fi
-          echo "Found app at: ${APP_PATH}"
-
-          # Persist for later steps
-          echo "APP_PATH=${APP_PATH}" >> $GITHUB_ENV
+          echo "[OK] Build successful: ${APP_PATH}"
 
       - name: Test GUI launch (macOS)
         run: |
@@ -110,8 +97,22 @@ jobs:
             source venv/bin/activate
           fi
 
+          # Make test script executable
           chmod +x tests/test_built_app.py
+
+          # Run test with 15 second timeout
           python tests/test_built_app.py --timeout 15
+
+      - name: Locate built .app
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find dist -type d -name 'YsaGUI.app' -print -quit)"
+          if [ -z "${APP_PATH}" ]; then
+            echo "ERROR: Could not find YsaGUI.app under dist/"
+            exit 1
+          fi
+          echo "Found app at: ${APP_PATH}"
+          echo "APP_PATH=${APP_PATH}" >> $GITHUB_ENV
 
       - name: Prepare Package
         run: |
@@ -119,7 +120,6 @@ jobs:
           rm -rf "${{ github.workspace }}/package_root"
           mkdir -p "${{ github.workspace }}/package_root"
 
-          # Copy the discovered .app to a stable name with spaces (your product name)
           cp -R "${APP_PATH}" "${{ github.workspace }}/package_root/YSA GUI.app"
           chmod -R 755 "${{ github.workspace }}/package_root/YSA GUI.app"
 
@@ -130,13 +130,12 @@ jobs:
             --version "${{ steps.ver.outputs.version }}" \
             "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
 
-      - name: Upload Artifact
-        if: github.event_name == 'push'
+      - name: Upload macOS Package
         uses: actions/upload-artifact@v4
         with:
           name: macos-package-${{ matrix.arch }}
           path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
-          retention-days: 1
+          retention-days: 7
 
   build-windows:
     runs-on: windows-latest
@@ -155,7 +154,6 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      # Compute version once per job
       - name: Compute version (tag or dev)
         id: ver
         shell: pwsh
@@ -167,7 +165,6 @@ jobs:
             $short = "${{ github.sha }}"[0..6] -join ''
             $disp = "0.0.0-dev+$short"
           }
-          # File version must be numeric a.b.c.d. Use commit chunk for the 3rd part.
           $m = [regex]::Match($disp, '^(?<maj>\d+)\.(?<min>\d+)\.(?<pat>\d+)')
           if ($m.Success) {
             $a = [int]$m.Groups['maj'].Value
@@ -209,7 +206,6 @@ jobs:
           pip install -r src/helpers/update/requirements.txt
           pip install ysa-signal
 
-          # Verify installations
           pip list
 
       - name: Build documentation
@@ -225,14 +221,35 @@ jobs:
         shell: pwsh
         run: |
           .\venv\Scripts\Activate.ps1
-          pyinstaller --noconfirm main.spec  # name is set inside spec -> YsaGUI
+          pyinstaller --noconfirm main.spec
 
-      - name: List dist contents (Windows)
+      - name: Verify PyInstaller build succeeded
         shell: pwsh
         run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path dist)) { throw "dist/ not found" }
-          Get-ChildItem -Recurse dist | Select-Object FullName, Length
+          if (-not (Test-Path '.\dist')) { throw "dist\ not found" }
+          $exe = Get-ChildItem '.\dist' -Recurse -Filter 'YsaGUI.exe' | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
+            throw "YsaGUI.exe not found under dist\. Build failed."
+          }
+          Write-Host "[OK] Build successful: $($exe.FullName)"
+
+      - name: Test GUI launch (Windows)
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+
+          # Run test with 15 second timeout
+          # Note: Windows CI may have Qt platform issues, so we accept certain exit codes
+          python tests/test_built_app.py --timeout 15
+
+          # If test failed, check if it's the known Qt platform issue
+          if ($LASTEXITCODE -ne 0) {
+            Write-Host "[WARN] GUI launch test failed on Windows - this is expected in CI without a display"
+            Write-Host "[INFO] The executable was built successfully and will work on real Windows systems"
+            # Don't fail the build for this known issue
+            exit 0
+          }
 
       - name: Pre-check Inno paths
         shell: pwsh
@@ -254,26 +271,12 @@ jobs:
           "SRC_DIR=$src"     | Out-File -FilePath $env:GITHUB_ENV -Append
           "OUT_DIR=$out"     | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Assert Inno inputs exist
-        shell: pwsh
-        run: |
-          $iss = "src/helpers/update/MEA_GUI_Installer.iss"
-          $src = "${{ github.workspace }}\dist\YsaGUI"
-          $out = "${{ github.workspace }}\src\helpers\update\Output"
-          if (-not (Test-Path $iss)) { throw "ISS not found: $iss" }
-          if (-not (Test-Path $src)) { throw "SourceDir not found: $src" }
-          if (-not (Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
-          Write-Host "OK: $iss"
-          Write-Host "OK: $src"
-          Write-Host "OK: $out"
-
       - name: Install Inno Setup (non-interactive)
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
           $ProgressPreference = 'SilentlyContinue'
 
-          # Make winget non-interactive and avoid msstore prompts
           try { winget source remove msstore | Out-Null } catch { }
           winget install --id JRSoftware.InnoSetup `
             --source winget `
@@ -281,10 +284,8 @@ jobs:
             --accept-package-agreements `
             --silent
 
-          # Try PATH
           $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
 
-          # Probe common locations (x64, x86, per-user)
           if (-not $iscc) {
             $candidates = @(
               "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
@@ -303,23 +304,13 @@ jobs:
           Write-Host "Resolved ISCC at: $iscc"
           "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
 
-      - name: Echo Inno inputs
-        shell: pwsh
-        run: |
-          Write-Host "ISS_PATH: $((Resolve-Path .\src\helpers\update\MEA_GUI_Installer.iss).Path)"
-          Write-Host "SRC_DIR : $((Resolve-Path .\dist\YsaGUI).Path)"
-          Write-Host "OUT_DIR : $((Resolve-Path .\src\helpers\update\Output).Path)"
-          Get-ChildItem .\dist\YsaGUI | Select-Object -First 5 | Format-Table -AutoSize
-
       - name: Build installer with ISCC
         shell: pwsh
         run: |
           $ErrorActionPreference = 'Stop'
 
-          # Use the path we saved during install
           $iscc = $env:ISCC_PATH
           if (-not $iscc -or -not (Test-Path $iscc)) {
-            # Fallback to PATH or well-known locations (also include per-user)
             $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
             if (-not $iscc) {
               $candidates = @(
@@ -333,12 +324,10 @@ jobs:
           if (-not $iscc) { throw "ISCC.exe not found on PATH or in Program Files/LocalAppData." }
           Write-Host "Using ISCC at: $iscc"
 
-          # Resolve inputs
           $iss  = (Resolve-Path ".\src\helpers\update\MEA_GUI_Installer.iss").Path
           $src  = (Resolve-Path ".\dist\YsaGUI").Path
           $out  = (Resolve-Path ".\src\helpers\update\Output").Path
 
-          # Run ISCC (quotes are important)
           & $iscc "$iss" /Qp `
             /DSourceDir="$src" `
             /DOutputDir="$out" `
@@ -348,105 +337,23 @@ jobs:
           Write-Host "Disp ver: ${{ steps.ver.outputs.version }}"
           Write-Host "File ver: ${{ steps.ver.outputs.file_version }}"
 
-      - name: Verify dist output
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = 'Stop'
-          if (-not (Test-Path dist)) { throw "dist/ not found" }
-          Get-ChildItem -Recurse dist | Select-Object FullName, Length
-
-      - name: Verify PyInstaller onedir exists (Windows)
-        shell: pwsh
-        run: |
-          if (-not (Test-Path '.\dist')) { throw "dist\ not found" }
-          $exe = Get-ChildItem '.\dist' -Recurse -Filter 'YsaGUI.exe' | Select-Object -First 1
-          if (-not $exe) {
-            Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
-            throw "YsaGUI.exe not found under dist\. Did PyInstaller run successfully?"
-          }
-          "Found: $($exe.FullName)"
-
-      - name: Test GUI launch (Windows)
-        shell: pwsh
-        run: |
-          .\venv\Scripts\Activate.ps1
-
-          # Run test with 15 second timeout
-          # Note: Windows CI may have Qt platform issues, so we accept certain exit codes
-          python tests/test_built_app.py --timeout 15
-
-          # If test failed, check if it's the known Qt platform issue
-          if ($LASTEXITCODE -ne 0) {
-            Write-Host "[WARN] GUI launch test failed on Windows - this is expected in CI without a display"
-            Write-Host "[INFO] The executable was built successfully and will work on real Windows systems"
-            # Don't fail the build for this known issue
-            exit 0
-          }
-
       - name: Upload Windows Installer
-        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
           path: ${{ env.OUT_DIR }}\YSA_GUI_Windows.exe
-          retention-days: 1
+          retention-days: 7
 
-  release:
-    if: github.event_name == 'push'
-    needs: [build-macos, build-windows]
+  # Aggregate status check - this is what GitHub branch protection looks for
+  test-build-status:
     runs-on: ubuntu-latest
-
+    needs: [build-macos, build-windows]
+    if: always()
     steps:
-      - uses: actions/checkout@v4
-
-      - name: Download MacOS Intel Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-package-x86_64
-          path: .
-
-      - name: Download MacOS Silicon Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-package-arm64
-          path: .
-
-      - name: Download Windows Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-package
-          path: .
-
-      - name: Determine Release Type
-        id: release_type
-        shell: bash
+      - name: Check build status
         run: |
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-            echo "release_name=Release ${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          else
-            echo "tag=latest" >> $GITHUB_OUTPUT
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            echo "release_name=Latest Development Build" >> $GITHUB_OUTPUT
+          if [ "${{ needs.build-macos.result }}" != "success" ] || [ "${{ needs.build-windows.result }}" != "success" ]; then
+            echo "One or more builds failed"
+            exit 1
           fi
-
-      - name: Create or Update Release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ github.token }}
-          tag_name: ${{ steps.release_type.outputs.tag }}
-          name: ${{ steps.release_type.outputs.release_name }}
-          prerelease: ${{ steps.release_type.outputs.is_prerelease }}
-          files: |
-            YSA_GUI_MacOS_x86_64.pkg
-            YSA_GUI_MacOS_arm64.pkg
-            YSA_GUI_Windows.exe
-          fail_on_unmatched_files: true
-          body: |
-            ## Downloads
-            - **macOS Intel**: YSA_GUI_MacOS_x86_64.pkg
-            - **macOS Silicon**: YSA_GUI_MacOS_arm64.pkg
-            - **Windows**: YSA_GUI_Windows.exe
-
-            Built from commit ${{ github.sha }}
+          echo "All builds passed"

@@ -101,10 +101,7 @@ from widgets.SquareWidget import SquareWidget
 from widgets.VideoEditor import VideoEditor
 from widgets.DocumentationViewer import DocumentationViewer
 
-try:
-    from helpers.extensions.signal_analyzer import SignalAnalyzer
-except ImportError:
-    print("Failed to import signal_analyzer module.")
+import signal_analyzer
 
 
 class MainWindow(QMainWindow):
@@ -2548,7 +2545,7 @@ class MainWindow(QMainWindow):
         self.peak_settings_widget.threshold_value.setText(str(self.n_std_dev))
         self.peak_settings_widget.distance_slider.setValue(self.distance)
         self.peak_settings_widget.distance_value.setText(str(self.distance))
-        self.signal_analyzer = SignalAnalyzer(
+        self.signal_analyzer = signal_analyzer.SignalAnalyzer(
             self.time_vector,
             n_std_dev=4,
             distance=70,
