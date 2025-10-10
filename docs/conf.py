@@ -14,9 +14,9 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
-project = "meaGUI"
-copyright = "2024, Jacob Cahoon"
-author = "Jacob Cahoon"
+project = "YSA GUI"
+copyright = "2025, Parrish Lab"
+author = "Parrish Lab"
 
 # -- General configuration ---------------------------------------------------
 # Add any Sphinx extension module names here, as strings. They can be
@@ -47,7 +47,7 @@ html_theme_options = {
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "show_nav_level": 1,
     "logo": {
-        "text": "meaGUI",
+        "text": "YSA GUI",
         "image_light": "_static/icon.ico",
         "image_dark": "_static/icon.ico",
     },
