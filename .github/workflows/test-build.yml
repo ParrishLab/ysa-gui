@@ -343,3 +343,17 @@ jobs:
           name: windows-package
           path: ${{ env.OUT_DIR }}\YSA_GUI_Windows.exe
           retention-days: 7
+
+  # Aggregate status check - this is what GitHub branch protection looks for
+  test-build-status:
+    runs-on: ubuntu-latest
+    needs: [build-macos, build-windows]
+    if: always()
+    steps:
+      - name: Check build status
+        run: |
+          if [ "${{ needs.build-macos.result }}" != "success" ] || [ "${{ needs.build-windows.result }}" != "success" ]; then
+            echo "One or more builds failed"
+            exit 1
+          fi
+          echo "All builds passed"
