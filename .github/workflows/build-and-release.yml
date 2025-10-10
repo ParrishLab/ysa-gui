@@ -8,9 +8,6 @@ on:
     branches: [main] # create "latest" pre-release on main
     tags: ["v*"] # create versioned release on tags
 
-  pull_request:
-    branches: [main] # test builds before merging to main
-
   workflow_dispatch: {} # allow manual workflow runs
 
 jobs:

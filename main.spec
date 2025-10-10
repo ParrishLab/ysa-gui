@@ -5,6 +5,7 @@ from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules, co
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
 
+binaries = []
 # Optionally let PyInstaller pull in any other linked libs from h5py:
 # binaries += collect_dynamic_libs("h5py")
 

@@ -1,0 +1,187 @@
+name: Test Build
+
+on:
+  pull_request:
+    branches: [main]
+
+  workflow_dispatch: {}
+
+jobs:
+  build-macos:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - arch: x86_64
+            python-version: 3.10.9
+          - arch: arm64
+            python-version: 3.10.9
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Compute version (tag or dev)
+        id: ver
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') { $v = $Matches[1] }
+          else { $shortsha = "${{ github.sha }}"[0..6] -join ''; $v = "0.0.0-dev+$shortsha" }
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+      - name: Update Constants.py version
+        run: |
+          sed -E -i '' 's/__version__\s*=\s*".*"/__version__ = "'${{ steps.ver.outputs.version }}'"/' src/helpers/Constants.py
+
+      - name: Install Python deps for build (macOS x86_64)
+        if: ${{ matrix.arch == 'x86_64' }}
+        run: |
+          arch -x86_64 python3 -m venv venv_x86
+          source venv_x86/bin/activate
+          python -m pip install --upgrade pip wheel
+          pip install -r src/helpers/update/requirements.txt
+          pip install ysa-signal
+
+      - name: Install Python deps for build (macOS arm64)
+        if: ${{ matrix.arch == 'arm64' }}
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          python -m pip install --upgrade pip wheel
+          pip install -r src/helpers/update/requirements.txt
+          pip install ysa-signal
+
+      - name: Build documentation
+        run: |
+          if [ "${{ matrix.arch }}" == "x86_64" ]; then
+            source $HOME/.bash_profile
+            arch -x86_64 /bin/bash -c "source venv_x86/bin/activate && cd docs && make html"
+          else
+            source venv/bin/activate
+            cd docs
+            make html
+          fi
+
+      - name: Build with PyInstaller
+        env:
+          ARCHFLAGS: "-arch ${{ matrix.arch }}"
+        run: |
+          if [ "${{ matrix.arch }}" == "x86_64" ]; then
+            source venv_x86/bin/activate
+          else
+            source venv/bin/activate
+          fi
+          pyinstaller --noconfirm main.spec
+
+      - name: Verify built .app exists
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find dist -type d -name 'YsaGUI.app' -print -quit)"
+          if [ -z "${APP_PATH}" ]; then
+            echo "ERROR: Could not find YsaGUI.app under dist/"
+            exit 1
+          fi
+          echo "✓ Build successful: ${APP_PATH}"
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.10.9
+
+      - name: Setup Visual Studio Developer Command Prompt
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          toolset: 14.29
+
+      - name: Compute version (tag or dev)
+        id: ver
+        shell: pwsh
+        run: |
+          $ref = "${{ github.ref_name }}"
+          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
+            $disp = $Matches[1]
+          } else {
+            $short = "${{ github.sha }}"[0..6] -join ''
+            $disp = "0.0.0-dev+$short"
+          }
+          $m = [regex]::Match($disp, '^(?<maj>\d+)\.(?<min>\d+)\.(?<pat>\d+)')
+          if ($m.Success) {
+            $a = [int]$m.Groups['maj'].Value
+            $b = [int]$m.Groups['min'].Value
+            $c = [int]$m.Groups['pat'].Value
+          } else {
+            $a = 0; $b = 0; $c = 0
+          }
+          $sha = "${{ github.sha }}"
+          $chunk = [Convert]::ToInt32($sha.Substring(0,4), 16) % 65535
+          $filever = "{0}.{1}.{2}.{3}" -f $a, $b, $chunk, 0
+
+          "version=$disp"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "file_version=$filever" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Display version: $disp"
+          Write-Host "File version: $filever"
+
+      - name: Update Constants.py version
+        shell: pwsh
+        run: |
+          $ver = '${{ steps.ver.outputs.version }}'
+          (Get-Content 'src/helpers/Constants.py' -Raw) `
+            -replace '__version__\s*=\s*["''][^"'']+["'']', "__version__ = `"$ver`"" `
+            | Set-Content 'src/helpers/Constants.py' -Encoding utf8
+
+      - name: Create Build Directories
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path "${{ github.workspace }}/build"
+          New-Item -ItemType Directory -Force -Path "${{ github.workspace }}/dist"
+
+      - name: Install dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m venv venv
+          .\venv\Scripts\Activate.ps1
+
+          pip install -r src/helpers/update/requirements.txt
+          pip install ysa-signal
+
+          pip list
+
+      - name: Build documentation
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+          cd docs
+          $env:PYTHONPATH = "$env:PYTHONPATH;$PWD"
+          sphinx-build -M html . _build
+          cd ..
+
+      - name: Build with PyInstaller
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+          pyinstaller --noconfirm main.spec
+
+      - name: Verify PyInstaller build succeeded
+        shell: pwsh
+        run: |
+          if (-not (Test-Path '.\dist')) { throw "dist\ not found" }
+          $exe = Get-ChildItem '.\dist' -Recurse -Filter 'YsaGUI.exe' | Select-Object -First 1
+          if (-not $exe) {
+            Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
+            throw "YsaGUI.exe not found under dist\. Build failed."
+          }
+          Write-Host "✓ Build successful: $($exe.FullName)"
