@@ -89,6 +89,20 @@ jobs:
           fi
           echo "✓ Build successful: ${APP_PATH}"
 
+      - name: Test GUI launch (macOS)
+        run: |
+          if [ "${{ matrix.arch }}" == "x86_64" ]; then
+            source venv_x86/bin/activate
+          else
+            source venv/bin/activate
+          fi
+
+          # Make test script executable
+          chmod +x tests/test_built_app.py
+
+          # Run test with 15 second timeout
+          python tests/test_built_app.py --timeout 15
+
   build-windows:
     runs-on: windows-latest
 
@@ -185,3 +199,11 @@ jobs:
             throw "YsaGUI.exe not found under dist\. Build failed."
           }
           Write-Host "✓ Build successful: $($exe.FullName)"
+
+      - name: Test GUI launch (Windows)
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+
+          # Run test with 15 second timeout
+          python tests/test_built_app.py --timeout 15

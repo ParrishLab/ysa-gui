@@ -102,6 +102,17 @@ jobs:
           # Persist for later steps
           echo "APP_PATH=${APP_PATH}" >> $GITHUB_ENV
 
+      - name: Test GUI launch (macOS)
+        run: |
+          if [ "${{ matrix.arch }}" == "x86_64" ]; then
+            source venv_x86/bin/activate
+          else
+            source venv/bin/activate
+          fi
+
+          chmod +x tests/test_built_app.py
+          python tests/test_built_app.py --timeout 15
+
       - name: Prepare Package
         run: |
           set -euo pipefail
@@ -354,6 +365,12 @@ jobs:
             throw "YsaGUI.exe not found under dist\. Did PyInstaller run successfully?"
           }
           "Found: $($exe.FullName)"
+
+      - name: Test GUI launch (Windows)
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+          python tests/test_built_app.py --timeout 15
 
       - name: Upload Windows Installer
         if: github.event_name == 'push'
