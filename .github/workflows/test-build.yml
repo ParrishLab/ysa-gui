@@ -103,6 +103,40 @@ jobs:
           # Run test with 15 second timeout
           python tests/test_built_app.py --timeout 15
 
+      - name: Locate built .app
+        run: |
+          set -euo pipefail
+          APP_PATH="$(find dist -type d -name 'YsaGUI.app' -print -quit)"
+          if [ -z "${APP_PATH}" ]; then
+            echo "ERROR: Could not find YsaGUI.app under dist/"
+            exit 1
+          fi
+          echo "Found app at: ${APP_PATH}"
+          echo "APP_PATH=${APP_PATH}" >> $GITHUB_ENV
+
+      - name: Prepare Package
+        run: |
+          set -euo pipefail
+          rm -rf "${{ github.workspace }}/package_root"
+          mkdir -p "${{ github.workspace }}/package_root"
+
+          cp -R "${APP_PATH}" "${{ github.workspace }}/package_root/YSA GUI.app"
+          chmod -R 755 "${{ github.workspace }}/package_root/YSA GUI.app"
+
+          pkgbuild \
+            --root "${{ github.workspace }}/package_root" \
+            --identifier edu.byu.parrishlab.ysagui \
+            --install-location /Applications \
+            --version "${{ steps.ver.outputs.version }}" \
+            "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
+
+      - name: Upload macOS Package
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-package-${{ matrix.arch }}
+          path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
+          retention-days: 7
+
   build-windows:
     runs-on: windows-latest
 
@@ -216,3 +250,96 @@ jobs:
             # Don't fail the build for this known issue
             exit 0
           }
+
+      - name: Pre-check Inno paths
+        shell: pwsh
+        run: |
+          $ws = "${{ github.workspace }}"
+          Write-Host "Workspace: $ws"
+
+          $iss = Resolve-Path ".\src\helpers\update\MEA_GUI_Installer.iss"
+          Write-Host "Found ISS: $iss"
+
+          $src = Resolve-Path ".\dist\YsaGUI"
+          Write-Host "Found SourceDir: $src"
+
+          $out = Join-Path $ws "src\helpers\update\Output"
+          if (-not (Test-Path $out)) { New-Item -ItemType Directory -Path $out | Out-Null }
+          Write-Host "Ensured OutputDir: $out"
+
+          "ISS_PATH=$iss"    | Out-File -FilePath $env:GITHUB_ENV -Append
+          "SRC_DIR=$src"     | Out-File -FilePath $env:GITHUB_ENV -Append
+          "OUT_DIR=$out"     | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Install Inno Setup (non-interactive)
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $ProgressPreference = 'SilentlyContinue'
+
+          try { winget source remove msstore | Out-Null } catch { }
+          winget install --id JRSoftware.InnoSetup `
+            --source winget `
+            --accept-source-agreements `
+            --accept-package-agreements `
+            --silent
+
+          $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
+
+          if (-not $iscc) {
+            $candidates = @(
+              "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+              "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
+              "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe"
+            )
+            $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+          }
+
+          if (-not $iscc) {
+            Write-Host "Checked these locations:"
+            $candidates | ForEach-Object { Write-Host " - $_" }
+            throw "ISCC not found after install."
+          }
+
+          Write-Host "Resolved ISCC at: $iscc"
+          "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
+
+      - name: Build installer with ISCC
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+
+          $iscc = $env:ISCC_PATH
+          if (-not $iscc -or -not (Test-Path $iscc)) {
+            $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
+            if (-not $iscc) {
+              $candidates = @(
+                "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
+                "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
+                "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe"
+              )
+              $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
+            }
+          }
+          if (-not $iscc) { throw "ISCC.exe not found on PATH or in Program Files/LocalAppData." }
+          Write-Host "Using ISCC at: $iscc"
+
+          $iss  = (Resolve-Path ".\src\helpers\update\MEA_GUI_Installer.iss").Path
+          $src  = (Resolve-Path ".\dist\YsaGUI").Path
+          $out  = (Resolve-Path ".\src\helpers\update\Output").Path
+
+          & $iscc "$iss" /Qp `
+            /DSourceDir="$src" `
+            /DOutputDir="$out" `
+            /DAppVersionFromCI=${{ steps.ver.outputs.version }} `
+            /DFileVerFromCI=${{ steps.ver.outputs.file_version }}
+
+          Write-Host "Disp ver: ${{ steps.ver.outputs.version }}"
+          Write-Host "File ver: ${{ steps.ver.outputs.file_version }}"
+
+      - name: Upload Windows Installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-package
+          path: ${{ env.OUT_DIR }}\YSA_GUI_Windows.exe
+          retention-days: 7
