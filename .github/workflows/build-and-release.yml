@@ -5,13 +5,13 @@ permissions:
 
 on:
   push:
-    branches: [develop] # CI for integration
-    tags: ["v*"] # release builds
+    branches: [main] # create "latest" pre-release on main
+    tags: ["v*"] # create versioned release on tags
 
   pull_request:
-    branches: [main] # gate merges to main
+    branches: [main] # test builds before merging to main
 
-  workflow_dispatch: {}
+  workflow_dispatch: {} # allow manual workflow runs
 
 jobs:
   build-macos:
@@ -123,7 +123,7 @@ jobs:
             "${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg"
 
       - name: Upload Artifact
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: macos-package-${{ matrix.arch }}
@@ -359,7 +359,7 @@ jobs:
           "Found: $($exe.FullName)"
 
       - name: Upload Windows Installer
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: github.event_name == 'push'
         uses: actions/upload-artifact@v4
         with:
           name: windows-package
@@ -367,7 +367,7 @@ jobs:
           retention-days: 1
 
   release:
-    if: startsWith(github.ref, 'refs/tags/v')
+    if: github.event_name == 'push'
     needs: [build-macos, build-windows]
     runs-on: ubuntu-latest
 
@@ -392,38 +392,36 @@ jobs:
           name: windows-package
           path: .
 
-      - name: Get Release Info
-        id: release_info
+      - name: Determine Release Type
+        id: release_type
         shell: bash
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
         run: |
-          release_url=$(gh api \
-            --method GET \
-            /repos/${{ github.repository }}/releases/tags/${{ github.ref_name }} \
-            --jq .upload_url)
-          echo "UPLOAD_URL=$release_url" >> $GITHUB_ENV
+          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "release_name=Release ${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=latest" >> $GITHUB_OUTPUT
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "release_name=Latest Development Build" >> $GITHUB_OUTPUT
+          fi
 
-      - name: Upload macOS Intel Package to Release
+      - name: Create or Update Release
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ github.token }}
-          files: YSA_GUI_MacOS_x86_64.pkg
-          name: YSA_GUI_MacOS_Intel.pkg
+          tag_name: ${{ steps.release_type.outputs.tag }}
+          name: ${{ steps.release_type.outputs.release_name }}
+          prerelease: ${{ steps.release_type.outputs.is_prerelease }}
+          files: |
+            YSA_GUI_MacOS_x86_64.pkg
+            YSA_GUI_MacOS_arm64.pkg
+            YSA_GUI_Windows.exe
           fail_on_unmatched_files: true
+          body: |
+            ## Downloads
+            - **macOS Intel**: YSA_GUI_MacOS_x86_64.pkg
+            - **macOS Silicon**: YSA_GUI_MacOS_arm64.pkg
+            - **Windows**: YSA_GUI_Windows.exe
 
-      - name: Upload macOS Silicon Package to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ github.token }}
-          files: YSA_GUI_MacOS_arm64.pkg
-          name: YSA_GUI_MacOS_Silicon.pkg
-          fail_on_unmatched_files: true
-
-      - name: Upload Windows Package to Release
-        uses: softprops/action-gh-release@v1
-        with:
-          token: ${{ github.token }}
-          files: YSA_GUI_Windows.exe
-          name: YSA_GUI_Windows.exe
-          fail_on_unmatched_files: true
+            Built from commit ${{ github.sha }}
