@@ -1,8 +1,6 @@
 import os
 from time import perf_counter
 import sys
-
-
 import h5py
 import numpy as np
 from scipy.io import loadmat
@@ -11,14 +9,7 @@ from PyQt5.QtCore import QThread, pyqtSignal
 from helpers.alert import alert
 from threads.ProgressUpdaterThread import ProgressUpdaterThread
 
-cpp_import_failed = False
-try:
-    from helpers.extensions import sz_se_detect
-
-    print("C++ extension loaded successfully")
-except ImportError:
-    cpp_import_failed = True
-    print("C++ extension failed to load")
+from ysa_signal import process_and_store
 
 
 class CppAnalysisThread(QThread):
@@ -31,13 +22,9 @@ class CppAnalysisThread(QThread):
         self.temp_data_path = temp_data_path
 
     def run(self):
-        if sys.platform == "win32":
-            results = sz_se_detect.processAllChannels(self.file_path, self.do_analysis)
-        else:
-            results = sz_se_detect.processAllChannels(
-                self.file_path, self.do_analysis, self.temp_data_path
-            )
-        self.analysis_completed.emit(results)
+        processed_data = process_and_store(
+            file_path=self.file_path, do_analysis=self.do_analysis, temp_data_path=self.temp_data_path)
+        self.analysis_completed.emit(processed_data)
 
 
 class AnalysisThread(QThread):
@@ -66,18 +53,13 @@ class AnalysisThread(QThread):
         self.use_cpp = False
 
     def process_cpp_results(self, results):
-        for result in results:
-            signal = np.array(result.signal, dtype=np.float32).squeeze()
-            SzTimes = np.array([(t[0], t[1], 1) for t in result.result.SzTimes])
-            SETimes = np.array([(t[0], t[1], 1) for t in result.result.SETimes])
-            DischargeTimes = np.array(result.result.DischargeTimes)
+        self.data = results.data
 
-            self.data[result.Row - 1, result.Col - 1] = {
-                "signal": signal,
-                "SzTimes": SzTimes,
-                "SETimes": SETimes,
-                "DischargeTimes": DischargeTimes,
-            }
+        # Copy metadata from ProcessedData
+        self.sampling_rate = results.sampling_rate
+        self.recording_length = results.recording_length
+        self.time_vector = results.time_vector
+        self.active_channels = results.active_channels
 
     def stop_engine(self):
         if self.eng is not None:
@@ -94,10 +76,12 @@ class AnalysisThread(QThread):
         if self.temp_data_path is not None:
             os.makedirs(self.temp_data_path, exist_ok=True)
         try:
-            self.progress_updater_thread = ProgressUpdaterThread(self.temp_data_path)
-            self.progress_updater_thread.progress_updated.connect(self.progress_updated)
+            self.progress_updater_thread = ProgressUpdaterThread(
+                self.temp_data_path)
+            self.progress_updater_thread.progress_updated.connect(
+                self.progress_updated)
             self.progress_updater_thread.start()
-            if self.eng is None or (self.use_cpp and not cpp_import_failed):
+            if self.eng is None or self.use_cpp:
                 print("Using c++ version")
                 cpp_thread = CppAnalysisThread(
                     self.file_path, self.do_analysis, self.temp_data_path
@@ -105,6 +89,7 @@ class AnalysisThread(QThread):
                 cpp_thread.analysis_completed.connect(self.process_cpp_results)
                 cpp_thread.start()
                 cpp_thread.wait()
+                # Metadata is already set by process_cpp_results, no need to read from file again
             else:
                 print("Using matlab version")
 
@@ -128,7 +113,8 @@ class AnalysisThread(QThread):
                     if file.endswith(".mat"):
                         data = loadmat(os.path.join(self.temp_data_path, file))
 
-                        signal = np.array(data["signal"], dtype=np.float32).squeeze()
+                        signal = np.array(
+                            data["signal"], dtype=np.float32).squeeze()
 
                         name = np.array(data["name"]).squeeze()
                         SzTimes = (
@@ -155,14 +141,19 @@ class AnalysisThread(QThread):
                             "DischargeTimes": DischargeTimes,
                         }
 
-            with h5py.File(self.file_path, "r") as f:
-                num_rec_frames = int(f["/3BRecInfo/3BRecVars/NRecFrames"][()])
-                self.sampling_rate = float(f["/3BRecInfo/3BRecVars/SamplingRate"][()])
+                # For MATLAB path, need to read metadata from file and set up channels
+                with h5py.File(self.file_path, "r") as f:
+                    num_rec_frames = int(
+                        f["/3BRecInfo/3BRecVars/NRecFrames"][()])
+                    self.sampling_rate = float(
+                        f["/3BRecInfo/3BRecVars/SamplingRate"][()])
 
-            self.recording_length = (1 / self.sampling_rate) * (num_rec_frames - 1)
-            self.time_vector = [i / self.sampling_rate for i in range(num_rec_frames)]
-            rows, cols = self.get_channels()
-            self.active_channels = list(zip(rows, cols))
+                self.recording_length = (
+                    1 / self.sampling_rate) * (num_rec_frames - 1)
+                self.time_vector = [
+                    i / self.sampling_rate for i in range(num_rec_frames)]
+                rows, cols = self.get_channels()
+                self.active_channels = list(zip(rows, cols))
             for cell_data in self.data.flatten():
                 if cell_data is None:
                     continue
