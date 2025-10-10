@@ -55,9 +55,9 @@ def test_executable(test_file=None, timeout_seconds=10):
 
     try:
         exe_path = find_executable()
-        print(f"✓ Found executable: {exe_path}")
+        print(f"[OK] Found executable: {exe_path}")
     except FileNotFoundError as e:
-        print(f"✗ {e}")
+        print(f"[ERROR] {e}")
         return False
 
     # Build command
@@ -85,7 +85,7 @@ def test_executable(test_file=None, timeout_seconds=10):
             text=True
         )
 
-        print(f"✓ Process started (PID: {process.pid})")
+        print(f"[OK] Process started (PID: {process.pid})")
         print(f"  Waiting {timeout_seconds} seconds...")
 
         # Wait for timeout
@@ -94,32 +94,32 @@ def test_executable(test_file=None, timeout_seconds=10):
 
             # If it exited before timeout, check return code
             if process.returncode == 0:
-                print("✓ Process exited cleanly")
+                print("[OK] Process exited cleanly")
                 return True
             else:
-                print(f"✗ Process exited with code {process.returncode}")
+                print(f"[ERROR] Process exited with code {process.returncode}")
                 if stderr:
                     print("STDERR:", stderr[:500])
                 return False
 
         except subprocess.TimeoutExpired:
             # Timeout is expected - the GUI should still be running
-            print(f"✓ Process still running after {timeout_seconds}s")
+            print(f"[OK] Process still running after {timeout_seconds}s")
 
             # Terminate gracefully
             process.terminate()
             try:
                 process.wait(timeout=5)
-                print("✓ Process terminated gracefully")
+                print("[OK] Process terminated gracefully")
             except subprocess.TimeoutExpired:
-                print("⚠ Process didn't terminate, forcing kill")
+                print("[WARN] Process didn't terminate, forcing kill")
                 process.kill()
                 process.wait()
 
             return True
 
     except Exception as e:
-        print(f"✗ Test failed with error: {e}")
+        print(f"[ERROR] Test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -138,10 +138,10 @@ def main():
     )
 
     if success:
-        print("\n✅ Executable test PASSED")
+        print("\n[PASS] Executable test PASSED")
         sys.exit(0)
     else:
-        print("\n❌ Executable test FAILED")
+        print("\n[FAIL] Executable test FAILED")
         sys.exit(1)
 
 

@@ -52,7 +52,7 @@ def test_gui_launch(test_file=None, timeout_seconds=10):
         success = [False]  # Use list to allow modification in nested function
 
         def on_timeout():
-            print(f"✓ GUI ran successfully for {timeout_seconds} seconds")
+            print(f"[OK] GUI ran successfully for {timeout_seconds} seconds")
             success[0] = True
             app.quit()
 
@@ -75,7 +75,7 @@ def test_gui_launch(test_file=None, timeout_seconds=10):
 
         # Show window (in offscreen mode this won't actually display)
         window.show()
-        print("✓ Window created and shown")
+        print("[OK] Window created and shown")
 
         # Run event loop
         app.exec_()
@@ -83,7 +83,7 @@ def test_gui_launch(test_file=None, timeout_seconds=10):
         return success[0]
 
     except Exception as e:
-        print(f"✗ GUI test failed with error: {e}")
+        print(f"[ERROR] GUI test failed with error: {e}")
         import traceback
         traceback.print_exc()
         return False
@@ -101,10 +101,10 @@ def main():
     )
 
     if success:
-        print("\n✅ GUI integration test PASSED")
+        print("\n[PASS] GUI integration test PASSED")
         sys.exit(0)
     else:
-        print("\n❌ GUI integration test FAILED")
+        print("\n[FAIL] GUI integration test FAILED")
         sys.exit(1)
 
 

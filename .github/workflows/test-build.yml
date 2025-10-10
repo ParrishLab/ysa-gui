@@ -87,7 +87,7 @@ jobs:
             echo "ERROR: Could not find YsaGUI.app under dist/"
             exit 1
           fi
-          echo "✓ Build successful: ${APP_PATH}"
+          echo "[OK] Build successful: ${APP_PATH}"
 
       - name: Test GUI launch (macOS)
         run: |
@@ -198,7 +198,7 @@ jobs:
             Write-Host "dist contents:"; Get-ChildItem -Recurse '.\dist' | Select-Object FullName,Length
             throw "YsaGUI.exe not found under dist\. Build failed."
           }
-          Write-Host "✓ Build successful: $($exe.FullName)"
+          Write-Host "[OK] Build successful: $($exe.FullName)"
 
       - name: Test GUI launch (Windows)
         shell: pwsh
