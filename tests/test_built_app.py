@@ -70,10 +70,15 @@ def test_executable(test_file=None, timeout_seconds=10):
     if sys.platform == 'darwin':
         env['QT_QPA_PLATFORM'] = 'offscreen'
     elif sys.platform == 'win32':
-        env['QT_QPA_PLATFORM'] = 'offscreen'
+        # On Windows CI, offscreen may not work - try minimal platform
+        env['QT_QPA_PLATFORM'] = 'minimal'
+        # Also disable GPU acceleration which can cause issues in CI
+        env['QT_OPENGL'] = 'software'
 
     print(f"Launching: {' '.join(cmd)}")
     print(f"  QT_QPA_PLATFORM: {env.get('QT_QPA_PLATFORM', 'default')}")
+    if sys.platform == 'win32':
+        print(f"  QT_OPENGL: {env.get('QT_OPENGL', 'default')}")
 
     try:
         # Start the process
@@ -99,7 +104,15 @@ def test_executable(test_file=None, timeout_seconds=10):
             else:
                 print(f"[ERROR] Process exited with code {process.returncode}")
                 if stderr:
-                    print("STDERR:", stderr[:500])
+                    print("STDERR:", stderr[:1000])
+                if stdout:
+                    print("STDOUT:", stdout[:1000])
+
+                # On Windows, if we get an access violation, it might be Qt platform issues
+                if sys.platform == 'win32' and process.returncode in [3221225477, -1073741819]:
+                    print("[INFO] Windows access violation detected - this may be a Qt platform plugin issue")
+                    print("[INFO] The executable was built successfully but cannot run in CI without a display")
+
                 return False
 
         except subprocess.TimeoutExpired:
