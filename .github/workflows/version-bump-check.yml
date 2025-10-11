@@ -1,0 +1,80 @@
+name: Version Bump Check
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'src/helpers/Constants.py'
+
+jobs:
+  check-version-bump:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version from PR branch
+        id: pr_version
+        run: |
+          pr_version=$(grep -E '^__version__\s*=\s*["\x27]' src/helpers/Constants.py | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
+          if [ -z "$pr_version" ]; then
+            echo "Error: Could not extract version from Constants.py in PR branch"
+            exit 1
+          fi
+          echo "version=$pr_version" >> $GITHUB_OUTPUT
+          echo "PR branch version: $pr_version"
+
+      - name: Get version from main branch
+        id: main_version
+        run: |
+          git fetch origin main
+          git checkout origin/main -- src/helpers/Constants.py
+          mv src/helpers/Constants.py Constants_main.py
+          git checkout ${{ github.head_ref }} -- src/helpers/Constants.py
+
+          main_version=$(grep -E '^__version__\s*=\s*["\x27]' Constants_main.py | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
+          if [ -z "$main_version" ]; then
+            echo "Error: Could not extract version from Constants.py in main branch"
+            exit 1
+          fi
+          echo "version=$main_version" >> $GITHUB_OUTPUT
+          echo "Main branch version: $main_version"
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install packaging library
+        run: pip install packaging
+
+      - name: Compare versions
+        run: |
+          python3 << 'EOF'
+          from packaging import version
+
+          pr_ver = "${{ steps.pr_version.outputs.version }}"
+          main_ver = "${{ steps.main_version.outputs.version }}"
+
+          print(f"PR version:   {pr_ver}")
+          print(f"Main version: {main_ver}")
+
+          try:
+              pr_parsed = version.parse(pr_ver)
+              main_parsed = version.parse(main_ver)
+
+              if pr_parsed <= main_parsed:
+                  print(f"\n❌ ERROR: Version must be bumped before merging to main!")
+                  print(f"   Current main version: {main_ver}")
+                  print(f"   PR version:          {pr_ver}")
+                  print(f"\n   Please update __version__ in src/helpers/Constants.py")
+                  exit(1)
+              else:
+                  print(f"\n✅ Version bump detected: {main_ver} → {pr_ver}")
+          except Exception as e:
+              print(f"\n❌ ERROR: Invalid version format: {e}")
+              exit(1)
+          EOF
