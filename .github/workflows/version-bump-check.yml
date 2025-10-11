@@ -29,12 +29,12 @@ jobs:
       - name: Get version from main branch
         id: main_version
         run: |
-          git fetch origin main
-          git checkout origin/main -- src/helpers/Constants.py
-          mv src/helpers/Constants.py Constants_main.py
-          git checkout ${{ github.head_ref }} -- src/helpers/Constants.py
+          # Fetch main branch
+          git fetch origin main:main
 
-          main_version=$(grep -E '^__version__\s*=\s*["\x27]' Constants_main.py | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
+          # Get version from main branch without checking out
+          main_version=$(git show origin/main:src/helpers/Constants.py | grep -E '^__version__\s*=\s*["\x27]' | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
+
           if [ -z "$main_version" ]; then
             echo "Error: Could not extract version from Constants.py in main branch"
             exit 1
