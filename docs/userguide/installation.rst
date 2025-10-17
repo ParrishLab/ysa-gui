@@ -20,26 +20,26 @@ There are two ways to install the application:
     - Clone the repository and navigate to the project directory:
         .. code-block:: bash
 
-          git clone https://github.com/booka66/mea-gui.git
+          git clone https://github.com/ParrishLab/ysa-gui.git
           cd mea-gui
 
     - Create a virtual environment:
         .. code-block:: bash
 
-          python -m venv mea_env
+          python -m venv ysa_env
 
     - Activate the virtual environment:
         - Windows:
 
         .. code-block:: bash
 
-          mea_env/Scripts/activate
+          ysa_env/Scripts/activate
 
         - MacOS:
 
         .. code-block:: bash
 
-          source mea_env/bin/activate
+          source ysa_env/bin/activate
 
     - Install the dependencies:
         .. code-block:: bash
