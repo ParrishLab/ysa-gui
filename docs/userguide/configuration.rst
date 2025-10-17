@@ -22,14 +22,21 @@ Configuring Input Files
 Downsampled and exported .brw files are ready to be loaded into YSA.
 
 .. note::
-  [Insert ChannelExtract GUI information and download link here]
-  
-  - Also explain more about exporting & downsampling: What types of downsampled material the GUI can process within an approximate time frame, and the caveat that the spatial resolution can handle up to 64x64 arrays, which is currently the highest spatial resolution offered on the MEA.
-  
+  - The ysa-GUI functions best when input files are under 1 GB, depending on the RAM capabilities of your machine:
+        - For devices with a RAM of 64 GB, optimal size is < ~1 GB
+        - For devices with a RAM of 16 GB, optimal size is < ~500 MB
+        - For devices with a RAM of 8 GB, optimal size is < ~300 MB
+  - Since raw MEA files can be quite large >100 GB, we recommend using files of an hour or less that are downsampled signals around 100-300 Hz for optimal performance.
+  - Spatially downsampling MEA files by selecting specific regions and channels in the MEA recording can also decrease file size
+  - The maximum grid size compatible with the ysa-GUI is 64 x 64 (Any grid dimension that can fit within this maximum 64 x 64 grid size are compatible)
+        - Most MEA systems have grid sizes of 64 x 64 or less, however if a larger grid size is used, a spatial downsampling that trims channels within the 64 x 64 size will render the data compatible with yse-GUI
+
+   Code to downsample and export .brw MEA files can be found here: https://github.com/ParrishLab/MEA_file_Extract_Downsample.git
+
 
 Data File (.h5 or other HDF5 extension, e.g. .brw)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-To make an .h5 file compatible with YSA, follow these formatting specifications.
+To make an .h5 file compatible with YSA, follow these formatting specifications in configuring the data structure.
 
 /3BData
 ~~~~~~~
@@ -70,7 +77,7 @@ NRows
 
 Chs
 
-- Size: 143  (Number of channels with exported data)
+- Size: n  (where n is the number of channels available in the exported data)
 - Type: H5T_COMPOUND  ['Row' 'Col'] (List of the [Row Col] locations of the stored channels)
 
 
