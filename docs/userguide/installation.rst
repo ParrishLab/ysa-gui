@@ -7,9 +7,9 @@ There are two ways to install the application:
 
 1. **Downloading an installer** for your operating system and following the instructions (recommended):
 
-  - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_Windows.exe>`__ for Windows
-  - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_arm64.pkg>`__ for MacOS (Apple Silicon)
-  - `Download <https://github.com/booka66/mea-gui/releases/latest/download/MEA_GUI_MacOS_x86_64.pkg>`__ for MacOS (Intel)
+  - `Download <https://github.com/ParrishLab/ysa-gui/releases/download/latest/YSA_GUI_MacOS_arm64.pkg>`__ for Windows
+  - `Download <https://github.com/ParrishLab/ysa-gui/releases/download/latest/YSA_GUI_MacOS_arm64.pkg>`__ for MacOS (Apple Silicon)
+  - `Download <https://github.com/ParrishLab/ysa-gui/releases/download/latest/YSA_GUI_MacOS_x86_64.pkg>`__ for MacOS (Intel)
 
 .. note::
   The installers are not signed, so you may need to allow the installation in the system settings. On Windows, it may be flagged as a potential threat, but choose to keep it anyway.
@@ -21,14 +21,14 @@ There are two ways to install the application:
     
     .. code-block:: bash
 
-      git clone https://github.com/booka66/mea-gui.git
-      cd mea-gui
+      git clone https://github.com/ParrishLab/ysa-gui.git
+      cd ysa-gui
 
   - Create a virtual environment:
     
     .. code-block:: bash
 
-      python -m venv mea_env
+      python -m venv ysa_env
 
   - Activate the virtual environment:
   
@@ -36,13 +36,13 @@ There are two ways to install the application:
 
     .. code-block:: bash
 
-      mea_env/Scripts/activate
+      ysa_env/Scripts/activate
 
     - MacOS:
 
     .. code-block:: bash
 
-      source mea_env/bin/activate
+      source ysa_env/bin/activate
 
   - Install the dependencies:
     
