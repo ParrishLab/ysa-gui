@@ -124,7 +124,7 @@ What Happens:
 
 - It scans for :term:`Seizure-Like Events (SLEs)`.
 
-- Analysis usually takes 2-5 minutes per file, depending on the file size and downsample ratio. 
+- Analysis usually takes 2-5 minutes per file, depending on the available RAM, file size, and downsample ratio.
 
 .. tip::
   Monitor progress in the status bar. You can cancel ongoing analysis with the ``Stop`` button if needed.
@@ -161,7 +161,7 @@ Results are automatically saved and can be exported for further processing.
 Common Issues
 ~~~~~~~~~~~~~
 
-* File won't open? Confirm it is processed and in ``.brw`` format.
+* File won't open? Confirm it is processed and in ``.brw`` or ``.h5`` format.
 
 * Analysis returns no events? Try lowering your :term:`Threshold detection` value.
 
