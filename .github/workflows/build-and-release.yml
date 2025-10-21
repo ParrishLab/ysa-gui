@@ -35,24 +35,26 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          # Read version from Constants.py
-          $content = Get-Content -Path "src/helpers/Constants.py" -Raw
-          $pattern = @'__version__\s*=\s*["']([^"']+)["']'@
+          $content = Get-Content -Raw 'src/helpers/Constants.py'  # adjust path if needed
+          $pattern = '__version__\s*=\s*["'']([^"'']+)["'']'
+
           if ($content -match $pattern) {
             $baseVersion = $Matches[1]
           } else {
             throw "Could not extract version from Constants.py"
           }
 
-          # For tagged releases, use the tag; otherwise append dev suffix
-          $ref = "${{ github.ref_name }}"
+          # Use tag on tagged builds; otherwise append dev+<shortsha>
+          $ref = '${{ github.ref_name }}'
           if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
-            $v = $Matches[1]
+            $v = $Matches[1]   # captured part without the 'v'
           } else {
-            $shortsha = "${{ github.sha }}"[0..6] -join ''
-            $v = "$baseVersion-dev+$shortsha"
+            $sha = '${{ github.sha }}'
+            $v = "$baseVersion-dev+$($sha.Substring(0,7))"
           }
-          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+
+          "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Detected version: $v"
 
       - name: Update Constants.py version
         run: |
@@ -173,39 +175,40 @@ jobs:
         id: ver
         shell: pwsh
         run: |
-          # Read version from Constants.py
-          $content = Get-Content -Path "src/helpers/Constants.py" -Raw
-          $pattern = @'__version__\s*=\s*["']([^"']+)["']'@
+          $content = Get-Content -Raw 'src/helpers/Constants.py'
+          $pattern = '__version__\s*=\s*["'']([^"'']+)["'']'
+
           if ($content -match $pattern) {
             $baseVersion = $Matches[1]
           } else {
             throw "Could not extract version from Constants.py"
           }
 
-          # For tagged releases, use the tag; otherwise append dev suffix
-          $ref = "${{ github.ref_name }}"
+          # Display version (tag or base-dev+sha)
+          $ref = '${{ github.ref_name }}'
           if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
             $disp = $Matches[1]
           } else {
-            $short = "${{ github.sha }}"[0..6] -join ''
-            $disp = "$baseVersion-dev+$short"
+            $sha = '${{ github.sha }}'
+            $disp = "$baseVersion-dev+$($sha.Substring(0,7))"
           }
 
-          # File version must be numeric a.b.c.d. Use commit chunk for the 3rd part.
+          # Numeric file version a.b.c.d for Windows
           $m = [regex]::Match($disp, '^(?<maj>\d+)\.(?<min>\d+)\.(?<pat>\d+)')
           if ($m.Success) {
             $a = [int]$m.Groups['maj'].Value
             $b = [int]$m.Groups['min'].Value
             $c = [int]$m.Groups['pat'].Value
-          } else {
-            $a = 0; $b = 0; $c = 0
-          }
-          $sha = "${{ github.sha }}"
-          $chunk = [Convert]::ToInt32($sha.Substring(0,4), 16) % 65535
-          $filever = "{0}.{1}.{2}.{3}" -f $a, $b, $chunk, 0
+          } else { $a = 0; $b = 0; $c = 0 }
 
-          "version=$disp"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          "file_version=$filever" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          $sha = '${{ github.sha }}'
+          $chunk = [Convert]::ToInt32($sha.Substring(0,4), 16) % 65535
+
+          # Use $chunk for the 3rd segment so filever changes per-commit
+          $filever = '{0}.{1}.{2}.{3}' -f $a, $b, $chunk, 0
+
+          "version=$disp"           | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          "file_version=$filever"   | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           Write-Host "Display version: $disp"
           Write-Host "File version: $filever"
 
