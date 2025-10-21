@@ -84,35 +84,10 @@ The ``Open File`` button simply allows the user to open a ``.brw`` file.
 After selecting a ``.brw`` file, an attempt will be made to load the corresponding image file if it exists and is in the same directory.
 If the image file is not found, the user will be prompted to select an image file to load.
 
-Low RAM Mode
-------------
-On certain systems, the application may run out of memory when loading large files.
-If ``Low RAM Mode`` is enabled, the application will attempt to load the file with less memory usage at the cost of slower performance.
-
-.. important::
-   Under the hood, the application uses two implementations of the same algorithm: one is written in MATLAB and the other in C++.
-   The ``Low RAM Mode`` option will use the MATLAB implementation, so a valid MATLAB installation is required to use this feature.
-   See :ref:`configuration` for more information.
-
-Use C++
--------
-For reasons beyond the scope of this documentation, the C++ implementation of the viewing/analysis algorithms is significantly faster than the MATLAB implementation.
-It is highly recommended to use the C++ implementation when only viewing data and not running analysis as it will quickly load large files and display the data with minimal delay.
-The C++ implementation uses much less memory than the MATLAB implementation, so it is recommended to use this option when running out of memory.
-
-.. caution::
-  The C++ implementation is not entirely true to the MATLAB implementation, so the results of the analysis may differ slightly.
-  If the user is running analysis and wants the most accurate results, it is recommended to use the MATLAB implementation despite the slower performance.
-
-.. note::
-   On Windows systems, the C++ implementation locks the UI thread, so the application may appear to be unresponsive while loading files.
-
-.. _quick_view:
-
 Quick View
 ----------
 The ``Quick View`` buttom will simply read the loaded file's signal data without running any analysis for a quick preview of the data.
-When using the C++ implementation, this should only take a few seconds to load the data.
+This should only take a few seconds to load the data.
 
 .. _run_analysis:
 

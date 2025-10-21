@@ -5,18 +5,7 @@ from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules, co
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
 
-# ---- Dynamic HDF5 libs (Homebrew path differs per arch) ----
 binaries = []
-if sys.platform == "darwin":
-    try:
-        prefix = subprocess.check_output(["brew", "--prefix", "hdf5"]).decode().strip()
-        for name in ("libhdf5.dylib", "libhdf5_hl.dylib", "libaec.dylib", "libsz.dylib"):
-            p = os.path.join(prefix, "lib", name)
-            if os.path.exists(p):
-                binaries.append((p, "."))
-    except Exception:
-        pass
-
 # Optionally let PyInstaller pull in any other linked libs from h5py:
 # binaries += collect_dynamic_libs("h5py")
 
@@ -27,8 +16,6 @@ hiddenimports = [
     "h5py.utils",
     "h5py._proxy",
 ]
-# include every submodule in sz_se_detect (your C++ extension package)
-hiddenimports += collect_submodules("sz_se_detect")
 
 # ---- Data files ----
 datas = [
@@ -76,13 +63,29 @@ exe = EXE(
     entitlements_file=None,  # fill if you sign with entitlements
 )
 
-# macOS: wrap as .app bundle and set bundle identifier
+# Prepare extra Trees for COLLECT
+extra_trees = []
+if os.path.isdir("docs/_build"):
+    extra_trees.append(Tree("docs/_build", prefix="."))
+if os.path.isdir("src/helpers/mat"):
+    extra_trees.append(Tree("src/helpers/mat", prefix="."))
+
+# First create COLLECT with all binaries and resources
+coll = COLLECT(
+    exe,
+    a.binaries, a.zipfiles, a.datas,
+    *extra_trees,
+    binaries=binaries,   # dynamic HDF5 list from earlier
+    strip=False, upx=False, name='YsaGUI'
+)
+
+# macOS: wrap COLLECT in .app bundle with proper structure
 if sys.platform == 'darwin':
     app = BUNDLE(
-        exe,
+        coll,  # Bundle the COLLECT, not just the EXE
         name='YsaGUI.app',
         icon='resources/icon.icns',
-        bundle_identifier='edu.byu.parrishlab.ysagui',   # pick and keep this stable
+        bundle_identifier='edu.byu.parrishlab.ysagui',
         info_plist={
             "CFBundleName": "YsaGUI",
             "CFBundleDisplayName": "YsaGUI",
@@ -91,21 +94,3 @@ if sys.platform == 'darwin':
             # "CFBundleVersion": "100",
         },
     )
-    coll_input = app
-else:
-    coll_input = exe
-
-# Prepare extra Trees for COLLECT
-extra_trees = []
-if os.path.isdir("docs/_build"):
-    extra_trees.append(Tree("docs/_build", prefix="."))
-if os.path.isdir("src/helpers/mat"):
-    extra_trees.append(Tree("src/helpers/mat", prefix="."))
-
-coll = COLLECT(
-    exe,
-    a.binaries, a.zipfiles, a.datas,
-    *extra_trees,
-    binaries=binaries,   # dynamic HDF5 list from earlier
-    strip=False, upx=False, name='YsaGUI'
-)

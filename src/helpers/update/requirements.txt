@@ -6,7 +6,6 @@ pydata_sphinx_theme
 setuptools
 wheel
 numpy
-pybind11
 requests
 scipy
 PyQt5

@@ -65,7 +65,7 @@ def check_for_update():
         )
         if resp.status_code != 200:
             return False, None
-        
+
         latest_release = resp.json()
         tag = latest_release.get("tag_name", "").strip()
         latest_ver = _normalize_tag(tag)
@@ -110,7 +110,8 @@ def download_and_install_update(release: dict) -> bool:
                 pass
 
         print(f"Downloading {download_url} to {file_path}")
-        urllib.request.urlretrieve(download_url, file_path)  # simple, blocking; ok for GUI helper
+        # simple, blocking; ok for GUI helper
+        urllib.request.urlretrieve(download_url, file_path)
 
         # Launch installer
         if sys.platform == "win32":
