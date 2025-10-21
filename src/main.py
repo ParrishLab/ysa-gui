@@ -71,7 +71,6 @@ from helpers.Constants import (
 )
 from helpers.update.Updater import check_for_update
 from threads.AnalysisThread import AnalysisThread
-from threads.MatlabEngineThread import MatlabEngineThread
 from threads.UpdateThread import UpdateThread
 from threads.DischargeFinderThread import DischargeFinderThread
 from widgets.ChannelExtract import ChannelExtract
@@ -119,7 +118,6 @@ class MainWindow(QMainWindow):
         self.setup_menu_bar()
         self.setup_main_window()
         self.setup_analysis_thread()
-        self.setup_matlab_thread()
         self.set_widgets_enabled()
 
     def setup_variables(self):
@@ -490,12 +488,6 @@ class MainWindow(QMainWindow):
         self.open_button.clicked.connect(self.open_file)
         self.control_layout.addWidget(self.open_button)
 
-        self.low_ram_checkbox = QCheckBox("󰡵 Low RAM Mode")
-        self.control_layout.addWidget(self.low_ram_checkbox)
-
-        self.cpp_mode_checkbox = QCheckBox(" Use C++")
-        self.cpp_mode_checkbox.stateChanged.connect(self.toggle_cpp_mode)
-        self.control_layout.addWidget(self.cpp_mode_checkbox)
 
         self.view_button = QPushButton(" Quick View")
         self.view_button.clicked.connect(self.run_analysis)
@@ -564,33 +556,9 @@ class MainWindow(QMainWindow):
         )
         self.analysis_thread.analysis_completed.connect(self.on_analysis_completed)
 
-    def setup_matlab_thread(self):
-        def on_engine_started(eng):
-            self.engine_started = True
-            self.eng = eng
-            self.set_widgets_enabled()
-
-        def on_engine_error(error):
-            print(f"Error starting MATLAB engine: {error}")
-            self.use_cpp = True
-            self.eng = None
-            self.set_widgets_enabled()
-
-        cwd = os.path.dirname(os.path.realpath(__file__))
-        matlab_path = os.path.join(cwd, "helpers", "mat")
-
-        self.matlab_thread = MatlabEngineThread(cwd, matlab_path)
-        self.matlab_thread.engine_started.connect(on_engine_started)
-        self.matlab_thread.error_occurred.connect(on_engine_error)
-        self.matlab_thread.start()
-        self.eng = None
-        self.use_cpp = True
-        self.cpp_mode_checkbox.setChecked(True)
-        self.engine_started = False
-
     # TODO: Need to review when things should be allowed and when they should not (when this gets called as well)
     def set_widgets_enabled(self):
-        if self.file_path is not None and (self.engine_started or self.use_cpp):
+        if self.file_path is not None:
             self.run_button.setEnabled(True)
             self.view_button.setEnabled(True)
         else:
@@ -734,10 +702,6 @@ class MainWindow(QMainWindow):
         for red_line in self.graph_widget.red_lines:
             red_line.setVisible(checked)
         self.raster_plot.raster_red_line.setVisible(checked)
-
-    def toggle_cpp_mode(self, state):
-        self.use_cpp = state == Qt.Checked
-        self.set_widgets_enabled()
 
     def toggle_lines(self, checked):
         self.do_show_spread_lines = checked
@@ -1167,7 +1131,6 @@ class MainWindow(QMainWindow):
 
     def update_tab_layout(self, index):
         if not self.is_recording_video:
-            print(f"Updating tab layout: {index}")
             if self.main_tab_widget.currentWidget() == self.main_tab:
                 if self.left_pane:
                     self.left_pane.setVisible(True)
@@ -2072,11 +2035,7 @@ class MainWindow(QMainWindow):
             )
             if np.any(se_mask):
                 se_index = np.where(se_mask)[0][0]
-                strength = (
-                    self.normalize_strength(se_times[se_index, 2])
-                    if not self.use_cpp
-                    else 1
-                )
+                strength = 1
                 if self.do_show_false_color_map:
                     se_color = self.blend_colors(colors[i], SE, strength)
                 else:
@@ -2104,11 +2063,7 @@ class MainWindow(QMainWindow):
             )
             if np.any(seizure_mask):
                 seizure_index = np.where(seizure_mask)[0][0]
-                strength = (
-                    self.normalize_strength(seizure_times[seizure_index, 2])
-                    if not self.use_cpp
-                    else 1
-                )
+                strength = 1
                 if self.do_show_false_color_map:
                     seizure_color = self.blend_colors(colors[i], SEIZURE, strength)
                 else:
@@ -2494,11 +2449,6 @@ class MainWindow(QMainWindow):
                 self.loading_dialog.progress_bar.setRange(0, num_channels)
             self.analysis_thread.file_path = self.file_path
             self.analysis_thread.do_analysis = do_analysis
-            self.analysis_thread.use_low_ram = (
-                True if self.low_ram_checkbox.isChecked() else False
-            )
-            self.analysis_thread.eng = self.eng
-            self.analysis_thread.use_cpp = self.use_cpp
             self.analysis_thread.temp_data_path = temp_data_path
             self.loading_dialog.show()
             self.analysis_thread.start()
@@ -2626,7 +2576,6 @@ class MainWindow(QMainWindow):
         self.analysis_thread.requestInterruption()
         self.analysis_thread.wait()
 
-        self.analysis_thread.eng = None
         self.loading_dialog.hide()
         print("Analysis Cancelled")
 
@@ -2835,6 +2784,11 @@ else:
     sys.exit(1)
 
 if __name__ == "__main__":
+    import signal
+
+    # Allow Ctrl+C to properly terminate the application
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     app = QApplication(sys.argv)
     qdarktheme.setup_theme()
 
@@ -2855,13 +2809,10 @@ if __name__ == "__main__":
         msg.setStandardButtons(QMessageBox.Ok)
         msg.exec_()
     else:
-        print("Font loaded successfully")
         # Get the exact font family name that was loaded
         families = QFontDatabase.applicationFontFamilies(font_id)
         if families:
             loaded_family = families[0]  # Use the first family name returned
-            print(f"Font loaded successfully from: {font_path}")
-            print(f"Using font family: {loaded_family}")
             font = QFont(loaded_family, font_size)
             app.setFont(font)
         else:
@@ -2904,8 +2855,6 @@ if __name__ == "__main__":
             msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             msg.buttonClicked.connect(handle_update_button)
             msg.exec_()
-        else:
-            print("No update available.")
 
     window = MainWindow()
     window.showMaximized()
@@ -2916,5 +2865,12 @@ if __name__ == "__main__":
             window.set_widgets_enabled()
             window.run_analysis()
     except IndexError:
-        print("No file path provided")
+        pass
+
+    # Set up a timer to allow Python to process signals (like Ctrl+C)
+    # This ensures the Qt event loop doesn't block signal handling
+    timer = QTimer()
+    timer.start(500)  # Check every 500ms
+    timer.timeout.connect(lambda: None)  # Do nothing, just wake up the event loop
+
     sys.exit(app.exec_())

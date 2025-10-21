@@ -14,7 +14,6 @@ stats.py
 __pycache__/
 Dockerfile
 *.app
-./matlab_env/*
 fonts.zip
 *.pkg
 package_root/

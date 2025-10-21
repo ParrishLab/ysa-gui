@@ -31,13 +31,26 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Compute version (tag or dev)
+      - name: Read version from Constants.py
         id: ver
         shell: pwsh
         run: |
+          # Read version from Constants.py
+          $content = Get-Content -Path "src/helpers/Constants.py" -Raw
+          if ($content -match '__version__\s*=\s*["\']([^"\']+)["\']') {
+            $baseVersion = $Matches[1]
+          } else {
+            throw "Could not extract version from Constants.py"
+          }
+
+          # For tagged releases, use the tag; otherwise append dev suffix
           $ref = "${{ github.ref_name }}"
-          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') { $v = $Matches[1] }
-          else { $shortsha = "${{ github.sha }}"[0..6] -join ''; $v = "0.0.0-dev+$shortsha" }
+          if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
+            $v = $Matches[1]
+          } else {
+            $shortsha = "${{ github.sha }}"[0..6] -join ''
+            $v = "$baseVersion-dev+$shortsha"
+          }
           "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
 
       - name: Update Constants.py version
@@ -155,18 +168,28 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      # Compute version once per job
-      - name: Compute version (tag or dev)
+      # Read version from Constants.py
+      - name: Read version from Constants.py
         id: ver
         shell: pwsh
         run: |
+          # Read version from Constants.py
+          $content = Get-Content -Path "src/helpers/Constants.py" -Raw
+          if ($content -match '__version__\s*=\s*["\']([^"\']+)["\']') {
+            $baseVersion = $Matches[1]
+          } else {
+            throw "Could not extract version from Constants.py"
+          }
+
+          # For tagged releases, use the tag; otherwise append dev suffix
           $ref = "${{ github.ref_name }}"
           if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
             $disp = $Matches[1]
           } else {
             $short = "${{ github.sha }}"[0..6] -join ''
-            $disp = "0.0.0-dev+$short"
+            $disp = "$baseVersion-dev+$short"
           }
+
           # File version must be numeric a.b.c.d. Use commit chunk for the 3rd part.
           $m = [regex]::Match($disp, '^(?<maj>\d+)\.(?<min>\d+)\.(?<pat>\d+)')
           if ($m.Success) {
@@ -417,18 +440,35 @@ jobs:
           name: windows-package
           path: .
 
+      - name: Read version from Constants.py for release
+        id: release_ver
+        shell: bash
+        run: |
+          # Read version from Constants.py
+          version=$(grep -E '^__version__\s*=\s*["\x27]' src/helpers/Constants.py | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
+          if [ -z "$version" ]; then
+            echo "Error: Could not extract version from Constants.py"
+            exit 1
+          fi
+          echo "base_version=$version" >> $GITHUB_OUTPUT
+
       - name: Determine Release Type
         id: release_type
         shell: bash
         run: |
+          base_version="${{ steps.release_ver.outputs.base_version }}"
           if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
             echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
             echo "is_prerelease=false" >> $GITHUB_OUTPUT
             echo "release_name=Release ${{ github.ref_name }}" >> $GITHUB_OUTPUT
           else
-            echo "tag=latest" >> $GITHUB_OUTPUT
+            # Use version from Constants.py with dev suffix
+            short_sha="${{ github.sha }}"
+            short_sha="${short_sha:0:7}"
+            dev_tag="v${base_version}-dev+${short_sha}"
+            echo "tag=${dev_tag}" >> $GITHUB_OUTPUT
             echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            echo "release_name=Latest Development Build" >> $GITHUB_OUTPUT
+            echo "release_name=Latest Development Build (${dev_tag})" >> $GITHUB_OUTPUT
           fi
 
       - name: Create or Update Release

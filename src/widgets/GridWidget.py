@@ -1,6 +1,6 @@
 import typing
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt, pyqtSignal, QTimer, QPointF
+from PyQt5.QtCore import Qt, pyqtSignal, QTimer
 from PyQt5.QtGui import QBrush, QColor, QPainterPath, QPen, QPixmap, QTransform
 from PyQt5.QtWidgets import (
     QAction,
@@ -16,32 +16,11 @@ from PyQt5.QtWidgets import (
     QPushButton,
     QVBoxLayout,
 )
-import random
 from widgets.ColorCell import ColorCell
 from widgets.Overlay import Overlay
 from helpers.Constants import BACKGROUND, ACTIVE
 import pyqtgraph as pg
 import numpy as np
-
-
-class Spark(QGraphicsEllipseItem):
-    def __init__(self, x, y):
-        super().__init__(0, 0, 3, 3)
-        self.setPos(x, y)
-        self.setBrush(QBrush(QColor(255, 165, 0)))
-        self.setPen(QPen(Qt.NoPen))
-        self.velocity = QPointF(random.uniform(-2, 2), random.uniform(-8, -4))
-        self.gravity = 0.8
-        self.life = random.randint(5, 15)
-
-    def update_position(self):
-        self.moveBy(self.velocity.x(), self.velocity.y())
-        self.velocity.setY(self.velocity.y() + self.gravity)
-        self.life -= 1
-        if self.life <= 0:
-            self.scene().removeItem(self)
-            return False
-        return True
 
 
 class PurpleDot(QGraphicsEllipseItem):
@@ -130,11 +109,6 @@ class GridWidget(QGraphicsView):
         self.lasso_points = []
         self.highlighted_cells = set()
         self.lasso_history = []
-
-        self.sparks = []
-        self.spark_timer = QTimer(self)
-        self.spark_timer.timeout.connect(self.update_sparks)
-        self.spark_timer.start(16)
 
         self.is_seizure_beginning_mode = False
         self.seizure_beginnings = []
@@ -356,16 +330,6 @@ class GridWidget(QGraphicsView):
         self.lasso_history.clear()
         self.update()
         self.show_temporary_message("Cleared all lasso selections")
-
-    def create_sparks(self, pos):
-        scene_pos = self.mapToScene(pos)
-        for _ in range(1):
-            spark = Spark(scene_pos.x(), scene_pos.y())
-            self.scene.addItem(spark)
-            self.sparks.append(spark)
-
-    def update_sparks(self):
-        self.sparks = [spark for spark in self.sparks if spark.update_position()]
 
     def mouseReleaseEvent(self, event):
         if self.is_lasso_mode and event.button() == Qt.LeftButton:

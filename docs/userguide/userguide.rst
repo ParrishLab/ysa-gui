@@ -14,7 +14,6 @@ From there, you can explore the various features and options available in the ap
    :caption: Getting Started
 
    installation
-   configuration
 
 .. toctree::
    :maxdepth: 1
