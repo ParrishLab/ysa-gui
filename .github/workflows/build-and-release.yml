@@ -37,7 +37,8 @@ jobs:
         run: |
           # Read version from Constants.py
           $content = Get-Content -Path "src/helpers/Constants.py" -Raw
-          if ($content -match '__version__\s*=\s*["\']([^"\']+)["\']') {
+          $pattern = @'__version__\s*=\s*["']([^"']+)["']'@
+          if ($content -match $pattern) {
             $baseVersion = $Matches[1]
           } else {
             throw "Could not extract version from Constants.py"
@@ -168,14 +169,14 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      # Read version from Constants.py
       - name: Read version from Constants.py
         id: ver
         shell: pwsh
         run: |
           # Read version from Constants.py
           $content = Get-Content -Path "src/helpers/Constants.py" -Raw
-          if ($content -match '__version__\s*=\s*["\']([^"\']+)["\']') {
+          $pattern = @'__version__\s*=\s*["']([^"']+)["']'@
+          if ($content -match $pattern) {
             $baseVersion = $Matches[1]
           } else {
             throw "Could not extract version from Constants.py"
