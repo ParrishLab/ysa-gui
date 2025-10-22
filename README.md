@@ -2,7 +2,7 @@
 
 ## 📘 Documentation
 
-👉 Click [here](https://ysa-gui.readthedocs.io/en/develop/) to view the full documentation.  
+Click [here](https://ysa-gui.readthedocs.io/en/develop/) to view the full documentation.  
 
 
 ## 📦 Downloads
