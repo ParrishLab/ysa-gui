@@ -2446,11 +2446,7 @@ class MainWindow(QMainWindow):
         button_clicked = self.sender()
         if button_clicked is not None:
             if button_clicked.text().__contains__("Run"):
-<<<<<<< HEAD
                 print("Running analysis")
-=======
-                # self.notify("Running analysis")
->>>>>>> 67b2556 (Merge pull request #2 from ParrishLab/port/old-develop)
                 self.view_button.setStyleSheet("")
                 self.run_button.setStyleSheet("")
                 do_analysis = True
@@ -2459,11 +2455,7 @@ class MainWindow(QMainWindow):
                 print("Running view with low RAM")
                 do_analysis = False
             else:
-<<<<<<< HEAD
                 print("Running view without analysis")
-=======
-                # self.notify("Running view without analysis")
->>>>>>> 67b2556 (Merge pull request #2 from ParrishLab/port/old-develop)
                 self.view_button.setStyleSheet("")
                 do_analysis = False
 
