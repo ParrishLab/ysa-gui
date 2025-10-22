@@ -1,6 +1,6 @@
 from PyQt5.QtGui import QColor
 
-__version__ = "1.0.1"   # warning: must use double quotes around version number (see build-and-release.yaml)
+__version__ = "1.0.2"   # warning: must use double quotes around version number (see build-and-release.yaml)
 
 BACKGROUND = QColor("#4a4e69")
 ACTIVE = QColor("#808080")
@@ -27,3 +27,6 @@ MAC = "darwin"
 WIN = "win32"
 FONT_FILE = "GeistMonoNerdFontMono-Regular.otf"
 FONT_FAMILY = "GeistMono Nerd Font Mono"
+SCREEN_DIAGONAL_THRESHOLD = 13
+SMALL_FONT_SIZE = 9
+LARGE_FONT_SIZE = 13

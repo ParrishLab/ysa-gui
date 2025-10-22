@@ -46,6 +46,7 @@ jobs:
           source venv_x86/bin/activate
           python -m pip install --upgrade pip wheel
           pip install -r src/helpers/update/requirements.txt
+          pip install -r docs/requirements.txt
           pip install ysa-signal
 
       - name: Install Python deps for build (macOS arm64)
@@ -204,6 +205,7 @@ jobs:
           .\venv\Scripts\Activate.ps1
 
           pip install -r src/helpers/update/requirements.txt
+          pip install -r docs/requirements.txt
           pip install ysa-signal
 
           pip list

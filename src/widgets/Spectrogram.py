@@ -1,6 +1,14 @@
 import numpy as np
 import pyqtgraph as pg
 from scipy.signal import spectrogram
+from PyQt5.QtWidgets import (
+    QCheckBox,
+    QDialog,
+    QVBoxLayout,
+    QPushButton,
+    QHBoxLayout
+)
+from PyQt5.QtCore import QRect, QSize, Qt
 
 FS = 100  # Sampling frequency of the EEG data
 CHUNKSZ = 1024  # Chunk size for FFT
@@ -75,3 +83,62 @@ class SpectrogramWidget(pg.PlotWidget):
             self.img_array.T, autoLevels=False
         )  # Transpose the spectrogram array for correct orientation
         return Sxx_db
+    
+    class ExportSpectrograms(QDialog):
+        def __init__(self, parent=None, plot_index=None):
+            super().__init__(parent)
+            self.parent = parent
+            self.plot_index = plot_index
+            self.setWindowTitle("Export Spectrograms")
+            self.setMinimumWidth(300)
+            self.initUI()
+
+        def initUI(self):
+            layout = QVBoxLayout(self)
+
+            # Channel selection
+            self.channel_checkboxes = []
+            if (
+                self.plot_index is not None
+                and self.parent.plotted_channels[self.plot_index] is not None
+            ):
+                row, col = (
+                    self.parent.plotted_channels[self.plot_index].row,
+                    self.parent.plotted_channels[self.plot_index].col,
+                )
+                checkbox = QCheckBox(f"Channel ({row + 1}, {col + 1})")
+                checkbox.setChecked(True)
+                layout.addWidget(checkbox)
+                self.channel_checkboxes.append(checkbox)
+            else:
+                for i in range(4):
+                    if self.parent.plotted_channels[i] is not None:
+                        row, col = (
+                            self.parent.plotted_channels[i].row,
+                            self.parent.plotted_channels[i].col,
+                        )
+                        checkbox = QCheckBox(f"Channel ({row + 1}, {col + 1})")
+                        checkbox.setChecked(True)
+                        layout.addWidget(checkbox)
+                        self.channel_checkboxes.append(checkbox)
+
+                # Select All checkbox
+                self.select_all_checkbox = QCheckBox("Select All")
+                self.select_all_checkbox.setChecked(True)
+                self.select_all_checkbox.stateChanged.connect(self.toggle_all_channels)
+                layout.addWidget(self.select_all_checkbox)
+
+            # Buttons
+            button_layout = QHBoxLayout()
+            save_button = QPushButton("Save")
+            save_button.clicked.connect(self.save_plots)
+            cancel_button = QPushButton("Cancel")
+            cancel_button.clicked.connect(self.reject)
+            button_layout.addWidget(save_button)
+            button_layout.addWidget(cancel_button)
+            layout.addLayout(button_layout)
+
+        def toggle_all_channels(self, state):
+            for checkbox in self.channel_checkboxes:
+                checkbox.setChecked(state == Qt.Checked)
+

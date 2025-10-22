@@ -6,11 +6,17 @@ Discharge Propagation Tracking
 Tracking the propagation of discharges is one of the more difficult tasks to complete with the GUI.
 Given the complexity of the task, it may take the user some time to become familiar with the process.
 
+.. note::
+  This tool assumes you've already completed a full :doc:`analysis run <walkthrough>` and have detected seizure-like events (SLEs).
+
+
 Introduction
 ============
 Before starting, it is important to understand what the discharge propagation tracking algorithm is doing behind the scenes.
 This understanding will help the user better able to set and fine tune the parameters of the algorithm.
 Admittedly, the algorithm is not perfect and may require some manual intervention to get the best results.
+
+The system detects each :term:`discharge event` and uses the :term:`DBSCAN algorithm` to cluster electrodes based on spatial recruitment.
 
 There are two main steps to the discharge propagation tracking algorithm:
 
@@ -93,15 +99,16 @@ At this point, the user should have a good set of orange markers placed at the b
     :align: center
     :alt: Good Discharge Path
 
+
   2. **Fine Tune DBSCAN Parameters**: The user should adjust the DBSCAN parameters to get the best results. The user should consider the following:
 
-     * **Epsilon**: The maximum distance between two samples for one to be considered as in the neighborhood of the other. If the centroids are not following the path of the seizure, try increasing this value. If the centroids are following the path of the seizure too closely, try decreasing this value. For example:
+    * **Epsilon**: The maximum distance between two samples for one to be considered as in the neighborhood of the other. If the centroids are not following the path of the seizure, try increasing this value. If the centroids are following the path of the seizure too closely, try decreasing this value. For example:
 
-        .. video:: ../../_static/adjust_epsilon.mp4
-            :width: 100%
-            :align: center
-            :alt: Adjust Epsilon
+    .. video:: ../../_static/adjust_epsilon.mp4
+        :width: 100%
+        :align: center
+        :alt: Adjust Epsilon
 
-     * **Min Samples**: The number of samples in a neighborhood for a point to be considered as a core point. If the centroids are not following the path of the seizure, try increasing this value. If the centroids are following the path of the seizure too closely, try decreasing this value.
-     * **Max Distance**: The maximum distance a discharge centroid can travel between consecutive frames. This is useful for tracking the propagation of the discharges.
-     * **Bin Size**: The bin size for calculating the false color map on the MEA grid. This is useful for tracking the propagation of the discharges because the centroids are calculated from electrodes that currently have a discharge event marker within the bin window. The default value is good for most cases.
+    * **Min Samples**: The number of samples in a neighborhood for a point to be considered as a core point. If the centroids are not following the path of the seizure, try increasing this value. If the centroids are following the path of the seizure too closely, try decreasing this value.
+    * **Max Distance**: The maximum distance a discharge centroid can travel between consecutive frames. This is useful for tracking the propagation of the discharges.
+    * **Bin Size**: The bin size for calculating the false color map on the MEA grid. This is useful for tracking the propagation of the discharges because the centroids are calculated from electrodes that currently have a discharge event marker within the bin window. The default value is good for most cases.
