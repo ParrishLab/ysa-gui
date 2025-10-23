@@ -1772,10 +1772,11 @@ class MainWindow(QMainWindow):
         self.selected_channel = (row, col)
 
     def open_file(self):
+        downloads_path = str(Path.home() / "Downloads")
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open File",
-            directory="/Users/booka66/Jake-Squared/Sz_SE_Detection/",
+            directory=downloads_path,
             filter="BRW Files (*.brw)",
         )
 
@@ -1838,10 +1839,11 @@ class MainWindow(QMainWindow):
         self.set_widgets_enabled()
 
     def upload_image(self):
+        downloads_path = str(Path.home() / "Downloads")
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open File",
-            directory="/Users/booka66/Jake-Squared/Sz_SE_Detection/",
+            directory=downloads_path,
             filter="Image Files (*.jpg *.png *.jpeg *.bmp)",
         )
 
