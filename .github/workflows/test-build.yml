@@ -280,20 +280,34 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $ProgressPreference = 'SilentlyContinue'
 
+          $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
+          if ($iscc) {
+            Write-Host "ISCC already present at: $iscc"
+            "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
+            exit 0
+          }
+
+          # this will ignore errors if already installed, was throwing non-zero exit codes
           try { winget source remove msstore | Out-Null } catch { }
-          winget install --id JRSoftware.InnoSetup `
-            --source winget `
+
+          winget install --id JRSoftware.InnoSetup -e `
             --accept-source-agreements `
             --accept-package-agreements `
-            --silent
+            --silent --disable-interactivity
+          $wingetExitCode = $LASTEXITCODE
+
+          if ($wingetExitCode -ne 0) {
+            Write-Host "winget install returned code $wingetExitCode (possibly already installed)"
+          }
 
           $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
-
           if (-not $iscc) {
             $candidates = @(
               "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
               "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
-              "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe"
+              "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe",
+              "$env:ChocolateyInstall\bin\ISCC.exe",
+              "C:\ProgramData\Chocolatey\bin\ISCC.exe"
             )
             $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           }
@@ -301,7 +315,7 @@ jobs:
           if (-not $iscc) {
             Write-Host "Checked these locations:"
             $candidates | ForEach-Object { Write-Host " - $_" }
-            throw "ISCC not found after install."
+            throw "ISCC.exe not found after install attempt."
           }
 
           Write-Host "Resolved ISCC at: $iscc"

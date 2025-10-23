@@ -303,45 +303,46 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $ProgressPreference = 'SilentlyContinue'
 
-          # 1) If ISCC is already available, use it and exit 0
           $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
           if ($iscc) {
             Write-Host "ISCC already present at: $iscc"
             "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
-            $LASTEXITCODE = 0
-            return
+            exit 0
           }
 
-          # 2) Try to install quietly (winget). Ignore errors if it’s already installed.
+          # this will ignore errors if already installed, was throwing non-zero exit codes
           try { winget source remove msstore | Out-Null } catch { }
-          try {
-            winget install --id JRSoftware.InnoSetup -e `
-              --accept-source-agreements --accept-package-agreements `
-              --silent --disable-interactivity
-          } catch {
-            Write-Host "winget failed (possibly already installed). Continuing…"
+
+          winget install --id JRSoftware.InnoSetup -e `
+            --accept-source-agreements `
+            --accept-package-agreements `
+            --silent --disable-interactivity
+          $wingetExitCode = $LASTEXITCODE
+
+          if ($wingetExitCode -ne 0) {
+            Write-Host "winget install returned code $wingetExitCode (possibly already installed)"
           }
 
-          # 3) Resolve location from PATH or common folders
           $iscc = (Get-Command iscc.exe -ErrorAction SilentlyContinue)?.Source
           if (-not $iscc) {
             $candidates = @(
               "$env:ProgramFiles\Inno Setup 6\ISCC.exe",
               "$env:ProgramFiles(x86)\Inno Setup 6\ISCC.exe",
               "$env:LocalAppData\Programs\Inno Setup 6\ISCC.exe",
-              "$env:Chocolatey\bin\ISCC.exe",
+              "$env:ChocolateyInstall\bin\ISCC.exe",
               "C:\ProgramData\Chocolatey\bin\ISCC.exe"
             )
             $iscc = $candidates | Where-Object { Test-Path $_ } | Select-Object -First 1
           }
 
-          if (-not $iscc) { throw "ISCC.exe not found after install attempt." }
+          if (-not $iscc) {
+            Write-Host "Checked these locations:"
+            $candidates | ForEach-Object { Write-Host " - $_" }
+            throw "ISCC.exe not found after install attempt."
+          }
 
           Write-Host "Resolved ISCC at: $iscc"
           "ISCC_PATH=$iscc" | Out-File -FilePath $env:GITHUB_ENV -Append
-
-          # 4) Ensure the step ends with a success code, even if winget returned 1 earlier
-          $LASTEXITCODE = 0
 
       - name: Echo Inno inputs
         shell: pwsh
