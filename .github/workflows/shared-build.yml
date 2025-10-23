@@ -3,10 +3,6 @@ name: Shared Build Workflow
 on:
   workflow_call:
     inputs:
-      version_strategy:
-        description: 'Version strategy: "dev" (compute dev version) or "constants" (read from Constants.py)'
-        required: true
-        type: string
       artifact_retention_days:
         description: 'Number of days to retain artifacts'
         required: false
@@ -38,45 +34,21 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Compute version
+      - name: Read version from Constants.py
         id: ver
         shell: pwsh
         run: |
-          $ref = "${{ github.ref_name }}"
-
-          if ("${{ inputs.version_strategy }}" -eq "constants") {
-            # Read base version from Constants.py
-            $content = Get-Content -Raw 'src/helpers/Constants.py'
-            $pattern = '__version__\s*=\s*["'']([^"'']+)["'']'
-            if ($content -match $pattern) {
-              $baseVersion = $Matches[1]
-            } else {
-              throw "Could not extract version from Constants.py"
-            }
-
-            # Use tag on tagged builds; otherwise append dev+<shortsha>
-            if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
-              $v = $Matches[1]
-            } else {
-              $sha = '${{ github.sha }}'
-              $v = "$baseVersion-dev+$($sha.Substring(0,7))"
-            }
+          # Always read version from Constants.py (single source of truth)
+          $content = Get-Content -Raw 'src/helpers/Constants.py'
+          $pattern = '__version__\s*=\s*["'']([^"'']+)["'']'
+          if ($content -match $pattern) {
+            $v = $Matches[1]
           } else {
-            # Dev strategy: always compute version from ref or use dev version
-            if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
-              $v = $Matches[1]
-            } else {
-              $shortsha = "${{ github.sha }}"[0..6] -join ''
-              $v = "0.0.0-dev+$shortsha"
-            }
+            throw "Could not extract version from Constants.py"
           }
 
           "version=$v" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "Detected version: $v"
-
-      - name: Update Constants.py version
-        run: |
-          sed -E -i '' 's/__version__\s*=\s*".*"/__version__ = "'${{ steps.ver.outputs.version }}'"/' src/helpers/Constants.py
+          Write-Host "Version from Constants.py: $v"
 
       - name: Install Python deps for build (macOS x86_64)
         if: ${{ matrix.arch == 'x86_64' }}
@@ -196,37 +168,17 @@ jobs:
           arch: x64
           toolset: 14.29
 
-      - name: Compute version
+      - name: Read version from Constants.py
         id: ver
         shell: pwsh
         run: |
-          $ref = "${{ github.ref_name }}"
-
-          if ("${{ inputs.version_strategy }}" -eq "constants") {
-            # Read base version from Constants.py
-            $content = Get-Content -Raw 'src/helpers/Constants.py'
-            $pattern = '__version__\s*=\s*["'']([^"'']+)["'']'
-            if ($content -match $pattern) {
-              $baseVersion = $Matches[1]
-            } else {
-              throw "Could not extract version from Constants.py"
-            }
-
-            # Display version (tag or base-dev+sha)
-            if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
-              $disp = $Matches[1]
-            } else {
-              $sha = '${{ github.sha }}'
-              $disp = "$baseVersion-dev+$($sha.Substring(0,7))"
-            }
+          # Always read version from Constants.py (single source of truth)
+          $content = Get-Content -Raw 'src/helpers/Constants.py'
+          $pattern = '__version__\s*=\s*["'']([^"'']+)["'']'
+          if ($content -match $pattern) {
+            $disp = $Matches[1]
           } else {
-            # Dev strategy
-            if ($ref -match '^v(\d+\.\d+\.\d+.*)$') {
-              $disp = $Matches[1]
-            } else {
-              $short = "${{ github.sha }}"[0..6] -join ''
-              $disp = "0.0.0-dev+$short"
-            }
+            throw "Could not extract version from Constants.py"
           }
 
           # Numeric file version a.b.c.d for Windows
@@ -244,16 +196,8 @@ jobs:
 
           "version=$disp"     | Out-File -FilePath $env:GITHUB_OUTPUT -Append
           "file_version=$filever" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
-          Write-Host "Display version: $disp"
-          Write-Host "File version: $filever"
-
-      - name: Update Constants.py version
-        shell: pwsh
-        run: |
-          $ver = '${{ steps.ver.outputs.version }}'
-          (Get-Content 'src/helpers/Constants.py' -Raw) `
-            -replace '__version__\s*=\s*["''][^"'']+["'']', "__version__ = `"$ver`"" `
-            | Set-Content 'src/helpers/Constants.py' -Encoding utf8
+          Write-Host "Version from Constants.py: $disp"
+          Write-Host "File version for Windows: $filever"
 
       - name: Create Build Directories
         shell: pwsh

@@ -5,8 +5,7 @@ permissions:
 
 on:
   push:
-    branches: [main] # create "latest" pre-release on main
-    tags: ["v*"] # create versioned release on tags
+    branches: [main] # build and release when pushed to main
 
   workflow_dispatch: {} # allow manual workflow runs
 
@@ -14,7 +13,6 @@ jobs:
   build:
     uses: ./.github/workflows/shared-build.yml
     with:
-      version_strategy: "constants"
       artifact_retention_days: 1
       upload_artifacts: true
 
@@ -44,51 +42,36 @@ jobs:
           name: windows-package
           path: .
 
-      - name: Read version from Constants.py for release
+      - name: Read version from Constants.py
         id: release_ver
         shell: bash
         run: |
-          # Read version from Constants.py
+          # Read version from Constants.py (single source of truth)
           version=$(grep -E '^__version__\s*=\s*["\x27]' src/helpers/Constants.py | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
           if [ -z "$version" ]; then
             echo "Error: Could not extract version from Constants.py"
             exit 1
           fi
-          echo "base_version=$version" >> $GITHUB_OUTPUT
-
-      - name: Determine Release Type
-        id: release_type
-        shell: bash
-        run: |
-          base_version="${{ steps.release_ver.outputs.base_version }}"
-          if [[ "${{ github.ref }}" == refs/tags/v* ]]; then
-            echo "tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-            echo "is_prerelease=false" >> $GITHUB_OUTPUT
-            echo "release_name=Release ${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          else
-            # Use version from Constants.py with dev suffix
-            short_sha="${{ github.sha }}"
-            short_sha="${short_sha:0:7}"
-            dev_tag="v${base_version}-dev+${short_sha}"
-            echo "tag=${dev_tag}" >> $GITHUB_OUTPUT
-            echo "is_prerelease=true" >> $GITHUB_OUTPUT
-            echo "release_name=Latest Development Build (${dev_tag})" >> $GITHUB_OUTPUT
-          fi
+          echo "version=$version" >> $GITHUB_OUTPUT
+          echo "tag=v$version" >> $GITHUB_OUTPUT
+          echo "Version from Constants.py: $version"
 
       - name: Create or Update Release
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ github.token }}
-          tag_name: ${{ steps.release_type.outputs.tag }}
-          name: ${{ steps.release_type.outputs.release_name }}
-          prerelease: ${{ steps.release_type.outputs.is_prerelease }}
+          tag_name: ${{ steps.release_ver.outputs.tag }}
+          name: Release ${{ steps.release_ver.outputs.version }}
+          prerelease: false
           files: |
             YSA_GUI_MacOS_x86_64.pkg
             YSA_GUI_MacOS_arm64.pkg
             YSA_GUI_Windows.exe
           fail_on_unmatched_files: true
           body: |
-            ## Downloads
+            ## YSA GUI ${{ steps.release_ver.outputs.version }}
+
+            ### Downloads
             - **macOS Intel**: YSA_GUI_MacOS_x86_64.pkg
             - **macOS Silicon**: YSA_GUI_MacOS_arm64.pkg
             - **Windows**: YSA_GUI_Windows.exe

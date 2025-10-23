@@ -10,7 +10,6 @@ jobs:
   build:
     uses: ./.github/workflows/shared-build.yml
     with:
-      version_strategy: "dev"
       artifact_retention_days: 7
       upload_artifacts: true
 
