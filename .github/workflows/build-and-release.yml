@@ -46,7 +46,6 @@ jobs:
         id: release_ver
         shell: bash
         run: |
-          # Read version from Constants.py (single source of truth)
           version=$(grep -E '^__version__\s*=\s*["\x27]' src/helpers/Constants.py | sed -E 's/.*["\x27]([^"\x27]+)["\x27].*/\1/')
           if [ -z "$version" ]; then
             echo "Error: Could not extract version from Constants.py"
