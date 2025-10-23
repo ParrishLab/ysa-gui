@@ -23,3 +23,7 @@ compile_commands.json
 sphinx_env
 _build
 *.lock
+
+# PyUpdater
+.pyupdater/
+pyu-data/

@@ -2974,37 +2974,46 @@ if __name__ == "__main__":
             app.setFont(font)
 
     def confirm_latest_version(self):
+        """Check for updates and prompt the user to install if available."""
         def handle_update_button(button):
             def on_update_completed(success):
                 self.download_msg.close()
 
                 if success:
+                    # PyUpdater will handle the restart automatically
+                    # If we reach here, something went wrong
                     sys.exit()
                 else:
                     msg = QMessageBox()
                     msg.setIcon(QMessageBox.Warning)
-                    msg.setText("Update process failed.")
-                    msg.setWindowTitle("Update")
+                    msg.setText("Update process failed. Please try again later.")
+                    msg.setWindowTitle("Update Failed")
                     msg.exec_()
+
+            def on_progress_update(percent):
+                """Update the progress message as download progresses."""
+                self.download_msg.setText(f"Downloading update... {percent}%")
 
             if button.text() == "&Yes":
                 self.download_msg = QMessageBox(self)
                 self.download_msg.setIcon(QMessageBox.Information)
-                self.download_msg.setText("Downloading update...")
+                self.download_msg.setText("Downloading update... 0%")
                 self.download_msg.setWindowTitle("Update in Progress")
                 self.download_msg.setStandardButtons(QMessageBox.NoButton)
                 self.download_msg.show()
 
-                self.update_thread = UpdateThread(self.latest_release)
+                self.update_thread = UpdateThread()
                 self.update_thread.update_completed.connect(on_update_completed)
+                self.update_thread.progress_update.connect(on_progress_update)
                 self.update_thread.start()
 
-        update_available, self.latest_release = check_for_update()
+        update_available, latest_version = check_for_update()
         if update_available:
             msg = QMessageBox()
             msg.setIcon(QMessageBox.Information)
-            msg.setText("An update is available. Would you like to update now?")
-            msg.setWindowTitle("Update")
+            version_text = f" (version {latest_version})" if latest_version else ""
+            msg.setText(f"An update is available{version_text}. Would you like to update now?")
+            msg.setWindowTitle("Update Available")
             msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
             msg.buttonClicked.connect(handle_update_button)
             msg.exec_()

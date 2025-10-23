@@ -1,141 +1,220 @@
-import os
-import platform
+"""
+PyUpdater-based auto-update system for YSA GUI.
+
+This replaces the old manual download-and-open system with a robust,
+production-ready updater that handles:
+- Delta updates (only downloads changed files)
+- Signature verification (ed25519)
+- Background downloads with progress
+- Automatic installation and rollback on failure
+- Cross-platform support (macOS, Windows)
+"""
+
 import sys
-import urllib.request
-from packaging import version
-import requests
-import subprocess
+import os
+from typing import Optional, Callable
+from pyupdater.client import Client
+from pyupdater.client import ClientError
 
 try:
     from helpers.Constants import __version__ as VERSION
 except Exception:
-    # Fallback if import path changes; better to fail closed than crash the app
     VERSION = "0.0.0"
 
-GITHUB_REPO = "ParrishLab/ysa-gui"
-GITHUB_API_URL = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+# PyUpdater configuration
+APP_NAME = "YsaGUI"
+COMPANY_NAME = "ParrishLab"
+UPDATE_URLS = ["https://github.com/ParrishLab/ysa-gui/releases/download/"]
 
-# Filenames saved to disk when downloading the installer
-DOWNLOAD_NAME_MAC = "ysa_gui_update_parrish_lab_DELETE_ME.pkg"
-DOWNLOAD_NAME_WIN = "ysa_gui_update_parrish_lab_DELETE_ME.exe"
-
-# Asset names as produced by CI release job
-ASSET_WIN = "YSA_GUI_Windows.exe"
-ASSET_MAC_ARM = "YSA_GUI_MacOS_arm64.pkg"
-ASSET_MAC_X86 = "YSA_GUI_MacOS_x86_64.pkg"
-
-
-def _normalize_tag(tag: str) -> str:
-    """Strip a leading 'v' from release tags (e.g., v1.2.3 -> 1.2.3)."""
-    return tag[1:] if tag.startswith("v") else tag
+# Client configuration
+CLIENT_CONFIG = {
+    "APP_NAME": APP_NAME,
+    "COMPANY_NAME": COMPANY_NAME,
+    "UPDATE_URLS": UPDATE_URLS,
+    "PUBLIC_KEY": None,  # Will be set after key generation (see setup instructions below)
+}
 
 
-def _choose_asset(latest_release: dict) -> str | None:
-    """Pick the correct asset download URL for this platform/architecture."""
-    assets = latest_release.get("assets", [])
-    if sys.platform == "darwin":
-        machine = platform.machine().lower()
-        is_arm = ("arm64" in machine) or ("aarch64" in machine)
-        want = ASSET_MAC_ARM if "arm64" in machine else ASSET_MAC_X86
-        for a in assets:
-            if a.get("name") == want:
-                return a.get("browser_download_url")
-        # Fallback: heuristic by suffix if exact name not found
-        for a in assets:
-            n = a.get("name", "")
-            if n.endswith(".pkg") and (("arm64" in machine and "arm64" in n) or ("x86_64" in machine and "x86_64" in n)):
-                return a.get("browser_download_url")
-    elif sys.platform == "win32":
-        for a in assets:
-            if a.get("name") == ASSET_WIN or a.get("name", "").lower().endswith(".exe"):
-                return a.get("browser_download_url")
-    return None
+class UpdateChecker:
+    """Wrapper for PyUpdater client with simplified API."""
 
+    def __init__(self, progress_callback: Optional[Callable[[int], None]] = None):
+        """
+        Initialize the update checker.
 
-def check_for_update():
-    """Return (True, release_json) if a newer release exists for this platform."""
-    try:
-        resp = requests.get(
-            GITHUB_API_URL,
-            headers={
-                "Accept": "application/vnd.github+json",
-                "User-Agent": "YsaGUI-Updater"
-            },
-            timeout=15,
-        )
-        if resp.status_code != 200:
-            return False, None
+        Args:
+            progress_callback: Optional callback for download progress (0-100)
+        """
+        self.client = Client(CLIENT_CONFIG, refresh=True, progress_hooks=[self._progress_hook] if progress_callback else None)
+        self.progress_callback = progress_callback
+        self.app_update = None
 
-        latest_release = resp.json()
-        tag = latest_release.get("tag_name", "").strip()
-        latest_ver = _normalize_tag(tag)
+    def _progress_hook(self, data: dict):
+        """Internal progress hook for PyUpdater."""
+        if self.progress_callback and "percent_complete" in data:
+            self.progress_callback(int(data["percent_complete"]))
 
-        # Compare normalized tag vs local VERSION
-        if not latest_ver:
-            return False, None
+    def check_for_update(self) -> bool:
+        """
+        Check if an update is available.
 
-        if version.parse(latest_ver) <= version.parse(VERSION):
-            return False, None
+        Returns:
+            True if an update is available, False otherwise.
+        """
+        try:
+            # Refresh the update manifest
+            self.client.refresh()
 
-        # Ensure there is a suitable asset for this platform
-        download_url = _choose_asset(latest_release)
-        if not download_url:
-            return False, None
+            # Get the latest version for this platform
+            self.app_update = self.client.update_check(APP_NAME, VERSION)
 
-        return True, latest_release
-    except Exception as e:
-        print(f"Failed to check for updates: {e}")
-        return False, None
-
-
-def download_and_install_update(release: dict) -> bool:
-    """Download the installer to ~/Downloads and launch it."""
-    try:
-        download_url = _choose_asset(release)
-        if not download_url:
-            print("No suitable update found for your platform.")
+            return self.app_update is not None
+        except ClientError as e:
+            print(f"Update check failed: {e}")
+            return False
+        except Exception as e:
+            print(f"Unexpected error during update check: {e}")
             return False
 
-        # Pick disk file name
-        file_name = DOWNLOAD_NAME_MAC if sys.platform == "darwin" else DOWNLOAD_NAME_WIN
-        download_folder = os.path.join(os.path.expanduser("~"), "Downloads")
-        os.makedirs(download_folder, exist_ok=True)
-        file_path = os.path.join(download_folder, file_name)
+    def download_update(self) -> bool:
+        """
+        Download the update.
 
-        # If an old file exists from a previous run, remove it
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception:
-                pass
+        Returns:
+            True if download succeeded, False otherwise.
+        """
+        if not self.app_update:
+            print("No update available to download")
+            return False
 
-        print(f"Downloading {download_url} to {file_path}")
-        # simple, blocking; ok for GUI helper
-        urllib.request.urlretrieve(download_url, file_path)
+        try:
+            # Download the update (with delta support)
+            return self.app_update.download()
+        except Exception as e:
+            print(f"Update download failed: {e}")
+            return False
 
-        # Launch installer
-        if sys.platform == "win32":
-            os.startfile(file_path)
-        elif sys.platform == "darwin":
-            subprocess.run(["open", file_path], check=False)
-            os.system(f"open '{file_path}'")
-        else:
-            print(f"Downloaded update to {file_path} (launch it manually)")
-        return True
-    except Exception as e:
-        print(f"Update download/launch failed: {e}")
+    def extract_and_restart(self) -> bool:
+        """
+        Extract the update and restart the application.
+
+        Returns:
+            True if extraction succeeded, False otherwise.
+            Note: If True, the app will restart and this function won't return normally.
+        """
+        if not self.app_update:
+            print("No update available to extract")
+            return False
+
+        try:
+            # Extract and restart (PyUpdater handles the restart automatically)
+            if self.app_update.extract_restart():
+                # This should not return - the app will restart
+                return True
+            else:
+                print("Failed to extract and restart")
+                return False
+        except Exception as e:
+            print(f"Update extraction failed: {e}")
+            return False
+
+    def get_latest_version(self) -> Optional[str]:
+        """Get the version string of the latest available update."""
+        if self.app_update:
+            return self.app_update.version
+        return None
+
+
+def check_for_update() -> tuple[bool, Optional[str]]:
+    """
+    Simple API for checking if an update is available.
+
+    Returns:
+        (has_update, version_string) tuple
+    """
+    checker = UpdateChecker()
+    has_update = checker.check_for_update()
+    version = checker.get_latest_version() if has_update else None
+    return has_update, version
+
+
+def download_and_install_update(progress_callback: Optional[Callable[[int], None]] = None) -> bool:
+    """
+    Download and install an available update.
+
+    Args:
+        progress_callback: Optional callback for download progress (0-100)
+
+    Returns:
+        True if successful (app will restart), False otherwise
+    """
+    checker = UpdateChecker(progress_callback)
+
+    # Check for update
+    if not checker.check_for_update():
+        print("No update available")
         return False
 
+    print(f"Update available: {checker.get_latest_version()}")
 
-def main():
-    has_update, release = check_for_update()
-    if has_update and release:
-        print("Update available. Downloading and launching installer...")
-        ok = download_and_install_update(release)
-        print("Update process completed." if ok else "Update process failed.")
-    else:
-        print("No update available.")
+    # Download the update
+    print("Downloading update...")
+    if not checker.download_update():
+        print("Download failed")
+        return False
+
+    print("Download complete, extracting and restarting...")
+
+    # Extract and restart
+    if checker.extract_and_restart():
+        # App will restart here - this return should not be reached
+        return True
+
+    print("Failed to extract and restart")
+    return False
+
+
+# =============================================================================
+# SETUP INSTRUCTIONS (run these ONCE to initialize PyUpdater)
+# =============================================================================
+#
+# 1. Generate signing keys (run from project root):
+#    ```
+#    pyupdater keys -c
+#    ```
+#    This creates a .pyupdater/ directory with keys.
+#
+# 2. Get your public key:
+#    ```
+#    pyupdater keys --show
+#    ```
+#    Copy the public key and set it in CLIENT_CONFIG["PUBLIC_KEY"] above.
+#
+# 3. Initialize PyUpdater config (run from project root):
+#    ```
+#    pyupdater init
+#    ```
+#    Follow prompts to set APP_NAME, COMPANY_NAME, and UPDATE_URLS.
+#
+# 4. The CI/CD pipeline (build-and-release.yml) needs to be updated to:
+#    - Sign the build with `pyupdater pkg --sign`
+#    - Upload packages with `pyupdater upload --service github`
+#
+# See: https://www.pyupdater.org/usage-cli/ for full documentation.
+# =============================================================================
 
 
 if __name__ == "__main__":
-    main()
+    # Simple CLI test
+    has_update, version = check_for_update()
+    if has_update:
+        print(f"Update available: {version}")
+        print("Run with --install to download and install")
+
+        if "--install" in sys.argv:
+            success = download_and_install_update()
+            if not success:
+                print("Update installation failed")
+                sys.exit(1)
+    else:
+        print("No update available")

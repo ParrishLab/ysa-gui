@@ -23,3 +23,4 @@ pyqtwebengine
 pandas
 zstandard
 urllib3
+PyUpdater[s3,scp]
