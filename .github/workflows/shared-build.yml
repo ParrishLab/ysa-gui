@@ -92,6 +92,29 @@ jobs:
           fi
           pyinstaller --noconfirm main.spec
 
+      # NEW: Restore PyUpdater config from GitHub Secrets
+      - name: Restore PyUpdater config
+        run: |
+          mkdir -p .pyupdater
+          echo "${{ secrets.PYUPDATER_KEYPACK }}" | base64 -d > .pyupdater/keypack.pyu
+          echo "${{ secrets.PYUPDATER_CONFIG }}" | base64 -d > .pyupdater/config.pyu
+
+      # NEW: Package with PyUpdater
+      - name: Package with PyUpdater
+        run: |
+          if [ "${{ matrix.arch }}" == "x86_64" ]; then
+            source venv_x86/bin/activate
+          else
+            source venv/bin/activate
+          fi
+
+          # Find the built .app
+          APP_PATH="$(find dist -type d -name 'YsaGUI.app' -print -quit)"
+
+          # Package and sign
+          pyupdater pkg --process "$APP_PATH" --app-version "${{ steps.ver.outputs.version }}"
+          pyupdater pkg --sign
+
       - name: Verify built .app exists
         run: |
           set -euo pipefail
@@ -149,6 +172,15 @@ jobs:
         with:
           name: macos-package-${{ matrix.arch }}
           path: ${{ github.workspace }}/YSA_GUI_MacOS_${{ matrix.arch }}.pkg
+          retention-days: ${{ inputs.artifact_retention_days }}
+
+      # NEW: Upload PyUpdater packages
+      - name: Upload PyUpdater Package (macOS)
+        if: ${{ inputs.upload_artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyupdater-macos-${{ matrix.arch }}
+          path: pyu-data/deploy/
           retention-days: ${{ inputs.artifact_retention_days }}
 
   build-windows:
@@ -232,6 +264,29 @@ jobs:
         run: |
           .\venv\Scripts\Activate.ps1
           pyinstaller --noconfirm main.spec
+
+      # NEW: Restore PyUpdater config from GitHub Secrets
+      - name: Restore PyUpdater config
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path .pyupdater
+          $keypack = [System.Convert]::FromBase64String("${{ secrets.PYUPDATER_KEYPACK }}")
+          [System.IO.File]::WriteAllBytes(".pyupdater/keypack.pyu", $keypack)
+          $config = [System.Convert]::FromBase64String("${{ secrets.PYUPDATER_CONFIG }}")
+          [System.IO.File]::WriteAllBytes(".pyupdater/config.pyu", $config)
+
+      # NEW: Package with PyUpdater
+      - name: Package with PyUpdater
+        shell: pwsh
+        run: |
+          .\venv\Scripts\Activate.ps1
+
+          # Find the built directory
+          $BUILD_PATH = Resolve-Path ".\dist\YsaGUI"
+
+          # Package and sign
+          pyupdater pkg --process "$BUILD_PATH" --app-version "${{ steps.ver.outputs.version }}"
+          pyupdater pkg --sign
 
       - name: Verify PyInstaller build succeeded
         shell: pwsh
@@ -367,4 +422,13 @@ jobs:
         with:
           name: windows-package
           path: ${{ env.OUT_DIR }}\YSA_GUI_Windows.exe
+          retention-days: ${{ inputs.artifact_retention_days }}
+
+      # NEW: Upload PyUpdater packages
+      - name: Upload PyUpdater Package (Windows)
+        if: ${{ inputs.upload_artifacts }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: pyupdater-windows
+          path: pyu-data/deploy/
           retention-days: ${{ inputs.artifact_retention_days }}

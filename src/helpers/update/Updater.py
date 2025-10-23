@@ -24,14 +24,14 @@ except Exception:
 # PyUpdater configuration
 APP_NAME = "YsaGUI"
 COMPANY_NAME = "ParrishLab"
-UPDATE_URLS = ["https://github.com/ParrishLab/ysa-gui/releases/download/"]
+UPDATE_URLS = ["http://localhost:8000/"]
 
 # Client configuration
 CLIENT_CONFIG = {
     "APP_NAME": APP_NAME,
     "COMPANY_NAME": COMPANY_NAME,
     "UPDATE_URLS": UPDATE_URLS,
-    "PUBLIC_KEY": None,  # Will be set after key generation (see setup instructions below)
+    "PUBLIC_KEY": "+dencBWqOcAcCoa2xI/65Z11gF07P3WMv+w9BMEs8kg",
 }
 
 

@@ -1,49 +1,27 @@
-name: Build and Release
+name: Test PyUpdater (Manual)
 
 permissions:
   contents: write
 
 on:
-  push:
-    branches: [main] # build and release when pushed to main
-
-  workflow_dispatch: {} # allow manual workflow runs
+  workflow_dispatch: {} # Manual trigger only
 
 jobs:
   build:
     uses: ./.github/workflows/shared-build.yml
     with:
-      artifact_retention_days: 1
+      artifact_retention_days: 7
       upload_artifacts: true
 
-  release:
-    if: github.event_name == 'push'
+  # Create a test release for manual testing
+  test-release:
     needs: [build]
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      # Download traditional PKG/EXE packages
-      - name: Download MacOS Intel Package
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-package-x86_64
-          path: traditional/
-
-      - name: Download MacOS Silicon Package
-        uses: actions/download-artifact@v4
-        with:
-          name: macos-package-arm64
-          path: traditional/
-
-      - name: Download Windows Package
-        uses: actions/download-artifact@v4
-        with:
-          name: windows-package
-          path: traditional/
-
-      # Download PyUpdater packages
+      # Download PyUpdater packages only
       - name: Download PyUpdater MacOS Intel
         uses: actions/download-artifact@v4
         with:
@@ -82,32 +60,35 @@ jobs:
             exit 1
           fi
           echo "version=$version" >> $GITHUB_OUTPUT
-          echo "tag=v$version" >> $GITHUB_OUTPUT
+          echo "tag=test-v$version" >> $GITHUB_OUTPUT
           echo "Version from Constants.py: $version"
 
-      - name: Create or Update Release
+      - name: Create Test Release
         uses: softprops/action-gh-release@v1
         with:
           token: ${{ github.token }}
           tag_name: ${{ steps.release_ver.outputs.tag }}
-          name: Release ${{ steps.release_ver.outputs.version }}
-          prerelease: false
+          name: Test Release ${{ steps.release_ver.outputs.version }}
+          prerelease: true
+          draft: false
           files: |
-            traditional/YSA_GUI_MacOS_x86_64.pkg
-            traditional/YSA_GUI_MacOS_arm64.pkg
-            traditional/YSA_GUI_Windows.exe
             pyupdater-deploy/*
           fail_on_unmatched_files: true
           body: |
-            ## YSA GUI ${{ steps.release_ver.outputs.version }}
+            ## Test Release - YSA GUI ${{ steps.release_ver.outputs.version }}
 
-            ### Automatic Updates (Recommended)
-            If you already have YSA GUI installed, the app will automatically detect and install this update.
+            ⚠️ **This is a TEST release for PyUpdater validation**
 
-            ### Manual Downloads
-            For new installations:
-            - **macOS Intel**: YSA_GUI_MacOS_x86_64.pkg
-            - **macOS Silicon**: YSA_GUI_MacOS_arm64.pkg
-            - **Windows**: YSA_GUI_Windows.exe
+            ### Testing Instructions
+
+            1. Download the PyUpdater artifacts from this release
+            2. Follow the testing guide in `.github/workflows/TESTING_PYUPDATER.md`
+            3. This release will be deleted after testing
+
+            ### Files in this release
+            - `versions.gz` - Update manifest
+            - `keys.gz` - Public key for verification
+            - Various `.zip` files - The actual update packages
 
             Built from commit ${{ github.sha }}
+            Branch: ${{ github.ref_name }}
