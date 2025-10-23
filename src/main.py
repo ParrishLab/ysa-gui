@@ -545,13 +545,6 @@ class MainWindow(QMainWindow):
         self.open_button.setStyleSheet(HIGHLIGHT_STYLE)   
         self.open_button.setToolTip("Start by opening a .brw or .h5 file")
 
-        #self.low_ram_checkbox = QCheckBox("󰡵 Low RAM Mode")
-        #self.control_layout.addWidget(self.low_ram_checkbox)
-
-        #self.cpp_mode_checkbox = QCheckBox(" Use C++")
-        #self.cpp_mode_checkbox.stateChanged.connect(self.toggle_cpp_mode)
-        #self.control_layout.addWidget(self.cpp_mode_checkbox)  # Add into 'Settings' in top of app
-
         self.view_button = QPushButton(" Quick View")
         self.view_button.clicked.connect(self.run_analysis)
         self.control_layout.addWidget(self.view_button)
