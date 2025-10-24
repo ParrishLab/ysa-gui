@@ -545,13 +545,6 @@ class MainWindow(QMainWindow):
         self.open_button.setStyleSheet(HIGHLIGHT_STYLE)   
         self.open_button.setToolTip("Start by opening a .brw or .h5 file")
 
-        #self.low_ram_checkbox = QCheckBox("󰡵 Low RAM Mode")
-        #self.control_layout.addWidget(self.low_ram_checkbox)
-
-        self.cpp_mode_checkbox = QCheckBox(" Use C++")
-        self.cpp_mode_checkbox.stateChanged.connect(self.toggle_cpp_mode)
-        #self.control_layout.addWidget(self.cpp_mode_checkbox)  # Add into 'Settings' in top of app
-
         self.view_button = QPushButton(" Quick View")
         self.view_button.clicked.connect(self.run_analysis)
         self.control_layout.addWidget(self.view_button)
@@ -1779,10 +1772,11 @@ class MainWindow(QMainWindow):
         self.selected_channel = (row, col)
 
     def open_file(self):
+        downloads_path = str(Path.home() / "Downloads")
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open File",
-            directory="/Users/booka66/Jake-Squared/Sz_SE_Detection/",
+            directory=downloads_path,
             filter="BRW Files (*.brw)",
         )
 
@@ -1845,10 +1839,11 @@ class MainWindow(QMainWindow):
         self.set_widgets_enabled()
 
     def upload_image(self):
+        downloads_path = str(Path.home() / "Downloads")
         file_path, _ = QFileDialog.getOpenFileName(
             self,
             "Open File",
-            directory="/Users/booka66/Jake-Squared/Sz_SE_Detection/",
+            directory=downloads_path,
             filter="Image Files (*.jpg *.png *.jpeg *.bmp)",
         )
 
@@ -2535,11 +2530,6 @@ class MainWindow(QMainWindow):
                 self.loading_dialog.progress_bar.setRange(0, num_channels)
             self.analysis_thread.file_path = self.file_path
             self.analysis_thread.do_analysis = do_analysis
-            #self.analysis_thread.use_low_ram = (
-            #    True if self.low_ram_checkbox.isChecked() else False
-            #)
-            self.analysis_thread.eng = self.eng
-            self.analysis_thread.use_cpp = self.use_cpp
             self.analysis_thread.temp_data_path = temp_data_path
             self.loading_dialog.show()
             self.analysis_thread.start()
@@ -3026,7 +3016,7 @@ if __name__ == "__main__":
     window = MainWindow()
     window.showMaximized()
     confirm_latest_version(window)
-    window.read_update_message()
+    # window.read_update_message() NOTE: This was merged without going through tests first, function definition is missing
 
     set_app_icon(app, window)
 
