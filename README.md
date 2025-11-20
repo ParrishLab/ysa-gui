@@ -1,4 +1,4 @@
-# YSA GUI by Parrish Lab
+# YSA GUI
 
 ## 📘 Documentation
 
