@@ -118,7 +118,7 @@ jobs:
           else
             source venv/bin/activate
             export QT_QPA_PLATFORM=offscreen
-            python tests/test_built_app.pay --timeout 15
+            python tests/test_built_app.py --timeout 15
           fi
 
       - name: Locate built .app
