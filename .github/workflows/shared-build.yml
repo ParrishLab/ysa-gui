@@ -72,6 +72,10 @@ jobs:
           python -m pip install ysa-signal
           python -m pip install "pyobjc<11"
 
+      - name: Ensure Rosetta is installed
+        run: |
+          /usr/sbin/softwareupdate --install-rosetta --agree-to-license || true
+
       - name: Build documentation
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
@@ -89,10 +93,11 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
             source venv_x86/bin/activate
+            arch -x86_64 python -m PyInstaller --noconfirm main.spec
           else
             source venv/bin/activate
+            python -m PyInstaller --noconfirm main.spec
           fi
-          pyinstaller --noconfirm main.spec
 
       - name: Verify built .app exists
         run: |
@@ -108,15 +113,13 @@ jobs:
         run: |
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
             source venv_x86/bin/activate
+            export QT_QPA_PLATFORM=offscreen
+            arch -x86_64 python tests/test_built_app.py --timeout 15
           else
             source venv/bin/activate
+            export QT_QPA_PLATFORM=offscreen
+            python tests/test_built_app.pay --timeout 15
           fi
-
-          # Make test script executable
-          chmod +x tests/test_built_app.py
-
-          # Run test with 15 second timeout
-          python tests/test_built_app.py --timeout 15
 
       - name: Locate built .app
         run: |
