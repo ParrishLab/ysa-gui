@@ -55,11 +55,11 @@ jobs:
         run: |
           arch -x86_64 python3 -m venv venv_x86
           source venv_x86/bin/activate
-          python -m pip install --upgrade pip wheel
-          pip install -r src/helpers/update/requirements.txt
-          pip install -r docs/requirements.txt
-          pip install ysa-signal
-          pip install pyobjc-framework-AppKit
+          arch -x86_64 python -m pip install --upgrade pip wheel
+          arch -x86_64 python -m pip install -r src/helpers/update/requirements.txt
+          arch -x86_64 python -m pip install -r docs/requirements.txt
+          arch -x86_64 python -m pip install ysa-signal
+          arch -x86_64 python -m pip install "pyobjc<11"
 
       - name: Install Python deps for build (macOS arm64)
         if: ${{ matrix.arch == 'arm64' }}
@@ -67,10 +67,10 @@ jobs:
           python -m venv venv
           source venv/bin/activate
           python -m pip install --upgrade pip wheel
-          pip install -r src/helpers/update/requirements.txt
-          pip install -r docs/requirements.txt
-          pip install ysa-signal
-          pip install pyobjc-framework-AppKit
+          python -m pip install -r src/helpers/update/requirements.txt
+          python -m pip install -r docs/requirements.txt
+          python -m pip install ysa-signal
+          python -m pip install "pyobjc<11"
 
       - name: Build documentation
         run: |
