@@ -59,6 +59,7 @@ jobs:
           pip install -r src/helpers/update/requirements.txt
           pip install -r docs/requirements.txt
           pip install ysa-signal
+          pip install pyobjc-framework-AppKit
 
       - name: Install Python deps for build (macOS arm64)
         if: ${{ matrix.arch == 'arm64' }}
@@ -69,6 +70,7 @@ jobs:
           pip install -r src/helpers/update/requirements.txt
           pip install -r docs/requirements.txt
           pip install ysa-signal
+          pip install pyobjc-framework-AppKit
 
       - name: Build documentation
         run: |
