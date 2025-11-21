@@ -3,6 +3,7 @@ import glob
 import math
 import os
 import sys
+import re
 import logging
 import webbrowser
 from pathlib import Path
@@ -2578,7 +2579,7 @@ class MainWindow(QMainWindow):
         else:
             return None
         
-    def init_logging(progress_dir: str):
+    def init_logging(self, progress_dir: str):
         """Initialize logging to both console and a file."""
         os.makedirs(progress_dir, exist_ok=True)
         log_path = os.path.join(progress_dir, "ysagui-run.log")
