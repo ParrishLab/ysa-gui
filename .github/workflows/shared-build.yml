@@ -110,16 +110,38 @@ jobs:
           echo "[OK] Build successful: ${APP_PATH}"
 
       - name: Test GUI launch (macOS)
+        env:
+          PYTHONUNBUFFERED: "1"           # flush prints immediately
+          QT_QPA_PLATFORM: offscreen
+          YSA_DEBUG: "1"                  
+          YSA_SMOKE_TEST: "0"             # drives simulated progress 
+          YSA_PROGRESS_DIR: "${{ github.workspace }}/ci_progress" # where logs/progress go
         run: |
+          set -euo pipefail
+          mkdir -p "${YSA_PROGRESS_DIR}"
           if [ "${{ matrix.arch }}" == "x86_64" ]; then
             source venv_x86/bin/activate
-            export QT_QPA_PLATFORM=offscreen
-            arch -x86_64 python tests/test_built_app.py --timeout 15
+            arch -x86_64 python tests/test_built_app.py --timeout 15 2>&1 | tee ysagui-ci.log
           else
             source venv/bin/activate
-            export QT_QPA_PLATFORM=offscreen
-            python tests/test_built_app.py --timeout 15
+            python tests/test_built_app.py --timeout 15 2>&1 | tee ysagui-ci.log
           fi
+
+      - name: Upload CI log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}-ysagui-ci-log
+          path: ysagui-ci.log
+          retention-days: ${{ inputs.artifact_retention_days }}
+
+      - name: Upload progress artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macos-${{ matrix.arch }}-progress
+          path: ${{ github.workspace }}/ci_progress
+          retention-days: ${{ inputs.artifact_retention_days }}
 
       - name: Locate built .app
         run: |

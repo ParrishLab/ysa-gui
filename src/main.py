@@ -3,6 +3,7 @@ import glob
 import math
 import os
 import sys
+import logging
 import webbrowser
 from pathlib import Path
 from urllib.request import pathname2url
@@ -2468,6 +2469,7 @@ class MainWindow(QMainWindow):
                 button = alert.exec()
 
                 if button == QMessageBox.Abort:
+                    print("[DEBUG] User clicked Abort — exiting run_analysis early")
                     return
                 else:
                     self.graph_widget.update_red_lines(0, self.sampling_rate)
@@ -2516,24 +2518,45 @@ class MainWindow(QMainWindow):
             self.update()
 
             selected_drive = self.get_drive()
-            if selected_drive:
+            # Allow CI or local debugging to override temp path
+            env_override = os.environ.get("YSA_PROGRESS_DIR")
+
+            if env_override:
+                temp_data_path = env_override
+                print(f"[DEBUG] Using override temp_data_path from env: {temp_data_path}")
+            elif selected_drive:
                 temp_data_path = os.path.join(selected_drive, "temp_data")
             else:
                 temp_data_path = os.path.expanduser("~/temp_data")
 
             print("Temp data path:", temp_data_path)
 
-            with h5py.File(self.file_path, "r") as f:
-                channels = f["/3BRecInfo/3BMeaStreams/Raw/Chs"][()]
-                num_channels = len(channels)
-                print(f"Number of channels: {num_channels}")
-                self.loading_dialog.progress_bar.setRange(0, num_channels)
+            # initialize logging to that same temp directory
+            self.init_logging(temp_data_path)
+
+            # ---- Make the dialog feel alive immediately (percent scale) ----
+            self.loading_dialog.update_progress("Starting analysis…", 0)
+            self.loading_dialog.progress_bar.setRange(0, 100)
+            self.loading_dialog.progress_bar.setValue(0)
+
+            # (Optional) still log channel count for context; does not drive the bar anymore
+            try:
+                with h5py.File(self.file_path, "r") as f:
+                    channels = f["/3BRecInfo/3BMeaStreams/Raw/Chs"][()]
+                    num_channels = len(channels)
+                    print(f"Number of channels: {num_channels}")
+            except Exception as e:
+                print(f"[WARN] Could not read channels for progress context: {e}")
+            
+            # ---- Hand off to analysis thread ----
             self.analysis_thread.file_path = self.file_path
             self.analysis_thread.do_analysis = do_analysis
             self.analysis_thread.temp_data_path = temp_data_path
+            
+            print("[UI] Showing loading dialog…")
             self.loading_dialog.show()
+            print("[UI] Starting analysis thread…")
             self.analysis_thread.start()
-
         except Exception as e:
             print(f"Error: {e}")
 
@@ -2554,6 +2577,24 @@ class MainWindow(QMainWindow):
             return drives[0]
         else:
             return None
+        
+    def init_logging(progress_dir: str):
+        """Initialize logging to both console and a file."""
+        os.makedirs(progress_dir, exist_ok=True)
+        log_path = os.path.join(progress_dir, "ysagui-run.log")
+
+        handlers = [logging.StreamHandler(sys.stdout)]
+        try:
+            handlers.append(logging.FileHandler(log_path, encoding="utf-8"))
+        except Exception as e:
+            print(f"[WARN] Could not open log file: {e}")
+
+        logging.basicConfig(
+            level=logging.INFO,
+            handlers=handlers,
+            format="%(asctime)s %(levelname)s %(message)s",
+        )
+        logging.info("Logging initialized. Writing to %s", log_path)
 
     def on_analysis_completed(self):
         self.loading_dialog.hide()

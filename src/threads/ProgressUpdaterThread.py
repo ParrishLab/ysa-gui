@@ -4,6 +4,7 @@ import os
 
 
 class ProgressUpdaterThread(QThread):
+    # status text + percent (0..100) s
     progress_updated = pyqtSignal(str, int)
 
     def __init__(self, temp_data_path):
@@ -12,24 +13,31 @@ class ProgressUpdaterThread(QThread):
         self.start_time = perf_counter()
 
     def run(self):
-        num_files = 0
+        last_pct = 0
+        print(f"[ProgressUpdater] watching dir: {self.temp_data_path!r}")
+        
         while not self.isInterruptionRequested():
-            if not os.path.exists(self.temp_data_path):
-                temp_files = []
+            if self.temp_data_path and os.path.isdir(self.temp_data_path):
+                try:
+                    temp_files = os.listdir(self.temp_data_path)
+                except Exception:
+                    temp_files = []
+                    print(f"[ProgressUpdater] listdir error for {self.temp_data_path!r}: {e}")
+                count = len(temp_files)
+                # Heuristic: cap to 99 so the worker can set 100 on completion.
+                pct = min(count, 99)
+                msg = f"Processing… ({count} chunks)"
             else:
-                temp_files = [f for f in os.listdir(self.temp_data_path)]
-            num_files = len(temp_files)
-            elapsed_time = perf_counter() - self.start_time
-            hours = int(elapsed_time // 3600)
-            elapsed_time -= hours * 3600
-            minutes = int(elapsed_time // 60)
-            elapsed_time -= minutes * 60
-            seconds = elapsed_time
-            self.progress_updated.emit(
-                f"Elapsed time: {hours}h {minutes}m {seconds:.2f}s",
-                num_files,
-            )
-            self.msleep(100)  # Update progress every second
+                # Heartbeat percent (smooth 0..95 loop every ~5s)
+                elapsed = perf_counter() - self.start_time
+                pct = int((elapsed * 20) % 96)  # 0..95
+                msg = "Processing…"
 
-        # Emit final progress update
-        self.progress_updated.emit("Analysis completed.", num_files)
+            if pct != last_pct:
+                self.progress_updated.emit(msg, pct)
+                last_pct = pct
+
+            self.msleep(100)  # 10 times per second
+
+        # On interruption/completion, emit a final "completed" tick
+        self.progress_updated.emit("Analysis completed.", 100)

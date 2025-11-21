@@ -1,4 +1,5 @@
 import os
+import shutil
 from time import perf_counter
 import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -11,6 +12,7 @@ from ysa_signal import process_and_store
 
 class AnalysisThread(QThread):
     analysis_completed = pyqtSignal()
+    analysis_failed = pyqtSignal(str)
     progress_updated = pyqtSignal(str, int)
 
     def __init__(self, parent=None):
@@ -34,55 +36,112 @@ class AnalysisThread(QThread):
     def run(self):
         start = perf_counter()
         self.data = np.empty((64, 64), dtype=object)
+        
         # Create temporary directory if it doesn't exist
         if self.temp_data_path is not None:
             os.makedirs(self.temp_data_path, exist_ok=True)
+
         try:
-            self.progress_updater_thread = ProgressUpdaterThread(
-                self.temp_data_path)
-            self.progress_updater_thread.progress_updated.connect(
-                self.progress_updated)
+            print(f"[AnalysisThread] temp_data_path={self.temp_data_path!r}")
+            
+            # Start the background progress poller (files/heartbeat -> percent)
+            self.progress_updater_thread = ProgressUpdaterThread(self.temp_data_path)
+            self.progress_updater_thread.progress_updated.connect(self.progress_updated)
             self.progress_updater_thread.start()
 
-            # Use ysa_signal package
-            processed_data = process_and_store(
-                file_path=self.file_path,
-                do_analysis=self.do_analysis,
-                temp_data_path=self.temp_data_path
-            )
+            debug = os.environ.get("YSA_DEBUG", "").strip() == "1"
+            smoke = os.environ.get("YSA_SMOKE_TEST", "").strip() == "1"
 
-            # Copy data and metadata from ProcessedData
-            self.data = processed_data.data
-            self.sampling_rate = processed_data.sampling_rate
-            self.recording_length = processed_data.recording_length
-            self.time_vector = processed_data.time_vector
-            self.active_channels = processed_data.active_channels
+            if debug:
+                print("[DEBUG] AnalysisThread running (debug mode ON)")
+                print(f"[DEBUG] file_path={self.file_path!r}, do_analysis={self.do_analysis}, temp={self.temp_data_path!r}")
 
-            for cell_data in self.data.flatten():
-                if cell_data is None:
-                    continue
-                signal = cell_data["signal"]
-                if signal is not None:
-                    # Print stats about the signal
-                    min_strength = signal.min()
-                    max_strength = signal.max()
-                    mean_strength = signal.mean()
-                    std_strength = signal.std()
-                    print(
-                        f"min: {min_strength}, max: {max_strength}, mean: {mean_strength}, std: {std_strength}\n{signal[:20]}"
-                    )
-                    break
+            # Kick the UI so it doesn't look frozen
+            self.progress_updated.emit("Preparing…", 1)
+
+            if smoke:
+                # CI smoke-test path: show progress, don't do heavy work
+                for i in range(0, 101, 5):
+                    if self.isInterruptionRequested():
+                        break
+                    self.progress_updated.emit(f"Debug: simulating analysis… {i}%", i)
+                    time.sleep(0.05)
+
+                # Minimal data so on_analysis_completed() has something sane
+                self.data = np.empty((64, 64), dtype=object)
+                self.active_channels = []
+                self.sampling_rate = 100
+                self.recording_length = 1.0
+                self.time_vector = np.linspace(0, self.recording_length, int(self.recording_length*self.sampling_rate))
+
+            else:
+                # ---- Real analysis ----  (Use ysa_signal package)
+                self.progress_updated.emit("Reading file…", 5)
+                if debug:
+                    print("[DEBUG] Starting process_and_store() call")
+                processed_data = process_and_store(
+                    file_path=self.file_path,
+                    do_analysis=self.do_analysis,
+                    temp_data_path=self.temp_data_path
+                )
+                if debug:
+                    print("[DEBUG] process_and_store() returned successfully")
+                    print(f"[DEBUG] Active channels: {len(self.active_channels)}")
+
+                # Copy data and metadata from ProcessedData
+                self.data = processed_data.data
+                self.sampling_rate = processed_data.sampling_rate
+                self.recording_length = processed_data.recording_length
+                self.time_vector = processed_data.time_vector
+                self.active_channels = processed_data.active_channels
+
+                # Optional: Quick stats on first populated cell
+                for cell_data in self.data.flatten():
+                    if cell_data is None:
+                        continue
+                    signal = cell_data["signal"]
+                    if signal is not None:
+                        # Print stats about the signal
+                        min_strength = signal.min()
+                        max_strength = signal.max()
+                        mean_strength = signal.mean()
+                        std_strength = signal.std()
+                        print(
+                            f"min: {min_strength}, max: {max_strength}, mean: {mean_strength}, std: {std_strength}\n{signal[:20]}"
+                        )
+                        break
+                
+            # Finish up
+            self.progress_updated.emit("Finalizing…", 100)
             self.analysis_completed.emit()
             end = perf_counter()
             analysis_time = end - start
-            alert(f"Analysis completed in {analysis_time:.2f} seconds.")
+            min, sec = divmod(analysis_time, 60)
+            alert(f"Analysis completed in {int(min)} min {sec:.2f} s.")
+
         except Exception as e:
             print(f"Error: {e}")
-            alert(f"Error during analysis:\n{str(e)}")
+            self.analysis_failed.emit(str(e))
+            # ensure the dialog closes even on error
+            try:
+                self.analysis_completed.emit()
+            except Exception:
+                pass
         finally:
             if self.progress_updater_thread is not None:
                 self.progress_updater_thread.requestInterruption()
                 self.progress_updater_thread.wait()
+
             # Clean up temporary directory if it exists
-            if os.path.exists(self.temp_data_path):
-                os.rmdir(self.temp_data_path)
+            if self.temp_data_path and os.path.isdir(self.temp_data_path):
+                try:
+                    # In debug mode, remove everything; otherwise only remove if empty
+                    if os.environ.get("YSA_DEBUG") == "1":
+                        shutil.rmtree(self.temp_data_path, ignore_errors=True)
+                        print(f"[DEBUG] Removed temp directory {self.temp_data_path}")
+                    else:
+                        os.rmdir(self.temp_data_path)
+                        print(f"[INFO] Removed empty temp directory {self.temp_data_path}")
+                except Exception as e:
+                    print(f"[WARN] Temp dir cleanup skipped: {e}")
+
