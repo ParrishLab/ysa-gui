@@ -86,6 +86,7 @@ from helpers.Constants import (
     FONT_FILE,
     MAC,
     LARGE_FONT_SIZE,
+    SMALL_FONT_SIZE,
     SCREEN_DIAGONAL_THRESHOLD,
     SE,
     SEIZURE,
@@ -271,10 +272,10 @@ class MainWindow(QMainWindow):
         self.saveMeaWithPlotsAction.triggered.connect(lambda: save_mea_with_plots(self))
         self.fileMenu.addAction(self.saveMeaWithPlotsAction)
 
-        self.fileMenu.addSeparator()
-        self.exportSpectrogramsAction = QAction("Export Spectrograms", self)
-        self.exportSpectrogramsAction.triggered.connect(self.export_spectrograms)
-        self.fileMenu.addAction(self.exportSpectrogramsAction)
+        # self.fileMenu.addSeparator()
+        # self.exportSpectrogramsAction = QAction("Export Spectrograms", self)
+        # self.exportSpectrogramsAction.triggered.connect(self.export_spectrograms)
+        # self.fileMenu.addAction(self.exportSpectrogramsAction)
 
         self.editMenu = QMenu("Edit", self)
         self.menuBar.addMenu(self.editMenu)
@@ -1023,7 +1024,7 @@ class MainWindow(QMainWindow):
 
             Sxx_db = 10 * np.log10(Sxx)
 
-            # Export from here by channel to h5 (gray-out "Export Spectrograms" button until we choose to "Show Spectrogram," and add this caveat into the ReadTheDocs)
+            # TODO: Export from here by channel to h5 (gray-out "Export Spectrograms" button until we choose to "Show Spectrogram," and add this caveat into the ReadTheDocs)
 
             freq_mask = (f >= self.fs_range[0]) & (f <= self.fs_range[1])
             Sxx_db = Sxx_db[freq_mask, :]
@@ -2914,35 +2915,6 @@ else:
     sys.exit(1)
 
     
-def auto_resize_font(button: QPushButton, text: str, max_font_size=14, min_font_size=8):
-    font = button.font()
-    for size in range(max_font_size, min_font_size - 1, - 1):
-        font.setPointSize(size)
-        metrics = QFontMetrics(font)
-        text_width = metrics.horizontalAdvance(text)
-        if text_width <= button.width() - 12:  # padding adjustment
-            break
-    button.setFont(font)
-
-
-def set_app_icon(app: QApplication, window: QMainWindow):
-    base_path = getattr(sys, "_MEIPASS", os.path.abspath("."))
-    if sys.platform == "win32":
-        icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
-    elif sys.platform == "darwin":
-        from AppKit import NSApplication, NSImage
-        icon_path = os.path.join(base_path, "..", "resources", "icon.icns")
-        nsapp = NSApplication.sharedApplication()
-        image = NSImage.alloc().initWithContentsOfFile_(icon_path)
-        nsapp.setApplicationIconImage_(image)
-        return
-    else:
-        icon_path = os.path.join(base_path, "..", "resources", "icon.png")
-
-    app.setWindowIcon(QIcon(icon_path))
-    window.setWindowIcon(QIcon(icon_path))
-
-
 def auto_resize_font(button: QPushButton, text: str, max_font_size=14, min_font_size=8):
     font = button.font()
     for size in range(max_font_size, min_font_size - 1, - 1):

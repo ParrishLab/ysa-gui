@@ -133,6 +133,7 @@ jobs:
         with:
           name: macos-${{ matrix.arch }}-ysagui-ci-log
           path: ysagui-ci.log
+          if-no-files-found: warn
           retention-days: ${{ inputs.artifact_retention_days }}
 
       - name: Upload progress artifacts
@@ -140,7 +141,8 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: macos-${{ matrix.arch }}-progress
-          path: ${{ github.workspace }}/ci_progress
+          path: ${{ github.workspace }}/ci_progress/**
+          if-no-files-found: ignore
           retention-days: ${{ inputs.artifact_retention_days }}
 
       - name: Locate built .app
