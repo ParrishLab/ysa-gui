@@ -5,6 +5,9 @@ import urllib.request
 from packaging import version
 import requests
 import subprocess
+import tempfile
+import shutil
+from contextlib import closing
 
 try:
     from helpers.Constants import __version__ as VERSION
@@ -30,25 +33,74 @@ def _normalize_tag(tag: str) -> str:
     return tag[1:] if tag.startswith("v") else tag
 
 
-def _choose_asset(latest_release: dict) -> str | None:
-    """Pick the correct asset download URL for this platform/architecture."""
-    assets = latest_release.get("assets", [])
-    if sys.platform == "darwin":
-        machine = platform.machine().lower()
-        is_arm = ("arm64" in machine) or ("aarch64" in machine)
-        want = ASSET_MAC_ARM if "arm64" in machine else ASSET_MAC_X86
-        for a in assets:
-            if a.get("name") == want:
-                return a.get("browser_download_url")
-        # Fallback: heuristic by suffix if exact name not found
-        for a in assets:
-            n = a.get("name", "")
-            if n.endswith(".pkg") and (("arm64" in machine and "arm64" in n) or ("x86_64" in machine and "x86_64" in n)):
-                return a.get("browser_download_url")
-    elif sys.platform == "win32":
-        for a in assets:
-            if a.get("name") == ASSET_WIN or a.get("name", "").lower().endswith(".exe"):
-                return a.get("browser_download_url")
+def _launch_installer(file_path: str) -> bool:
+    try:
+        if sys.platform == "win32":
+            os.startfile(file_path)               # non-blocking on Windows
+        elif sys.platform == "darwin":
+            subprocess.Popen(["open", file_path]) # non-blocking on macOS
+        else:
+            print(f"Downloaded update to {file_path} (launch manually).")
+        return True
+    except Exception as e:
+        print(f"Failed to launch installer: {e}")
+        return False
+
+
+def _download_to(file_url: str, final_path: str, timeout: float = 60.0) -> str:
+    """
+    Download file_url to final_path atomically (tmp file then rename).
+    Returns the final_path on success.
+    """
+    req = urllib.request.Request(
+        file_url,
+        headers={"User-Agent": "YsaGUI-Updater/1.0 (+github-actions)"},
+        method="GET",
+    )
+    os.makedirs(os.path.dirname(final_path), exist_ok=True)
+    if os.path.exists(final_path):
+        try:
+            os.remove(final_path)
+        except Exception:
+            pass
+
+    with closing(urllib.request.urlopen(req, timeout=timeout)) as r, \
+         tempfile.NamedTemporaryFile(delete=False, dir=os.path.dirname(final_path)) as tmp:
+        while True:
+            chunk = r.read(1024 * 256)
+            if not chunk:
+                break
+            tmp.write(chunk)
+        tmp_path = tmp.name
+
+    shutil.move(tmp_path, final_path)  # atomic finalization
+    return final_path
+
+
+def _choose_asset(release: dict) -> str | None:
+    """
+    Return the browser_download_url for the correct asset, or None.
+    Uses exact, stable filenames produced by CI.
+    """
+    want = None
+    arch = platform.machine().lower()  # e.g. 'x86_64', 'arm64', 'aarch64'
+
+    if sys.platform == "win32":
+        want = ASSET_WIN
+    elif sys.platform == "darwin":
+        if "arm" in arch or "aarch64" in arch:
+            want = ASSET_MAC_ARM
+        else:
+            want = ASSET_MAC_X86
+    else:
+        return None
+    
+    print(f"Platform: {sys.platform}, Arch: {arch}")
+    print(f"Expected asset: {want}")
+
+    for a in release.get("assets", []):
+        if a.get("name") == want:
+            return a.get("browser_download_url")
     return None
 
 
@@ -95,32 +147,30 @@ def download_and_install_update(release: dict) -> bool:
         if not download_url:
             print("No suitable update found for your platform.")
             return False
+        
+        dl_name = ASSET_WIN if sys.platform == "win32" else (
+            ASSET_MAC_ARM if "arm" in platform.machine().lower() else ASSET_MAC_X86
+        )
+        downloads = os.path.join(os.path.expanduser("~"), "Downloads")
+        dest = os.path.join(downloads, dl_name)
 
-        # Pick disk file name
-        file_name = DOWNLOAD_NAME_MAC if sys.platform == "darwin" else DOWNLOAD_NAME_WIN
-        download_folder = os.path.join(os.path.expanduser("~"), "Downloads")
-        os.makedirs(download_folder, exist_ok=True)
-        file_path = os.path.join(download_folder, file_name)
+        # Clean up any older delete-me installers
+        for name in os.listdir(downloads):
+            if name.endswith("_DELETE_ME.pkg") or name.endswith("_DELETE_ME.exe"):
+                try:
+                    os.remove(os.path.join(downloads, name))
+                except Exception:
+                    pass
 
-        # If an old file exists from a previous run, remove it
-        if os.path.exists(file_path):
-            try:
-                os.remove(file_path)
-            except Exception:
-                pass
+        print(f"Downloading updater to: {dest}")
+        _download_to(download_url, dest, timeout=120.0)
 
-        print(f"Downloading {download_url} to {file_path}")
-        # simple, blocking; ok for GUI helper
-        urllib.request.urlretrieve(download_url, file_path)
+        # Launch asynchronously so the GUI doesn't freeze
+        launched = _launch_installer(dest)
+        if not launched:
+            return False
 
-        # Launch installer
-        if sys.platform == "win32":
-            os.startfile(file_path)
-        elif sys.platform == "darwin":
-            subprocess.run(["open", file_path], check=False)
-            os.system(f"open '{file_path}'")
-        else:
-            print(f"Downloaded update to {file_path} (launch it manually)")
+        print("Installer launched. The app may be closed during update.")
         return True
     except Exception as e:
         print(f"Update download/launch failed: {e}")

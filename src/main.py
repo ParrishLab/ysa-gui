@@ -62,6 +62,7 @@ from PyQt5.QtWidgets import (
     QTextEdit,
     QVBoxLayout,
     QWidget,
+    QProgressDialog,
 )
 from scipy.signal import spectrogram
 from sklearn.cluster import DBSCAN
@@ -3016,40 +3017,70 @@ if __name__ == "__main__":
             app.setFont(font)
 
     def confirm_latest_version(self):
-        def handle_update_button(button):
-            def on_update_completed(success):
-                self.download_msg.close()
+        def start_update(latest_release):
+            # Non-modal progress indicator (small, cancellable = False)
+            self.download_msg = QProgressDialog("Downloading update…", None, 0, 0, self)
+            self.download_msg.setWindowTitle("Update in progress")
+            self.download_msg.setCancelButton(None)
+            self.download_msg.setMinimumDuration(0)   # show immediately
+            self.download_msg.setModal(True)
+            self.download_msg.show()
 
-                if success:
-                    sys.exit()
+            self.update_thread = UpdateThread(latest_release, self)
+
+            # Optional: live text updates
+            self.update_thread.update_progress.connect(self.download_msg.setLabelText)
+
+            def on_done(ok: bool):
+                # Always close the dialog
+                try:
+                    self.download_msg.close()
+                except Exception:
+                    pass
+
+                # Tell user what happened
+                m = QMessageBox(self)
+                if ok:
+                    m.setIcon(QMessageBox.Information)
+                    m.setWindowTitle("Update")
+                    m.setText("Installer launched. The app may close during update.\n"
+                            "If it doesn’t, quit the app after the installer finishes.")
                 else:
-                    msg = QMessageBox()
-                    msg.setIcon(QMessageBox.Warning)
-                    msg.setText("Update process failed.")
-                    msg.setWindowTitle("Update")
-                    msg.exec_()
+                    m.setIcon(QMessageBox.Warning)
+                    m.setWindowTitle("Update")
+                    m.setText("Update could not be started. Please try again later.")
+                m.exec_()
 
-            if button.text() == "&Yes":
-                self.download_msg = QMessageBox(self)
-                self.download_msg.setIcon(QMessageBox.Information)
-                self.download_msg.setText("Downloading update...")
-                self.download_msg.setWindowTitle("Update in Progress")
-                self.download_msg.setStandardButtons(QMessageBox.NoButton)
-                self.download_msg.show()
+            def on_err(msg: str):
+                # Show an error note, but still let on_done() close the dialog
+                print(f"[Update] error: {msg}")
 
-                self.update_thread = UpdateThread(self.latest_release)
-                self.update_thread.update_completed.connect(on_update_completed)
-                self.update_thread.start()
+            self.update_thread.update_error.connect(on_err)
+            self.update_thread.update_completed.connect(on_done)
+            self.update_thread.start()
 
-        update_available, self.latest_release = check_for_update()
-        if update_available:
-            msg = QMessageBox()
-            msg.setIcon(QMessageBox.Information)
-            msg.setText("An update is available. Would you like to update now?")
-            msg.setWindowTitle("Update")
-            msg.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
-            msg.buttonClicked.connect(handle_update_button)
-            msg.exec_()
+        # ---- initial check (quick, async not needed) ----
+        try:
+            has_update, latest_release = check_for_update()
+        except Exception as e:
+            print(f"[Update] check failed: {e}")
+            return
+
+        if not has_update or not latest_release:
+            return  # nothing to do
+        
+        # Ask user
+        msg = QMessageBox(self)
+        msg.setIcon(QMessageBox.Information)
+        msg.setWindowTitle("Update available")
+        msg.setText("A new version is available. Do you want to download and install it now?")
+        yes = msg.addButton(QMessageBox.Yes)
+        no  = msg.addButton(QMessageBox.No)
+        msg.setDefaultButton(yes)
+        msg.exec_()
+
+        if msg.clickedButton() is yes:
+            start_update(latest_release)
 
     icon_path = os.path.join(base_path, "..", "resources", "icon.ico")
 
