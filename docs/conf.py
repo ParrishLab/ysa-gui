@@ -56,6 +56,7 @@ html_theme = "pydata_sphinx_theme"
 
 html_theme_options = {
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
+    "use_edit_page_button": True,
     "show_nav_level": 1,
     "logo": {
         "text": "YSA",
@@ -64,6 +65,16 @@ html_theme_options = {
     },
     "navbar_align": "left",
 }
+
+# Tell the theme where your GitHub repo lives and which branch to use
+html_context = {
+    "github_user": "ParrishLab",
+    "github_repo": "ysa-gui",
+    "github_version": "main",   # RTD “latest” tracks this branch
+    "doc_path": "docs",
+}
+
+html_baseurl = "https://ysa-gui.readthedocs.io/en/latest/"
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
