@@ -8,9 +8,10 @@ class UpdateThread(QThread):
     update_completed = pyqtSignal(bool)     # True = launched installer ok
     update_error     = pyqtSignal(str)
 
-    def __init__(self, latest_release):
-        super().__init__()
+    def __init__(self, latest_release, parent=None):
+        super().__init__(parent)
         self.latest_release = latest_release
+        self.parent = parent
 
     def run(self):
         try:
