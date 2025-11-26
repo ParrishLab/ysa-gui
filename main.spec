@@ -38,12 +38,11 @@ ysa_signal_hidden = collect_submodules('ysa_signal')
 
 # Collect any compiled libs (.so/.pyd) that ship with ysa_signal and sz_se_detect
 ysa_signal_bins = collect_dynamic_libs('ysa_signal')
-sz_bins = collect_dynamic_libs('sz_se_detect')
 
 a = Analysis(
     ['src/main.py'],
     pathex=[],
-    binaries = binaries + ysa_signal_bins + sz_bins,
+    binaries = binaries + ysa_signal_bins,
     datas=datas,
     hiddenimports = hiddenimports + ysa_signal_hidden + ['sz_se_detect'],
     hookspath=hook_paths,
