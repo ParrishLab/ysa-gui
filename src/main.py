@@ -125,6 +125,18 @@ from widgets.VideoEditor import VideoEditor
 from widgets.DocumentationViewer import DocumentationViewer
 # from widgets.RealTimeAnalysis import RealTimeAnalysis
 
+import traceback
+
+print("[DEBUG] Python version in frozen app:", sys.version)
+
+try:
+    import sz_se_detect
+    print("[DEBUG] sz_se_detect imported from:", getattr(sz_se_detect, "__file__", "<no __file__>"))
+    print("[DEBUG] sz_se_detect module repr:", sz_se_detect)
+except Exception as e:
+    print("[DEBUG] sz_se_detect import failed:", repr(e))
+    traceback.print_exc()
+
 class MainWindow(QMainWindow):
     gridUpdateRequested = pyqtSignal()
 
