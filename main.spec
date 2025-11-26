@@ -15,6 +15,7 @@ hiddenimports = [
     "h5py.defs",
     "h5py.utils",
     "h5py._proxy",
+    "ysa_signal",
 ]
 
 # ---- Data files ----
@@ -28,12 +29,24 @@ datas += collect_data_files("h5py")
 
 hook_paths = ['hooks'] if os.path.isdir('hooks') else []
 
+# --- Collect Qt plugins without importing PyQt5 ---
+from PyInstaller.utils.hooks import collect_data_files
+# Copy all Qt plugin files (platforms, imageformats, etc.)
+datas += collect_data_files("PyQt5.Qt5.plugins", includes=["**/*"], include_py_files=False)
+
+# Collect all ysa_signal Python modules
+ysa_signal_hidden = collect_submodules('ysa_signal')
+
+# Collect any compiled libs (.so/.pyd) that ship with ysa_signal and sz_se_detect
+ysa_signal_bins = collect_dynamic_libs('ysa_signal')
+sz_bins = collect_dynamic_libs('sz_se_detect')
+
 a = Analysis(
     ['src/main.py'],
     pathex=[],
-    binaries=[],
+    binaries=binaries = binaries + ysa_signal_bins + sz_bins,
     datas=datas,
-    hiddenimports=hiddenimports,
+    hiddenimports=hiddenimports = hiddenimports + ysa_signal_hidden + ['sz_se_detect'],
     hookspath=hook_paths,
     hooksconfig={},
     runtime_hooks=[],

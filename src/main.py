@@ -125,9 +125,6 @@ from widgets.VideoEditor import VideoEditor
 from widgets.DocumentationViewer import DocumentationViewer
 # from widgets.RealTimeAnalysis import RealTimeAnalysis
 
-import signal_analyzer
-
-
 class MainWindow(QMainWindow):
     gridUpdateRequested = pyqtSignal()
 
@@ -2601,6 +2598,18 @@ class MainWindow(QMainWindow):
 
     def on_analysis_completed(self):
         self.loading_dialog.hide()
+
+        # Bail out cleanly if analysis failed / returned nothing
+        if getattr(self.analysis_thread, "data", None) is None or \
+        getattr(self.analysis_thread, "sampling_rate", None) is None:
+            err = getattr(self.analysis_thread, "last_error", None)
+            msg = "Analysis finished without data."
+            if err:
+                msg += f"\nDetails: {err}"
+            QMessageBox.warning(self, "Analysis failed", msg)
+            self.set_widgets_enabled()
+            return
+
         self.data = self.analysis_thread.data
 
         self.min_strength = self.analysis_thread.min_strength
@@ -2620,13 +2629,18 @@ class MainWindow(QMainWindow):
         self.peak_settings_widget.threshold_value.setText(str(self.n_std_dev))
         self.peak_settings_widget.distance_slider.setValue(self.distance)
         self.peak_settings_widget.distance_value.setText(str(self.distance))
-        self.signal_analyzer = signal_analyzer.SignalAnalyzer(
-            self.time_vector,
-            n_std_dev=4,
-            distance=70,
-            sampling_rate=self.sampling_rate,
-        )
-        self.signal_analyzer.snr_threshold = 35
+        
+        try:
+            import signal_analyzer  # lazy import so missing C++ ext doesn’t break startup
+            self.signal_analyzer = signal_analyzer.SignalAnalyzer(
+                self.time_vector,
+                n_std_dev=4,
+                distance=70,
+                sampling_rate=self.sampling_rate,
+            )
+            self.signal_analyzer.snr_threshold = 35
+        except Exception as e:
+            print(f"[WARN] SignalAnalyzer unavailable, continuing without it: {e}")
 
         delta_t = 1 / self.sampling_rate
         delta_t_str = str(delta_t)

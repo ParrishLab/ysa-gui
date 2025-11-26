@@ -1,5 +1,6 @@
 import os
 import shutil
+import time
 from time import perf_counter
 import numpy as np
 from PyQt5.QtCore import QThread, pyqtSignal
@@ -17,6 +18,8 @@ class AnalysisThread(QThread):
 
     def __init__(self, parent=None):
         super().__init__(parent)
+        self.ok = False
+        self.last_error = None
         self.parent = parent
         self.file_path = None
         self.data = np.empty((64, 64), dtype=object)
@@ -73,7 +76,8 @@ class AnalysisThread(QThread):
                 self.sampling_rate = 100
                 self.recording_length = 1.0
                 self.time_vector = np.linspace(0, self.recording_length, int(self.recording_length*self.sampling_rate))
-
+                self.min_strength = 0.0
+                self.max_strength = 0.0
             else:
                 # ---- Real analysis ----  (Use ysa_signal package)
                 self.progress_updated.emit("Reading file…", 5)
@@ -95,21 +99,30 @@ class AnalysisThread(QThread):
                 self.time_vector = processed_data.time_vector
                 self.active_channels = processed_data.active_channels
 
-                # Optional: Quick stats on first populated cell
-                for cell_data in self.data.flatten():
-                    if cell_data is None:
+                # Compute mix/max event strength across all cells
+                min_s, max_s = None, None
+                for cell in self.data.flatten():
+                    if cell is None:
                         continue
-                    signal = cell_data["signal"]
-                    if signal is not None:
-                        # Print stats about the signal
-                        min_strength = signal.min()
-                        max_strength = signal.max()
-                        mean_strength = signal.mean()
-                        std_strength = signal.std()
-                        print(
-                            f"min: {min_strength}, max: {max_strength}, mean: {mean_strength}, std: {std_strength}\n{signal[:20]}"
-                        )
-                        break
+                    for key in ("SzTimes", "SETimes"):
+                        arr = cell.get(key)
+                        if arr is None or np.size(arr) == 0:
+                            continue
+                        arr = np.atleast_2d(arr)
+                        if arr.shape[1] >= 3:
+                            strengths = arr[:, 2].astype(float)
+                            if strengths.size:
+                                smin = float(np.nanmin(strengths))
+                                smax = float(np.nanmax(strengths))
+                                min_s = smin if (min_s is None or smin < min_s) else min_s
+                                max_s = smax if (max_s is None or smax > max_s) else max_s
+
+                # Fallback if no events had strengths
+                if min_s is None: min_s = 0.0
+                if max_s is None: max_s = 0.0
+
+                self.min_strength = min_s
+                self.max_strength = max_s
                 
             # Finish up
             self.progress_updated.emit("Finalizing…", 100)
@@ -118,10 +131,13 @@ class AnalysisThread(QThread):
             analysis_time = end - start
             min, sec = divmod(analysis_time, 60)
             alert(f"Analysis completed in {int(min)} min {sec:.2f} s.")
-
+            self.ok = True
         except Exception as e:
             print(f"Error: {e}")
             self.analysis_failed.emit(str(e))
+            self.last_error = str(e)
+            self.data = None
+            self.sampling_rate = None
             # ensure the dialog closes even on error
             try:
                 self.analysis_completed.emit()
