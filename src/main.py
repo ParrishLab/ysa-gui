@@ -125,18 +125,6 @@ from widgets.VideoEditor import VideoEditor
 from widgets.DocumentationViewer import DocumentationViewer
 # from widgets.RealTimeAnalysis import RealTimeAnalysis
 
-import traceback
-
-print("[DEBUG] Python version in frozen app:", sys.version)
-
-try:
-    import sz_se_detect
-    print("[DEBUG] sz_se_detect imported from:", getattr(sz_se_detect, "__file__", "<no __file__>"))
-    print("[DEBUG] sz_se_detect module repr:", sz_se_detect)
-except Exception as e:
-    print("[DEBUG] sz_se_detect import failed:", repr(e))
-    traceback.print_exc()
-
 class MainWindow(QMainWindow):
     gridUpdateRequested = pyqtSignal()
 
@@ -2972,6 +2960,23 @@ def set_app_icon(app: QApplication, window: QMainWindow):
 
 if __name__ == "__main__":
     import signal
+    
+    # ---- DEBUG: check ysa_signal / sz_se_detect in frozen app ----
+    import sys, traceback
+
+    print("[DEBUG] frozen? ", getattr(sys, "frozen", False))
+    print("[DEBUG] sys.executable:", sys.executable)
+    print("[DEBUG] sys.path:", sys.path)
+
+    try:
+        import ysa_signal
+        print("[DEBUG] ysa_signal imported from:", getattr(ysa_signal, "__file__", "<no __file__>"))
+        import sz_se_detect
+        print("[DEBUG] sz_se_detect imported from:", getattr(sz_se_detect, "__file__", "<no __file__>"))
+    except Exception as e:
+        print("[DEBUG] error importing ysa_signal/sz_se_detect:", repr(e))
+        traceback.print_exc()
+    # ---- END DEBUG ----
 
     # Allow Ctrl+C to properly terminate the application
     signal.signal(signal.SIGINT, signal.SIG_DFL)
