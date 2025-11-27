@@ -78,6 +78,23 @@ QPushButton:hover {
 }
 """
 
+# --- Early debug import for C++ extension (frozen macOS only) ---
+if getattr(sys, "frozen", False) and sys.platform == "darwin":
+    print("[DEBUG] attempting early import of ysa_signal / sz_se_detect")
+    try:
+        import ysa_signal
+        print("[DEBUG] ysa_signal imported from:", ysa_signal.__file__)
+    except Exception as e:
+        print("[DEBUG] import ysa_signal failed:", repr(e))
+
+    try:
+        import sz_se_detect
+        print("[DEBUG] sz_se_detect imported from:", sz_se_detect.__file__)
+    except Exception as e:
+        print("[DEBUG] import sz_se_detect failed:", repr(e))
+# --- end debug block ---
+
+
 from helpers.Constants import (
     ACTIVE,
     BACKGROUND,
