@@ -2966,7 +2966,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     # Helper to preload libhdf5_cpp*.dylib here
-    if getattr(sys, "frozen", False):
+    if getattr(sys, "frozen", False) and sys.platform == "darwin":
         exe_dir = os.path.dirname(sys.executable)       # .../Contents/MacOS
         frameworks_dir = os.path.dirname(exe_dir)       # .../Contents/Frameworks
         lib_dir = os.path.join(frameworks_dir, "lib")   # where main.spec puts "lib"

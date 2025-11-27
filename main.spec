@@ -6,13 +6,17 @@ from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
 
 binaries = []
+hdf5_libs = []
 
-# ---- Vendor HDF5 libs (from conda env) ----
-hdf5_vendor_root = os.path.join(os.path.dirname(__file__), "vendor", "hdf5", "mac")
-if os.path.isdir(hdf5_vendor_root):
-    for name in os.listdir(hdf5_vendor_root):
-        if name.startswith("libhdf5") and name.endswith(".dylib"):
-            binaries.append((os.path.join(hdf5_vendor_root, name), "lib"))
+# ---- Vendor HDF5 libs (from conda env) on macOS only ----
+if sys.platform == "darwin":
+    hdf5_vendor_root = os.path.join("vendor", "hdf5", "mac")
+    if os.path.isdir(hdf5_vendor_root):
+        for name in os.listdir(hdf5_vendor_root):
+            if name.startswith("libhdf5") and name.endswith(".dylib"):
+                hdf5_libs.append((os.path.join(hdf5_vendor_root, name), "lib"))
+
+binaries += hdf5_libs
 
 # ---- C++ extension + any other dynamic libs from ysa_signal/sz_se_detect ----
 binaries += collect_dynamic_libs("ysa_signal")
