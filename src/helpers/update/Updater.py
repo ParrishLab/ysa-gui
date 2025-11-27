@@ -8,6 +8,9 @@ import subprocess
 import tempfile
 import shutil
 from contextlib import closing
+import ssl
+import certifi
+import json
 
 try:
     from helpers.Constants import __version__ as VERSION
@@ -31,6 +34,21 @@ ASSET_MAC_X86 = "YSA_GUI_MacOS_x86_64.pkg"
 def _normalize_tag(tag: str) -> str:
     """Strip a leading 'v' from release tags (e.g., v1.2.3 -> 1.2.3)."""
     return tag[1:] if tag.startswith("v") else tag
+
+
+def _create_ssl_context() -> ssl.SSLContext:
+    """
+    Create an SSL context using the certifi CA bundle so that HTTPS
+    requests to GitHub work even if the system certificates are weird.
+    """
+    ctx = ssl.create_default_context()
+    try:
+        # Point to certifi's CA bundle
+        ctx.load_verify_locations(certifi.where())
+    except Exception:
+        # If this fails for some reason, the default context will still be used.
+        pass
+    return ctx
 
 
 def _launch_installer(file_path: str) -> bool:
@@ -64,7 +82,9 @@ def _download_to(file_url: str, final_path: str, timeout: float = 60.0) -> str:
         except Exception:
             pass
 
-    with closing(urllib.request.urlopen(req, timeout=timeout)) as r, \
+    ctx = _create_ssl_context()
+
+    with closing(urllib.request.urlopen(req, timeout=timeout, context=ctx)) as r, \
          tempfile.NamedTemporaryFile(delete=False, dir=os.path.dirname(final_path)) as tmp:
         while True:
             chunk = r.read(1024 * 256)
@@ -114,6 +134,7 @@ def check_for_update():
                 "User-Agent": "YsaGUI-Updater"
             },
             timeout=15,
+            verify=certifi.where(),
         )
         if resp.status_code != 200:
             return False, None

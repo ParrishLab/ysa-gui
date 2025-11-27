@@ -29,6 +29,7 @@ hiddenimports = [
     "h5py.utils",
     "h5py._proxy",
     "ysa_signal",
+    "certifi",
 ]
 
 # ---- Data files ----
@@ -39,6 +40,7 @@ datas = [
 ]
 # h5py package data (equivalent to --collect-data h5py)
 datas += collect_data_files("h5py")
+datas += collect_data_files("certifi")
 
 hook_paths = ['hooks'] if os.path.isdir('hooks') else []
 
