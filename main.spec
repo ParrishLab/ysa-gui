@@ -1,40 +1,51 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import os, sys, subprocess, platform
+import os, sys
 from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules, collect_data_files
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
 
 binaries = []
-hdf5_libs = []
-
-# ---- HDF5 libs on macOS ----
-if sys.platform == "darwin":
-    # Prefer architecture-matched HDF5 libs from the current conda env
-    conda_prefix = os.environ.get("CONDA_PREFIX")
-    if conda_prefix:
-        conda_lib_dir = os.path.join(conda_prefix, "lib")
-        # These names match what you have in your env: libhdf5_cpp.310.dylib, etc.
-        for name in ("libhdf5.310.dylib", "libhdf5_hl.310.dylib", "libhdf5_cpp.310.dylib"):
-            full = os.path.join(conda_lib_dir, name)
-            if os.path.exists(full):
-                print(f"[spec] Adding HDF5 lib from CONDA_PREFIX: {full}")
-                hdf5_libs.append((full, "."))
-
-    # Also include vendor HDF5 libs if present (these may be arm64/universal)
-    hdf5_vendor_root = os.path.join("vendor", "hdf5", "mac")
-    if os.path.isdir(hdf5_vendor_root):
-        for name in os.listdir(hdf5_vendor_root):
-            if name.startswith("libhdf5") and name.endswith(".dylib"):
-                full = os.path.join(hdf5_vendor_root, name)
-                print(f"[spec] Adding vendor HDF5 lib: {full}")
-                hdf5_libs.append((full, "."))
-
-binaries += hdf5_libs
 
 # ---- C++ extension + any other dynamic libs from ysa_signal/sz_se_detect ----
 binaries += collect_dynamic_libs("ysa_signal")
 binaries += collect_dynamic_libs("sz_se_detect")
+
+# ---- Inject x86_64 HDF5 libs from current conda env for sz_se_detect ----
+if sys.platform == "darwin":
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    if conda_prefix:
+        conda_lib = os.path.join(conda_prefix, "lib")
+
+        base_hdf5 = os.path.join(conda_lib, "libhdf5.310.dylib")
+        hl_hdf5   = os.path.join(conda_lib, "libhdf5_hl.310.dylib")
+        cpp_hdf5  = os.path.join(conda_lib, "libhdf5_cpp.310.dylib")
+
+        # Only add if they actually exist
+        for src in (base_hdf5, hl_hdf5, cpp_hdf5):
+            if not os.path.exists(src):
+                print(f"[spec] WARNING: expected HDF5 lib not found in conda env: {src}")
+
+        # Put them in Frameworks root (for general use / preload)
+        binaries += [
+            (base_hdf5, "libhdf5.310.dylib"),
+            (hl_hdf5,   "libhdf5_hl.310.dylib"),
+            (cpp_hdf5,  "libhdf5_cpp.310.dylib"),
+        ]
+
+        # ALSO put them where sz_se_detect expects them: inside ysa_signal__dot__dylibs
+        binaries += [
+            # Match the wheel’s original file names (arm64 ones) with x86_64 copies
+            (base_hdf5, "ysa_signal__dot__dylibs/libhdf5.310.5.1.dylib"),
+            (cpp_hdf5,  "ysa_signal__dot__dylibs/libhdf5_cpp.310.0.6.dylib"),
+
+            # And the more generic names too, for good measure
+            (base_hdf5, "ysa_signal__dot__dylibs/libhdf5.310.dylib"),
+            (hl_hdf5,   "ysa_signal__dot__dylibs/libhdf5_hl.310.dylib"),
+            (cpp_hdf5,  "ysa_signal__dot__dylibs/libhdf5_cpp.310.dylib"),
+        ]
+
+        print("[spec] Injected x86_64 HDF5 dylibs from conda env for sz_se_detect.")
 
 hiddenimports = [
     "zstandard",
