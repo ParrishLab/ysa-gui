@@ -85,10 +85,8 @@ def _preload_hdf5_for_sz_se_detect():
     """
     On macOS frozen builds, sz_se_detect was compiled with undefined HDF5 symbols
     and relies on libhdf5* being loaded into the global namespace first.
-
-    This walks known bundle locations and dlopens libhdf5*.dylib with RTLD_GLOBAL
-    using _ctypes.dlopen (bypassing PyInstaller's patched ctypes shim), so that
-    sz_se_detect can resolve its HDF5 C++ symbols.
+    This function walks known bundle locations and dlopens libhdf5*.dylib
+    with RTLD_GLOBAL so that sz_se_detect can resolve its symbols.
     """
     # Only needed in the frozen PyInstaller app on macOS
     if not getattr(sys, "frozen", False):
@@ -114,48 +112,29 @@ def _preload_hdf5_for_sz_se_detect():
         resources_dir,
     ]
 
-    # Collect all libhdf5*.dylib we can see
-    all_libs: list[str] = []
+    loaded_any = False
+
     for d in candidate_dirs:
         if not os.path.isdir(d):
             continue
         for name in os.listdir(d):
             if name.startswith("libhdf5") and name.endswith(".dylib"):
                 full = os.path.join(d, name)
-                all_libs.append(full)
-
-    if not all_libs:
-        print("[DEBUG] No HDF5 libs preloaded (no libhdf5*.dylib found in candidates)")
-        return
-    
-    # Sort so that C++ libs come first, then core libhdf5, then the rest
-    def sort_key(path: str):
-        base = os.path.basename(path).lower()
-        if "cpp" in base:
-            priority = 0
-        elif base.startswith("libhdf5.310") or base == "libhdf5.dylib":
-            priority = 1
-        else:
-            priority = 2
-        return (priority, base)
-
-    all_libs.sort(key=sort_key)
-
-    loaded_any = False
-
-    for full in all_libs:
-        try:
-            print(f"[DEBUG] Preloading HDF5 lib via _ctypes: {full}")
-            # Use _ctypes.dlopen to avoid PyInstaller's patched ctypes.CDLL;
-            # still pass RTLD_GLOBAL so symbols are visible to sz_se_detect.
-            _ctypes.dlopen(full, mode=ctypes.RTLD_GLOBAL)
-            loaded_any = True
-            print(f"[DEBUG] Preloaded HDF5 lib: {full}")
-        except OSError as e:
-            print(f"[DEBUG] Failed to load {full} via _ctypes: {e}")
+                try:
+                    # IMPORTANT: _ctypes.dlopen does NOT accept keyword args.
+                    # Use positional args to request RTLD_GLOBAL.
+                    try:
+                        _ctypes.dlopen(full, ctypes.RTLD_GLOBAL)
+                    except TypeError:
+                        # Fallback for any weirdness: call without mode.
+                        _ctypes.dlopen(full)
+                    loaded_any = True
+                    print(f"[DEBUG] Preloaded HDF5 lib via _ctypes: {full}")
+                except Exception as e:
+                    print(f"[DEBUG] Failed to load {full}: {e}")
 
     if not loaded_any:
-        print("[DEBUG] No HDF5 libs successfully preloaded")
+        print("[DEBUG] No HDF5 libs preloaded (no libhdf5*.dylib found in candidates)")
 
 
 # Call this before importing ysa_signal / sz_se_detect
