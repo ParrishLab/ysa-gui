@@ -78,6 +78,35 @@ QPushButton:hover {
 }
 """
 
+import ctypes
+
+# ---- macOS: preload vendored HDF5 libs for sz_se_detect when frozen ----
+if getattr(sys, "frozen", False) and sys.platform == "darwin":
+    try:
+        exe_dir = os.path.dirname(sys.executable)          # .../Contents/MacOS
+        contents_dir = os.path.dirname(exe_dir)            # .../Contents
+        frameworks_dir = os.path.join(contents_dir, "Frameworks")
+        lib_dir = os.path.join(frameworks_dir, "lib")      # where main.spec puts libhdf5*.dylib
+
+        print("[DEBUG] HDF5 preload: exe_dir =", exe_dir)
+        print("[DEBUG] HDF5 preload: contents_dir =", contents_dir)
+        print("[DEBUG] HDF5 preload: frameworks_dir =", frameworks_dir)
+        print("[DEBUG] HDF5 preload: lib_dir =", lib_dir)
+
+        if os.path.isdir(lib_dir):
+            for name in os.listdir(lib_dir):
+                if name.startswith("libhdf5") and name.endswith(".dylib"):
+                    full_path = os.path.join(lib_dir, name)
+                    try:
+                        print(f"[DEBUG] Preloading HDF5 lib: {full_path}")
+                        ctypes.CDLL(full_path)
+                    except OSError as e:
+                        print(f"[DEBUG] Failed to load {full_path}: {e}")
+        else:
+            print(f"[DEBUG] HDF5 preload: lib_dir not found: {lib_dir}")
+    except Exception as e:
+        print(f"[DEBUG] HDF5 preload failed: {e}")
+
 from helpers.Constants import (
     ACTIVE,
     BACKGROUND,
@@ -2960,31 +2989,9 @@ def set_app_icon(app: QApplication, window: QMainWindow):
 
 if __name__ == "__main__":
     import signal
-    import ctypes
 
     # Allow Ctrl+C to properly terminate the application
     signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-    # Helper to preload libhdf5_cpp*.dylib here
-    if getattr(sys, "frozen", False) and sys.platform == "darwin":
-        exe_dir = os.path.dirname(sys.executable)       # .../Contents/MacOS
-        frameworks_dir = os.path.dirname(exe_dir)       # .../Contents/Frameworks
-        lib_dir = os.path.join(frameworks_dir, "lib")   # where main.spec puts "lib"
-
-        loaded = False
-        for name in os.listdir(lib_dir):
-            if name.startswith("libhdf5_cpp") and name.endswith(".dylib"):
-                cand = os.path.join(lib_dir, name)
-                try:
-                    print(f"[DEBUG] Preloading HDF5 C++ from {cand!r}")
-                    ctypes.CDLL(cand)
-                    loaded = True
-                    break
-                except OSError as e:
-                    print(f"[DEBUG] Failed to CDLL({cand!r}): {e}")
-
-        if not loaded:
-            print("[DEBUG] WARNING: could not preload any libhdf5_cpp*.dylib; sz_se_detect may fail")
 
     app = QApplication(sys.argv)
     qdarktheme.setup_theme()
