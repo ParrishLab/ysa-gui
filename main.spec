@@ -14,7 +14,7 @@ if sys.platform == "darwin":
     if os.path.isdir(hdf5_vendor_root):
         for name in os.listdir(hdf5_vendor_root):
             if name.startswith("libhdf5") and name.endswith(".dylib"):
-                hdf5_libs.append((os.path.join(hdf5_vendor_root, name), "lib"))
+                hdf5_libs.append((os.path.join(hdf5_vendor_root, name), "."))
 
 binaries += hdf5_libs
 
