@@ -2960,26 +2960,31 @@ def set_app_icon(app: QApplication, window: QMainWindow):
 
 if __name__ == "__main__":
     import signal
-    
-    # ---- DEBUG: check ysa_signal / sz_se_detect in frozen app ----
-    import sys, traceback
-
-    print("[DEBUG] frozen? ", getattr(sys, "frozen", False))
-    print("[DEBUG] sys.executable:", sys.executable)
-    print("[DEBUG] sys.path:", sys.path)
-
-    try:
-        import ysa_signal
-        print("[DEBUG] ysa_signal imported from:", getattr(ysa_signal, "__file__", "<no __file__>"))
-        import sz_se_detect
-        print("[DEBUG] sz_se_detect imported from:", getattr(sz_se_detect, "__file__", "<no __file__>"))
-    except Exception as e:
-        print("[DEBUG] error importing ysa_signal/sz_se_detect:", repr(e))
-        traceback.print_exc()
-    # ---- END DEBUG ----
+    import ctypes
 
     # Allow Ctrl+C to properly terminate the application
     signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    # Helper to preload libhdf5_cpp*.dylib here
+    if getattr(sys, "frozen", False):
+        exe_dir = os.path.dirname(sys.executable)       # .../Contents/MacOS
+        frameworks_dir = os.path.dirname(exe_dir)       # .../Contents/Frameworks
+        lib_dir = os.path.join(frameworks_dir, "lib")   # where main.spec puts "lib"
+
+        loaded = False
+        for name in os.listdir(lib_dir):
+            if name.startswith("libhdf5_cpp") and name.endswith(".dylib"):
+                cand = os.path.join(lib_dir, name)
+                try:
+                    print(f"[DEBUG] Preloading HDF5 C++ from {cand!r}")
+                    ctypes.CDLL(cand)
+                    loaded = True
+                    break
+                except OSError as e:
+                    print(f"[DEBUG] Failed to CDLL({cand!r}): {e}")
+
+        if not loaded:
+            print("[DEBUG] WARNING: could not preload any libhdf5_cpp*.dylib; sz_se_detect may fail")
 
     app = QApplication(sys.argv)
     qdarktheme.setup_theme()

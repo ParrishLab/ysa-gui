@@ -6,8 +6,17 @@ from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
 
 binaries = []
-# Optionally let PyInstaller pull in any other linked libs from h5py:
-# binaries += collect_dynamic_libs("h5py")
+
+# ---- Vendor HDF5 libs (from conda env) ----
+hdf5_vendor_root = os.path.join(os.path.dirname(__file__), "vendor", "hdf5", "mac")
+if os.path.isdir(hdf5_vendor_root):
+    for name in os.listdir(hdf5_vendor_root):
+        if name.startswith("libhdf5") and name.endswith(".dylib"):
+            binaries.append((os.path.join(hdf5_vendor_root, name), "lib"))
+
+# ---- C++ extension + any other dynamic libs from ysa_signal/sz_se_detect ----
+binaries += collect_dynamic_libs("ysa_signal")
+binaries += collect_dynamic_libs("sz_se_detect")
 
 hiddenimports = [
     "zstandard",
@@ -83,22 +92,22 @@ coll = COLLECT(
     exe,
     a.binaries, a.zipfiles, a.datas,
     *extra_trees,
-    binaries=binaries,   # dynamic HDF5 list from earlier
+    binaries=binaries,
     strip=False, upx=False, name='YsaGUI'
 )
 
 # macOS: wrap COLLECT in .app bundle with proper structure
+# Optionally set versions:
+            # "CFBundleShortVersionString": "1.0.0",
+            # "CFBundleVersion": "100",
 if sys.platform == 'darwin':
     app = BUNDLE(
-        coll,  # Bundle the COLLECT, not just the EXE
+        coll,
         name='YsaGUI.app',
         icon='resources/icon.icns',
         bundle_identifier='edu.byu.parrishlab.ysagui',
         info_plist={
             "CFBundleName": "YsaGUI",
             "CFBundleDisplayName": "YsaGUI",
-            # Optionally set versions:
-            # "CFBundleShortVersionString": "1.0.0",
-            # "CFBundleVersion": "100",
         },
     )
