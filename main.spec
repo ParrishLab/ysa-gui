@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 
-import os, sys, subprocess
+import os, sys, subprocess, platform
 from PyInstaller.utils.hooks import collect_dynamic_libs, collect_submodules, collect_data_files
 from PyInstaller.building.build_main import Analysis, PYZ, EXE, COLLECT, BUNDLE
 from PyInstaller.building.datastruct import Tree
@@ -8,13 +8,27 @@ from PyInstaller.building.datastruct import Tree
 binaries = []
 hdf5_libs = []
 
-# ---- Vendor HDF5 libs (from conda env) on macOS only ----
+# ---- HDF5 libs on macOS ----
 if sys.platform == "darwin":
+    # Prefer architecture-matched HDF5 libs from the current conda env
+    conda_prefix = os.environ.get("CONDA_PREFIX")
+    if conda_prefix:
+        conda_lib_dir = os.path.join(conda_prefix, "lib")
+        # These names match what you have in your env: libhdf5_cpp.310.dylib, etc.
+        for name in ("libhdf5.310.dylib", "libhdf5_hl.310.dylib", "libhdf5_cpp.310.dylib"):
+            full = os.path.join(conda_lib_dir, name)
+            if os.path.exists(full):
+                print(f"[spec] Adding HDF5 lib from CONDA_PREFIX: {full}")
+                hdf5_libs.append((full, "."))
+
+    # Also include vendor HDF5 libs if present (these may be arm64/universal)
     hdf5_vendor_root = os.path.join("vendor", "hdf5", "mac")
     if os.path.isdir(hdf5_vendor_root):
         for name in os.listdir(hdf5_vendor_root):
             if name.startswith("libhdf5") and name.endswith(".dylib"):
-                hdf5_libs.append((os.path.join(hdf5_vendor_root, name), "."))
+                full = os.path.join(hdf5_vendor_root, name)
+                print(f"[spec] Adding vendor HDF5 lib: {full}")
+                hdf5_libs.append((full, "."))
 
 binaries += hdf5_libs
 
