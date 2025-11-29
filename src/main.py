@@ -78,6 +78,17 @@ QPushButton:hover {
 }
 """
 
+OPEN_FILE_HIGHLIGHT_STYLE = """
+QPushButton {
+    background-color: #8cffdb;
+    color: black;
+    font-weight: bold;
+}
+QPushButton:hover {
+    background-color: #b4c8e6;
+}
+"""
+
 import ctypes
 import _ctypes
 
@@ -606,7 +617,7 @@ class MainWindow(QMainWindow):
         auto_resize_font(self.open_button, " Open File")   # Auto-adjust font to fit the button
 
         # Highlight 'Open File' button on startup
-        self.open_button.setStyleSheet(HIGHLIGHT_STYLE)   
+        self.open_button.setStyleSheet(OPEN_FILE_HIGHLIGHT_STYLE)   
         self.open_button.setToolTip("Start by opening a .brw or .h5 file")
 
         self.view_button = QPushButton(" Quick View")
