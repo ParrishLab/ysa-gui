@@ -84,7 +84,7 @@ class AnalysisThread(QThread):
                 if debug:
                     print("[DEBUG] Starting process_and_store() call")
                 processed_data = process_and_store(
-                    file_path=self.file_path,
+                    file_path=str(self.file_path),
                     do_analysis=self.do_analysis,
                     temp_data_path=self.temp_data_path
                 )
