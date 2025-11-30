@@ -2309,7 +2309,7 @@ class MainWindow(QMainWindow):
                                     colors[index], QColor(255, 0, 0, int(255 * 0.3)), 1
                                 )
 
-                        if len(high_luminance_cells) > 0:
+                        if len(high_luminance_cells) > 0 and self.discharge_start_dialog is not None:
                             self.need_confirmation = True
                             self.discharge_start_dialog.current_time = current_time
 
@@ -2773,11 +2773,6 @@ class MainWindow(QMainWindow):
                 np.array([]),
                 np.array([]),
             )
-
-        if LAB_FEATURES_AVAILABLE:
-            self.discharge_start_dialog = DischargeStartDialog(self)
-        else:
-            self.discharge_start_dialog = None
 
         sz_cells = []
         se_cells = []
