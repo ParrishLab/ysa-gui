@@ -1,0 +1,3 @@
+[submodule "lab_private"]
+	path = lab_private
+	url = https://github.com/ParrishLab/ysa-gui-lab
