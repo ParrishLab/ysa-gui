@@ -176,7 +176,6 @@ from threads.DischargeFinderThread import DischargeFinderThread
 from widgets.ChannelExtract import ChannelExtract
 from widgets.ClusterTracker import ClusterTracker
 from widgets.ColorCell import ColorCell
-from widgets.DischargeStartDialog import DischargeStartDialog
 from widgets.GraphWidget import GraphWidget
 from widgets.GridWidget import GridWidget
 from widgets.GroupSelectionDialog import Group, GroupSelectionDialog
@@ -219,7 +218,7 @@ class MainWindow(QMainWindow):
         # Lab-only features (Discharge Start), if private submodule is available
         if LAB_FEATURES_AVAILABLE and attach_discharge_start is not None:
             attach_discharge_start(self)
-            
+
         self.setup_main_window()
         self.setup_analysis_thread()
         self.set_widgets_enabled()
@@ -264,7 +263,9 @@ class MainWindow(QMainWindow):
         self.is_auto_analyzing = False
         self.low_pass_cutoff = 35
         self.discharge_starts_points = []
-        self.discharge_start_dialog: DischargeStartDialog = None
+
+        # Lab-only: dialog is attached by lab_private.integration if available
+        self.discharge_start_dialog = None
         self.last_found_discharge_time = None
         self.track_discharge_beginnings = False
 
@@ -376,13 +377,14 @@ class MainWindow(QMainWindow):
         self.viewMenu = QMenu("View", self)
         self.menuBar.addMenu(self.viewMenu)
 
-        self.viewDischargeStartDialogAction = QAction(
-            "Open Discharge Start Dialog", self
-        )
-        self.viewDischargeStartDialogAction.triggered.connect(
-            self.open_discharge_start_dialog
-        )
-        self.viewMenu.addAction(self.viewDischargeStartDialogAction)
+        if LAB_FEATURES_AVAILABLE:
+            self.viewDischargeStartDialogAction = QAction(
+                "Open Discharge Start Dialog", self
+            )
+            self.viewDischargeStartDialogAction.triggered.connect(
+                self.open_discharge_start_dialog
+            )
+            self.viewMenu.addAction(self.viewDischargeStartDialogAction)
 
         self.toggleEventsOverlayAction = QAction(
             "Detected Events Overlay", self, checkable=True
@@ -869,10 +871,13 @@ class MainWindow(QMainWindow):
             self.hide_seizure_order()
 
     def open_discharge_start_dialog(self):
-        if (
-            self.discharge_start_dialog is None
-            or self.discharge_start_dialog.isVisible()
-        ):
+        # Called only from lab builds where the dialog exists
+        if self.discharge_start_dialog is None:
+            return
+        if self.discharge_start_dialog.isVisible():
+            # Optionally raise/activate instead of doing nothing
+            self.discharge_start_dialog.raise_()
+            self.discharge_start_dialog.activateWindow()
             return
         self.discharge_start_dialog.show()
 
@@ -1605,13 +1610,13 @@ class MainWindow(QMainWindow):
                 self.markers.append(current_time)
                 self.progress_bar.setMarkers(self.markers)
                 print(f"Added marker at {current_time}")
-            elif event.key() == Qt.Key_Return:
+            elif event.key() == Qt.Key_Return and LAB_FEATURES_AVAILABLE:
                 print("Enter pressed")
-                if self.need_confirmation:
+                if self.need_confirmation and self.discharge_start_dialog is not None:
                     self.discharge_start_dialog.confirm(True)
                     self.need_confirmation = False
-            elif event.key() == Qt.Key_Escape:
-                if self.need_confirmation:
+            elif event.key() == Qt.Key_Escape and LAB_FEATURES_AVAILABLE:
+                if self.need_confirmation and self.discharge_start_dialog is not None:
                     self.discharge_start_dialog.confirm(False)
                     self.need_confirmation = False
                     self.stepForward()
@@ -2274,7 +2279,7 @@ class MainWindow(QMainWindow):
                 current_time
             )
             high_luminance_cells = []
-            if self.track_discharge_beginnings:
+            if LAB_FEATURES_AVAILABLE and self.track_discharge_beginnings:
                 gray_range = max_gray_value - min_gray_value
 
                 for row in self.grid_widget.cells:
@@ -2769,7 +2774,10 @@ class MainWindow(QMainWindow):
                 np.array([]),
             )
 
-        self.discharge_start_dialog = DischargeStartDialog(self)
+        if LAB_FEATURES_AVAILABLE:
+            self.discharge_start_dialog = DischargeStartDialog(self)
+        else:
+            self.discharge_start_dialog = None
 
         sz_cells = []
         se_cells = []
