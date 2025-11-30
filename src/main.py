@@ -78,6 +78,19 @@ QPushButton:hover {
 }
 """
 
+import importlib
+
+LAB_FEATURES_AVAILABLE = False
+attach_discharge_start = None
+
+try:
+    # Dynamic import so public builds don't hard-fail if lab_private is missing
+    lab_module = importlib.import_module("lab_private.integration")
+    attach_discharge_start = lab_module.attach_discharge_start
+    LAB_FEATURES_AVAILABLE = True
+except Exception:
+    LAB_FEATURES_AVAILABLE = False
+
 import ctypes
 import _ctypes
 
@@ -202,6 +215,11 @@ class MainWindow(QMainWindow):
         # Functions to run on startup that setup the main window
         self.setup_variables()
         self.setup_menu_bar()
+
+        # Lab-only features (Discharge Start), if private submodule is available
+        if LAB_FEATURES_AVAILABLE and attach_discharge_start is not None:
+            attach_discharge_start(self)
+            
         self.setup_main_window()
         self.setup_analysis_thread()
         self.set_widgets_enabled()
