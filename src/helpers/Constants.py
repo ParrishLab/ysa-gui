@@ -1,7 +1,7 @@
 from PyQt5.QtGui import QColor
 
 # WARN: must use double quotes around version number (see build-and-release.yaml)
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 
 BACKGROUND = QColor("#4a4e69")
 ACTIVE = QColor("#808080")
