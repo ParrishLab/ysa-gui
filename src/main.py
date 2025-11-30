@@ -78,19 +78,6 @@ QPushButton:hover {
 }
 """
 
-import importlib
-
-LAB_FEATURES_AVAILABLE = False
-attach_discharge_start = None
-
-try:
-    # Dynamic import so public builds don't hard-fail if lab_private is missing
-    lab_module = importlib.import_module("lab_private.integration")
-    attach_discharge_start = lab_module.attach_discharge_start
-    LAB_FEATURES_AVAILABLE = True
-except Exception:
-    LAB_FEATURES_AVAILABLE = False
-
 import ctypes
 import _ctypes
 
@@ -215,10 +202,6 @@ class MainWindow(QMainWindow):
         self.setup_variables()
         self.setup_menu_bar()
 
-        # Lab-only features (Discharge Start), if private submodule is available
-        if LAB_FEATURES_AVAILABLE and attach_discharge_start is not None:
-            attach_discharge_start(self)
-
         self.setup_main_window()
         self.setup_analysis_thread()
         self.set_widgets_enabled()
@@ -263,11 +246,6 @@ class MainWindow(QMainWindow):
         self.is_auto_analyzing = False
         self.low_pass_cutoff = 35
         self.discharge_starts_points = []
-
-        # Lab-only: dialog is attached by lab_private.integration if available
-        self.discharge_start_dialog = None
-        self.last_found_discharge_time = None
-        self.track_discharge_beginnings = False
 
         # Min and max values
         self.overall_min_voltage = None
@@ -376,15 +354,6 @@ class MainWindow(QMainWindow):
 
         self.viewMenu = QMenu("View", self)
         self.menuBar.addMenu(self.viewMenu)
-
-        if LAB_FEATURES_AVAILABLE:
-            self.viewDischargeStartDialogAction = QAction(
-                "Open Discharge Start Dialog", self
-            )
-            self.viewDischargeStartDialogAction.triggered.connect(
-                self.open_discharge_start_dialog
-            )
-            self.viewMenu.addAction(self.viewDischargeStartDialogAction)
 
         self.toggleEventsOverlayAction = QAction(
             "Detected Events Overlay", self, checkable=True
@@ -869,17 +838,6 @@ class MainWindow(QMainWindow):
             self.show_seizure_order()
         else:
             self.hide_seizure_order()
-
-    def open_discharge_start_dialog(self):
-        # Called only from lab builds where the dialog exists
-        if self.discharge_start_dialog is None:
-            return
-        if self.discharge_start_dialog.isVisible():
-            # Optionally raise/activate instead of doing nothing
-            self.discharge_start_dialog.raise_()
-            self.discharge_start_dialog.activateWindow()
-            return
-        self.discharge_start_dialog.show()
 
     def set_bin_size(self):
         bin_size, ok = QInputDialog.getText(
@@ -1610,16 +1568,6 @@ class MainWindow(QMainWindow):
                 self.markers.append(current_time)
                 self.progress_bar.setMarkers(self.markers)
                 print(f"Added marker at {current_time}")
-            elif event.key() == Qt.Key_Return and LAB_FEATURES_AVAILABLE:
-                print("Enter pressed")
-                if self.need_confirmation and self.discharge_start_dialog is not None:
-                    self.discharge_start_dialog.confirm(True)
-                    self.need_confirmation = False
-            elif event.key() == Qt.Key_Escape and LAB_FEATURES_AVAILABLE:
-                if self.need_confirmation and self.discharge_start_dialog is not None:
-                    self.discharge_start_dialog.confirm(False)
-                    self.need_confirmation = False
-                    self.stepForward()
             elif event.key() == Qt.Key_V:
                 self.update_grid(red=False)
 
@@ -2277,42 +2225,7 @@ class MainWindow(QMainWindow):
         if self.do_show_false_color_map:
             colors, min_gray_value, max_gray_value = self.get_false_color_map_colors(
                 current_time
-            )
-            high_luminance_cells = []
-            if LAB_FEATURES_AVAILABLE and self.track_discharge_beginnings:
-                gray_range = max_gray_value - min_gray_value
-
-                for row in self.grid_widget.cells:
-                    for cell in row:
-                        cell.is_high_luminance = False
-
-                if gray_range > 50:
-                    if (
-                        self.last_found_discharge_time is None
-                        or current_time - self.last_found_discharge_time > 0.5
-                    ):
-                        luminance_threshold = np.percentile(
-                            [cell.get_luminance() for cell in self.cells], 96
-                        )
-
-                        high_luminance_cells = self.get_high_luminance_cells(
-                            luminance_threshold
-                        )
-                        high_luminance_indices = [
-                            self.active_channels.index((cell.row + 1, cell.col + 1))
-                            for cell in high_luminance_cells
-                        ]
-                        # This is what is currently being used to determine if a discharge has started
-                        if red:
-                            for index in high_luminance_indices:
-                                colors[index] = self.blend_colors(
-                                    colors[index], QColor(255, 0, 0, int(255 * 0.3)), 1
-                                )
-
-                        if len(high_luminance_cells) > 0 and self.discharge_start_dialog is not None:
-                            self.need_confirmation = True
-                            self.discharge_start_dialog.current_time = current_time
-
+            )            
         else:
             colors = [ACTIVE] * len(self.active_channels)
 
