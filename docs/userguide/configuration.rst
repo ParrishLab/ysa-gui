@@ -103,3 +103,12 @@ SignalInversion (-1 or 1)
 
 - Size: 1
 - Type: H5T_FLOAT
+
+
+Example Conversion Code: 3Brain & Utah Array File
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The YSA GUI was originally designed to work on .h5 (.brw extension) exports of 3Brain MEA data.
+We also took .mat data file output from Utah Array MEA recordings and converted them to a YSA-GUI
+compatible format. The code to perform these conversions can be found at the following repo:
+
+https://github.com/ParrishLab/MEA_file_Extract_Downsample.git
