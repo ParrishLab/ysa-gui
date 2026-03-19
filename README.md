@@ -14,3 +14,7 @@ You can download the latest installers from the [Releases page](https://github.c
 ➡️ [macOS Intel (x86_64)](https://github.com/ParrishLab/ysa-gui/releases/latest/download/YSA_GUI_MacOS_x86_64.pkg)
 
 ➡️ [macOS Silicon (ARM64)](https://github.com/ParrishLab/ysa-gui/releases/latest/download/YSA_GUI_MacOS_arm64.pkg)
+
+
+## Example Downsampling code
+https://github.com/ParrishLab/MEA_file_Extract_Downsample 
