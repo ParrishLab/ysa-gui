@@ -112,3 +112,39 @@ At this point, the user should have a good set of orange markers placed at the b
     * **Min Samples**: The number of samples in a neighborhood for a point to be considered as a core point. If the centroids are not following the path of the seizure, try increasing this value. If the centroids are following the path of the seizure too closely, try decreasing this value.
     * **Max Distance**: The maximum distance a discharge centroid can travel between consecutive frames. This is useful for tracking the propagation of the discharges.
     * **Bin Size**: The bin size for calculating the false color map on the MEA grid. This is useful for tracking the propagation of the discharges because the centroids are calculated from electrodes that currently have a discharge event marker within the bin window. The default value is good for most cases.
+
+Default Parameters
+===================
+
+.. list-table::
+   :widths: 40 30
+   :header-rows: 0
+
+   * - DBSCAN Settings
+     -
+   * - Epsilon
+     - 4.8
+   * - Min samples
+     - 4
+   * - Max distance
+     - 20
+   * - Bin size
+     - 0.0133
+   * - Peak Settings
+     -
+   * - Peak threshold (Std Dev)
+     - 4
+   * - Min distance between peaks
+     - 10
+   * - SNR threshold
+     - 35
+   * - Spectrogram Settings
+     -
+   * - Chunk size
+     - 256
+   * - Overlap
+     - 0
+   * - Frequency range
+     - Min: 0.5; Max: 50.0
+
+
